@@ -1748,6 +1748,17 @@
           🔄 Reorganize Entire Schedule Starting Today
         </button>
       </div>
+
+      <!-- SECTION 4: ANDROID HOME SCREEN WIDGET APP -->
+      <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; flex-direction:column; gap:8px;">
+        <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; color:var(--muted);">📱 Android Home Screen Widget</span>
+        <p style="font-size:0.78rem; color:var(--muted); line-height:1.35;">
+          Install the Android app to place an interactive <strong>Daily / Weekly / Tasks</strong> widget directly on your home screen wallpaper and check off tasks without opening the app.
+        </p>
+        <a href="./one-minor-one-major.apk" download="one-minor-one-major.apk" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; background:#059669; color:#fff; font-weight:800; font-size:0.84rem; padding:10px 14px; border-radius:10px;">
+          📲 Download Android Widget App (.apk)
+        </a>
+      </div>
     </div>
   </div>
 
@@ -2825,6 +2836,7 @@
       try {
         if (!appState.changeId) appState.changeId = generateChangeId();
         const pushedChangeId = appState.changeId;
+        appState.widgetSnapshot = buildWidgetSnapshot();
         const encryptedEnvelope = encryptStatePayload(appState, cloudAccount.encKeyHex, cloudAccount.macKeyHex);
         const vaultKey = getVaultKeyForEmailHash(cloudAccount.emailHash);
         const vaultTopic = getVaultTopicForEmailHash(cloudAccount.emailHash);
@@ -3100,18 +3112,228 @@
 
     window.addEventListener('focus', () => {
       checkAndAutoUpdateHostedBuild();
-      if (cloudAccount) pullStateFromCloud(true);
+      if (!window.applyPendingNativeWidgetActions()) {
+        if (cloudAccount) pullStateFromCloud(true);
+      }
     });
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         checkAndAutoUpdateHostedBuild();
-        if (cloudAccount) pullStateFromCloud(true);
+        if (!window.applyPendingNativeWidgetActions()) {
+          if (cloudAccount) pullStateFromCloud(true);
+        }
       }
     });
 
     // =====================================================
-    // 5. RENDERING ENGINE (TODAY, TASK LIST, WEEKLY/PRINT)
+    // 5. RENDERING ENGINE & NATIVE ANDROID WIDGET BRIDGE
     // =====================================================
+    function buildWidgetSnapshot() {
+      const todayObj = new Date();
+      const todayStr = toDateStr(todayObj);
+      const todayDow = todayObj.getDay();
+
+      // 1. Daily View Data (Today's Habits + 1 Minor + 1 Major)
+      const todayHabits = appState.tasks
+        .filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit')
+        .filter(t => !Array.isArray(t.habitDays) || t.habitDays.length === 0 || t.habitDays.includes(todayDow))
+        .map(h => ({
+          id: h.id,
+          title: h.title || '',
+          done: !!appState.habitCompletions[`${todayStr}_${h.id}`],
+          dateStr: todayStr
+        }));
+
+      const minorTask = getSlotTaskForDate(todayStr, 'minor');
+      const majorTask = getSlotTaskForDate(todayStr, 'major');
+      const todayMeta = ensureDayMeta(todayStr);
+
+      const formatSlotObj = (t, slotSize, partialWin) => {
+        if (!t && partialWin) {
+          return {
+            id: '',
+            slotSize,
+            title: partialWin.title || 'Partial Progress Win',
+            subtitle: `Completed ${partialWin.doneCount} of ${partialWin.totalCount} steps today!`,
+            done: true,
+            empty: false,
+            dateStr: todayStr
+          };
+        }
+        if (!t) {
+          return {
+            id: '',
+            slotSize,
+            title: `No ${slotSize === 'minor' ? 'Minor' : 'Major'} Task Scheduled`,
+            subtitle: 'Tap to open planner & pick a task',
+            done: false,
+            empty: true,
+            dateStr: todayStr
+          };
+        }
+        const subs = Array.isArray(t.subtasks) ? t.subtasks : [];
+        const subDone = subs.filter(s => s.done).length;
+        const subParts = [];
+        const recBadge = getRecurrenceBadgeText(t);
+        if (recBadge) subParts.push(recBadge);
+        if (subs.length > 0) subParts.push(`☑️ ${subDone}/${subs.length} steps`);
+        if (t.notes) subParts.push(t.notes);
+        return {
+          id: t.id,
+          slotSize,
+          title: t.title || '',
+          subtitle: subParts.join(' • '),
+          done: t.status === 'completed',
+          empty: false,
+          dateStr: todayStr
+        };
+      };
+
+      // 2. Weekly View Data (Rolling 7 days starting Today)
+      const weeklyDays = [];
+      for (let i = 0; i < 7; i++) {
+        const dObj = addDays(todayObj, i);
+        const dStr = toDateStr(dObj);
+        const dayInfo = DAYS.find(d => d.offset === dObj.getDay()) || DAYS[0];
+        const minT = getSlotTaskForDate(dStr, 'minor');
+        const majT = getSlotTaskForDate(dStr, 'major');
+        weeklyDays.push({
+          dateStr: dStr,
+          dayLabel: `${i === 0 ? 'TODAY • ' : ''}${dayInfo.mShort}, ${formatShortDate(dObj)}`,
+          isToday: i === 0,
+          minor: minT ? {
+            id: minT.id,
+            title: minT.title || '',
+            done: minT.status === 'completed',
+            recBadge: getRecurrenceBadgeText(minT),
+            dateStr: dStr
+          } : null,
+          major: majT ? {
+            id: majT.id,
+            title: majT.title || '',
+            done: majT.status === 'completed',
+            recBadge: getRecurrenceBadgeText(majT),
+            dateStr: dStr
+          } : null
+        });
+      }
+
+      // 3. Tasks View Data (All Active Tasks sorted by effective score + All Habits)
+      const activeTasks = appState.tasks
+        .filter(t => t.status === 'active' && t.recurrence !== 'daily_habit')
+        .sort((a, b) => getEffectiveScore(b) - getEffectiveScore(a))
+        .map(t => {
+          const catObj = appState.categories.find(c => c.id === t.category);
+          const catName = catObj ? catObj.name : '✨ Personal';
+          const recBadge = getRecurrenceBadgeText(t);
+          const metaParts = [t.size === 'minor' ? '✓ Minor' : '★ Major', catName];
+          if (recBadge) metaParts.push(recBadge);
+          if (t.scheduledDate) metaParts.push(`📅 ${formatShortDate(parseDateStr(t.scheduledDate))}`);
+          return {
+            id: t.id,
+            title: t.title || '',
+            subtitle: metaParts.join(' • '),
+            size: t.size || 'minor',
+            done: false,
+            dateStr: t.scheduledDate || todayStr
+          };
+        });
+
+      const allHabits = appState.tasks
+        .filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit')
+        .map(h => ({
+          id: h.id,
+          title: h.title || '',
+          subtitle: getRecurrenceBadgeText(h) || '🔄 Habit',
+          done: !!appState.habitCompletions[`${todayStr}_${h.id}`],
+          dateStr: todayStr
+        }));
+
+      return {
+        updatedAt: Date.now(),
+        todayStr,
+        todayHeader: formatFullDateHeader(todayObj),
+        daily: {
+          habits: todayHabits,
+          minor: formatSlotObj(minorTask, 'minor', todayMeta.partialWinMinor),
+          major: formatSlotObj(majorTask, 'major', todayMeta.partialWinMajor)
+        },
+        weekly: weeklyDays,
+        tasks: activeTasks,
+        habits: allHabits
+      };
+    }
+
+    function syncNativeAndroidWidget() {
+      try {
+        const snapshot = buildWidgetSnapshot();
+        appState.widgetSnapshot = snapshot;
+        if (window.AndroidWidgetBridge && typeof window.AndroidWidgetBridge.syncFromWeb === 'function') {
+          const authJson = cloudAccount ? JSON.stringify({
+            email: cloudAccount.email || '',
+            emailHash: cloudAccount.emailHash || '',
+            encKeyHex: cloudAccount.encKeyHex || '',
+            macKeyHex: cloudAccount.macKeyHex || '',
+            vaultKey: getVaultKeyForEmailHash(cloudAccount.emailHash || ''),
+            firebaseDbUrl: getActiveFirebaseDbUrl() || DEFAULT_FIREBASE_DB_URL
+          }) : '';
+          window.AndroidWidgetBridge.syncFromWeb(
+            JSON.stringify(appState),
+            authJson,
+            JSON.stringify(snapshot)
+          );
+        }
+      } catch (e) {}
+    }
+
+    window.applyPendingNativeWidgetActions = function() {
+      try {
+        if (!window.AndroidWidgetBridge || typeof window.AndroidWidgetBridge.consumePendingActions !== 'function') return false;
+        const raw = window.AndroidWidgetBridge.consumePendingActions();
+        if (!raw) return false;
+        const actions = JSON.parse(raw);
+        if (!Array.isArray(actions) || actions.length === 0) return false;
+        let changed = false;
+        actions.forEach(act => {
+          if (!act || !act.type) return;
+          if (act.type === 'toggle_habit' && act.id) {
+            const dStr = act.dateStr || toDateStr(new Date());
+            const key = `${dStr}_${act.id}`;
+            appState.habitCompletions[key] = !appState.habitCompletions[key];
+            changed = true;
+          } else if (act.type === 'toggle_task' && act.id) {
+            const task = appState.tasks.find(t => t.id === act.id);
+            if (task) {
+              if (task.status === 'completed') {
+                if (task.spawnedChildId) {
+                  appState.tasks = appState.tasks.filter(t => t.id !== task.spawnedChildId);
+                  task.spawnedChildId = null;
+                }
+                if (task.completedOccurrenceDate) {
+                  task.scheduledDate = task.completedOccurrenceDate;
+                  task.completedOccurrenceDate = null;
+                }
+                task.status = 'active';
+                task.completedAt = null;
+              } else {
+                task.status = 'completed';
+                task.completedAt = Date.now();
+                spawnNextRecurrenceIfNeeded(task);
+                handleEarlyCompletionReplacement(task);
+              }
+              changed = true;
+            }
+          }
+        });
+        if (changed) {
+          persistAndSync();
+        }
+        return changed;
+      } catch (e) {
+        return false;
+      }
+    };
+
     function renderAll() {
       runAutoScheduler();
 
@@ -3122,6 +3344,7 @@
       renderTodayFocusView();
       renderTaskListView();
       renderWeeklyAndPrintView();
+      syncNativeAndroidWidget();
     }
 
     // -----------------------------------------------------
@@ -4516,8 +4739,60 @@
       navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
 
+    // Handle deep-links from the Android Home Screen Widget
+    window.handleWidgetLaunchParams = function(viewMode, editTaskId, openNewTask) {
+      if (viewMode === 'tasks') {
+        switchMainView('tasks');
+      } else if (viewMode === 'weekly') {
+        setMainScreenScheduleMode('weekly');
+      } else if (viewMode === 'daily') {
+        setMainScreenScheduleMode('daily');
+      }
+      if (editTaskId) {
+        setTimeout(() => openTaskWizard({ editTaskId }), 80);
+      } else if (openNewTask) {
+        setTimeout(() => openTaskWizard(), 80);
+      }
+    };
+
+    // Hydrate from Native Android Widget Bridge if needed & apply any wallpaper check-offs
+    try {
+      if (window.AndroidWidgetBridge) {
+        if (!cloudAccount && typeof window.AndroidWidgetBridge.getSavedAuthJson === 'function') {
+          const savedAuthRaw = window.AndroidWidgetBridge.getSavedAuthJson();
+          if (savedAuthRaw) {
+            const parsedAuth = JSON.parse(savedAuthRaw);
+            if (parsedAuth && parsedAuth.emailHash) {
+              cloudAccount = parsedAuth;
+              localStorage.setItem(CLOUD_AUTH_STORAGE_KEY, JSON.stringify(cloudAccount));
+            }
+          }
+        }
+        if (typeof window.AndroidWidgetBridge.getSavedStateJson === 'function') {
+          const savedStateRaw = window.AndroidWidgetBridge.getSavedStateJson();
+          if (savedStateRaw) {
+            const parsedState = JSON.parse(savedStateRaw);
+            if (parsedState && Array.isArray(parsedState.tasks) && (parsedState.updatedAt || 0) > (appState.updatedAt || 0)) {
+              appState = parsedState;
+              localStorage.setItem(STORAGE_KEY_V4, JSON.stringify(appState));
+            }
+          }
+        }
+      }
+    } catch (e) {}
+
     // Initialize app on startup
+    window.applyPendingNativeWidgetActions();
     renderAll();
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const wView = urlParams.get('widgetView');
+      const wEdit = urlParams.get('widgetEditId');
+      const wNew = urlParams.get('widgetNewTask');
+      if (wView || wEdit || wNew) {
+        window.handleWidgetLaunchParams(wView, wEdit, wNew === '1');
+      }
+    } catch (e) {}
     checkAndAutoUpdateHostedBuild();
     if (cloudAccount && cloudAccount.emailHash) {
       setSyncBadge('ok', `✓ Synced • ${cloudAccount.email}`);
