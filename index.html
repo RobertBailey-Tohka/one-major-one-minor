@@ -1348,99 +1348,76 @@
         <span>1 Minor + 1 Major</span>
       </div>
 
-      <!-- Main Navigation (Always starts on Calm Daily View!) -->
+      <!-- Main Navigation: Strictly Schedule & Task List -->
       <nav class="main-nav-tabs">
-        <button class="nav-tab-btn active" id="navBtnToday" onclick="switchMainView('today')">☀️ Today Focus</button>
+        <button class="nav-tab-btn active" id="navBtnToday" onclick="switchMainView('today')">☀️ Schedule</button>
         <button class="nav-tab-btn" id="navBtnTasks" onclick="switchMainView('tasks')">☑️ Task List (<span id="navActiveTaskCount">0</span>)</button>
-        <button class="nav-tab-btn" id="navBtnWeek" onclick="switchMainView('week')">🗓️ Weekly &amp; Print</button>
       </nav>
 
       <div class="nav-right-actions">
-        <button class="sync-status-pill" onclick="openDriveModal()" title="Cloud Auto-Sync Account">
+        <button class="sync-status-pill" onclick="openDriveModal()" title="Settings, Account Sync &amp; Print" style="padding:7px 13px; font-size:0.84rem;">
           <span class="sync-dot" id="syncStatusDot"></span>
-          <span id="syncStatusLabel">Auto-Sync Ready</span>
+          <span>⚙️ Settings</span>
         </button>
-        <button class="btn-primary-add" onclick="openTaskWizard()">+ New Task</button>
       </div>
     </header>
 
     <!-- =====================================================
-         VIEW 1: MAIN SCREEN (STARTS ON DAILY VIEW, TOGGLES TO WEEKLY VIEW)
+         VIEW 1: MAIN SCHEDULE SCREEN (SIMPLE DAILY / WEEKLY VIEW)
          ===================================================== -->
     <section id="viewToday" class="today-view-container">
-      <div class="today-header-card">
-        <!-- Prominent Daily / Weekly View Switcher + Reorganize & Print Actions on the Main Screen -->
-        <div style="width:100%; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding-bottom:10px; border-bottom:1px solid var(--surface-subtle);">
-          <div class="main-view-mode-switch" role="tablist" aria-label="Main Screen View Mode">
-            <button type="button" class="mode-switch-btn active" id="btnMainModeDaily" onclick="setMainScreenScheduleMode('daily')">☀️ Daily View</button>
-            <button type="button" class="mode-switch-btn" id="btnMainModeWeekly" onclick="setMainScreenScheduleMode('weekly')">🗓️ Weekly View</button>
-          </div>
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <button type="button" id="btnReorganizeMain" onclick="reorganizeSchedule()" style="background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-size:0.78rem; padding:6px 12px; font-weight:800;" title="Clear schedule & reprioritize everything starting Today">
-              🔄 Reorganize
-            </button>
-            <button type="button" onclick="switchMainView('week')" style="font-size:0.78rem; padding:6px 11px; font-weight:700;" title="Open Weekly & Print Screen">
-              🖨️ Weekly &amp; Print
-            </button>
-          </div>
-        </div>
-
-        <!-- Daily Date Navigation & Controls (Visible when Daily View is active) -->
-        <div id="mainDailyHeaderControls" style="width:100%; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-          <div class="today-date-nav">
-            <button onclick="shiftFocusDate(-1)" title="Previous Day">❮</button>
-            <div>
-              <div class="today-date-title" id="todayDateHeading">Today</div>
-              <div class="today-subtitle" id="todayDateSubheading">Focus on 1 quick win &amp; 1 main priority</div>
-            </div>
-            <button onclick="shiftFocusDate(1)" title="Next Day">❯</button>
-            <button id="btnJumpToday" onclick="jumpFocusToToday()" style="font-size:0.76rem; padding:5px 10px; display:none;">Jump to Today</button>
+      <div class="today-header-card" style="padding:12px 16px; gap:12px;">
+        <!-- Single Clean Toolbar Row: Mode Toggle | Date Navigation | Low Energy -->
+        <div style="width:100%; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div class="main-view-mode-switch" role="tablist" aria-label="Schedule View Mode">
+            <button type="button" class="mode-switch-btn active" id="btnMainModeDaily" onclick="setMainScreenScheduleMode('daily')">☀️ Daily</button>
+            <button type="button" class="mode-switch-btn" id="btnMainModeWeekly" onclick="setMainScreenScheduleMode('weekly')">🗓️ Weekly</button>
           </div>
 
-          <div class="today-controls-right">
-            <select id="todayCatPrefSelect" onchange="onChangeDayCategoryPref(this.value)" style="padding:6px 10px; border-radius:999px; border:1px solid var(--border-strong); font-size:0.78rem; font-weight:700; background:var(--surface);">
-            </select>
-            <button class="low-energy-btn" id="btnTodayLowEnergy" onclick="toggleDayLowEnergy(appState.focusDate)">
-              🔋 Low Energy Mode
-            </button>
+          <!-- Daily Date Navigation -->
+          <div id="mainDailyHeaderControls" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <button onclick="shiftFocusDate(-1)" title="Previous Day" style="padding:5px 10px;">❮</button>
+            <div class="today-date-title" id="todayDateHeading" style="font-size:1.1rem; min-width:140px; text-align:center;">Today</div>
+            <button onclick="shiftFocusDate(1)" title="Next Day" style="padding:5px 10px;">❯</button>
+            <button id="btnJumpToday" onclick="jumpFocusToToday()" style="font-size:0.76rem; padding:5px 10px; display:none;">Today</button>
           </div>
-        </div>
 
-        <!-- Weekly Date Navigation & Controls (Visible on Main Screen when Weekly View is active) -->
-        <div id="mainWeeklyHeaderControls" style="width:100%; display:none; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <button onclick="shiftSelectedWeek(-7)" title="Previous Week">❮</button>
-            <strong style="font-size:1.15rem; font-weight:800;" id="mainWeekRangeHeading">Sun – Sat</strong>
-            <input type="date" id="mainWeekDatePickerInput" onchange="onPickWeekDate(this.value)" style="padding:4px 8px; border-radius:7px; border:1px solid var(--border-strong); font-size:0.8rem;" />
-            <button onclick="shiftSelectedWeek(7)" title="Next Week">❯</button>
+          <!-- Weekly Date Navigation -->
+          <div id="mainWeeklyHeaderControls" style="display:none; align-items:center; gap:8px; flex-wrap:wrap;">
+            <button onclick="shiftSelectedWeek(-7)" title="Previous Week" style="padding:5px 10px;">❮</button>
+            <strong style="font-size:1.05rem; font-weight:800; min-width:140px; text-align:center;" id="mainWeekRangeHeading">Sun – Sat</strong>
+            <button onclick="shiftSelectedWeek(7)" title="Next Week" style="padding:5px 10px;">❯</button>
             <button onclick="jumpWeekToCurrent()" style="font-size:0.76rem; padding:5px 10px;">This Week</button>
           </div>
-          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            <button onclick="switchMainView('week')" style="font-size:0.76rem; padding:5px 10px;" title="Open Print Options & Wallet Preview">🖨️ Print Options</button>
+
+          <!-- Low Energy Toggle -->
+          <div class="today-controls-right">
+            <button class="low-energy-btn" id="btnTodayLowEnergy" onclick="toggleDayLowEnergy(appState.focusDate)">
+              🔋 Low Energy
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Compact Daily Habits / Routines Strip (Doesn't steal the 1 Minor / 1 Major slot!) -->
-      <div class="habits-strip-card" id="todayHabitsCard">
-        <div class="habits-strip-header">
-          <span>🔄 Daily Habits &amp; Routines</span>
-          <button style="font-size:0.73rem; padding:3px 9px; border-radius:999px;" onclick="openTaskWizard({ defaultHabit: true })">+ Add Daily Habit</button>
+      <!-- Compact Daily Habits Strip (Hidden automatically when no habits exist; habits are added in Task List) -->
+      <div class="habits-strip-card" id="todayHabitsCard" style="display:none;">
+        <div class="habits-strip-header" style="margin-bottom:6px;">
+          <span>🔄 Daily Habits</span>
         </div>
         <div class="habits-pills-wrap" id="todayHabitsList"></div>
       </div>
 
-      <!-- Strictly 1 Minor Thing + 1 Major Thing Cards (Daily Mode on Main Screen) -->
+      <!-- Strictly 1 Minor Thing + 1 Major Thing Cards (Daily Mode) -->
       <div class="focus-cards-grid" id="todayFocusCardsGrid"></div>
 
-      <!-- 7-Day Weekly Schedule (Weekly Mode on Main Screen) -->
-      <div class="weekly-panel" id="mainScreenWeeklyPanel" style="display:none; padding:16px 18px;">
+      <!-- 7-Day Weekly Schedule (Weekly Mode) -->
+      <div class="weekly-panel" id="mainScreenWeeklyPanel" style="display:none; padding:14px 16px;">
         <div id="mainScreenWeeklyGridRows"></div>
       </div>
     </section>
 
     <!-- =====================================================
-         VIEW 2: MICROSOFT TO DO / GOOGLE TASKS STYLE LIST VIEW
+         VIEW 2: TASK LIST VIEW (ONLY PLACE TO ADD TASKS & HABITS)
          ===================================================== -->
     <section id="viewTasks" style="display:none;">
       <div class="tasks-view-layout">
@@ -1452,18 +1429,17 @@
           <div class="tasks-panel-header">
             <div>
               <h2 style="font-size:1.2rem; font-weight:800;" id="currentListTitle">All Active Tasks</h2>
-              <p style="font-size:0.8rem; color:var(--muted);" id="currentListSubtitle">Sorted by effective priority (includes +2/day aging &amp; +5 bump boosts • Saturdays reserve oldest task)</p>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button type="button" id="btnReorganizeTasks" onclick="reorganizeSchedule()" style="background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-weight:800;">🔄 Reorganize</button>
-              <button class="btn-primary-add" onclick="openTaskWizard()">+ Add Task (4 Questions)</button>
+              <button type="button" onclick="openTaskWizard({ defaultHabit: true })" style="font-weight:700;">+ Daily Habit</button>
+              <button class="btn-primary-add" onclick="openTaskWizard()">+ Add Task</button>
             </div>
           </div>
 
           <!-- Active Tasks List -->
           <div id="todoActiveList" style="display:flex; flex-direction:column; gap:10px;"></div>
 
-          <!-- Collapsible Completed Section (Just like MS To Do / Google Tasks) -->
+          <!-- Collapsible Completed Section -->
           <div id="todoCompletedSection" style="margin-top:8px;">
             <button class="completed-accordion-btn" onclick="toggleCompletedAccordion()">
               <span>✓ Completed (<span id="completedCountLabel">0</span>)</span>
@@ -1476,22 +1452,21 @@
     </section>
 
     <!-- =====================================================
-         VIEW 3: 7-DAY WEEKLY SCHEDULE & PRINT GUIDES
+         VIEW 3: PRINT PREVIEW SCREEN (OPENED FROM SETTINGS MENU)
          ===================================================== -->
     <section id="viewWeek" style="display:none;">
       <div class="weekly-panel">
         <div class="week-toolbar">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <button onclick="switchMainView('today')" style="font-size:0.78rem; font-weight:800; background:var(--surface-subtle);">← Back to Today</button>
+            <button onclick="switchMainView('today')" style="font-size:0.78rem; font-weight:800; background:var(--surface-subtle);">← Back to Schedule</button>
             <button onclick="shiftSelectedWeek(-7)">❮</button>
             <strong style="font-size:1.1rem; font-weight:800;" id="weekRangeHeading">Sun – Sat</strong>
             <input type="date" id="weekDatePickerInput" onchange="onPickWeekDate(this.value)" style="padding:4px 8px; border-radius:7px; border:1px solid var(--border-strong); font-size:0.8rem;" />
-            <button onclick=" shiftSelectedWeek(7)">❯</button>
+            <button onclick="shiftSelectedWeek(7)">❯</button>
             <button onclick="jumpWeekToCurrent()" style="font-size:0.76rem;">This Week</button>
           </div>
 
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <button type="button" onclick="reorganizeSchedule()" style="background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-size:0.78rem; font-weight:800;">🔄 Reorganize</button>
             <select id="printWeeksSelect" onchange="onChangePrintWeeksCount(this.value)" style="padding:6px 10px; border-radius:8px; border:1px solid var(--border-strong); font-size:0.8rem; font-weight:600;">
               <option value="2">Print: 2 Weeks (1 Page)</option>
               <option value="4">Print: 4 Weeks (2 Pages)</option>
@@ -1502,10 +1477,10 @@
           </div>
         </div>
 
-        <div id="weeklyGridRows"></div>
+        <div id="weeklyGridRows" style="display:none;"></div>
 
         <!-- Wallet Card Live Preview -->
-        <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+        <div style="margin-top:4px;">
           <h3 style="font-size:0.95rem; font-weight:800; margin-bottom:4px;">Wallet Size Preview (5.5" × 2.4" Single-Fold • 2 Weeks per Page)</h3>
           <p style="font-size:0.8rem; color:var(--muted);">Left column = ✓ Minor Thing, Right column = ★ Major Thing.</p>
           <div class="pocket-cards-container" id="walletPreviewContainer"></div>
@@ -1514,20 +1489,20 @@
     </section>
   </div>
 
-  <!-- Floating '+' Button & Bottom Navigation for Android Phone (Weekly & Print tab removed; accessed via Today screen) -->
-  <button class="m-fab-add" onclick="openTaskWizard()" title="Add Task">+</button>
+  <!-- Floating '+' Button (Only shown on Task List tab on mobile) & Bottom Navigation -->
+  <button class="m-fab-add" id="mobileFabAddBtn" onclick="openTaskWizard()" title="Add Task" style="display:none;">+</button>
   <nav class="mobile-bottom-nav">
     <button class="m-nav-btn active" id="mNavToday" onclick="switchMainView('today')">
       <span style="font-size:1.15rem;">☀️</span>
-      <span>Today</span>
+      <span>Schedule</span>
     </button>
     <button class="m-nav-btn" id="mNavTasks" onclick="switchMainView('tasks')">
       <span style="font-size:1.15rem;">☑️</span>
       <span>Task List</span>
     </button>
     <button class="m-nav-btn" id="mNavSync" onclick="openDriveModal()">
-      <span style="font-size:1.15rem;">☁️</span>
-      <span>Drive Sync</span>
+      <span style="font-size:1.15rem;">⚙️</span>
+      <span>Settings</span>
     </button>
   </nav>
 
@@ -1729,60 +1704,92 @@
   </div>
 
   <!-- =====================================================
-       MODAL 3: FIREBASE REALTIME CLOUD ACCOUNT SYNC
+       MODAL 3: SETTINGS, CLOUD SYNC & PRINT MENU
        ===================================================== -->
   <div class="modal-backdrop" id="driveSyncModal">
-    <div class="modal-sheet" style="max-width:460px;">
+    <div class="modal-sheet" style="max-width:480px;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="font-size:1.08rem; font-weight:800;">☁️ Cloud Sync (Google Firebase)</h3>
+        <h3 style="font-size:1.1rem; font-weight:800;">⚙️ Settings &amp; Menu</h3>
         <button style="border:none; background:transparent; font-size:1.1rem;" onclick="closeDriveModal()">✕</button>
       </div>
 
-      <div style="background:#ecfdf5; border:1px solid #6ee7b7; border-radius:12px; padding:11px 14px; font-size:0.81rem; color:#065f46;">
-        <strong>✓ End-to-End Encrypted • Event-Driven Push (Zero Polling):</strong><br/>
-        Your tasks are encrypted in your browser with your password and pushed in real time via your Google Firebase Realtime Database.
+      <!-- SECTION 1: ACCOUNT & CLOUD SYNC -->
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; color:var(--muted);">☁️ Account &amp; Cloud Sync</span>
+          <span style="font-size:0.76rem; font-weight:700; color:#047857;" id="syncStatusLabel">Auto-Sync Ready</span>
+        </div>
+
+        <!-- Signed-Out View: Clean Email & Password Form -->
+        <div id="cloudAuthFormBox" style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px;">
+          <div>
+            <label style="font-size:0.76rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Email Address</label>
+            <input type="email" id="cloudEmailInput" placeholder="you@example.com" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:8px 11px; font-size:0.88rem;" />
+          </div>
+          <div>
+            <label style="font-size:0.76rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Password</label>
+            <input type="password" id="cloudPasswordInput" placeholder="Enter password..." onkeydown="if(event.key==='Enter'){event.preventDefault();signInOrCreateCloudAccount();}" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:8px 11px; font-size:0.88rem;" />
+          </div>
+          <div id="cloudAuthErrorMsg" style="display:none; color:#be123c; font-size:0.78rem; font-weight:700;"></div>
+          <button class="btn-primary-add" style="width:100%; justify-content:center; padding:9px;" id="btnCloudSignInSubmit" onclick="signInOrCreateCloudAccount()">
+            ☁️ Sign In &amp; Sync
+          </button>
+        </div>
+
+        <!-- Signed-In View: Account Status -->
+        <div id="cloudSignedInBox" style="display:none; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px; flex-direction:column; gap:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:0.72rem; color:var(--muted); font-weight:700;">SIGNED IN AS</div>
+              <div style="font-size:0.92rem; font-weight:800; color:var(--text);" id="cloudSignedInEmailLabel">—</div>
+            </div>
+            <span style="background:#d1fae5; color:#047857; padding:3px 9px; border-radius:999px; font-size:0.74rem; font-weight:800;" id="driveModalStatusBadge">✓ Synced</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.74rem; color:#047857; font-weight:700;">⚡ End-to-End Encrypted Push Sync</span>
+            <button style="color:#be123c; border-color:#fda4af; background:#fff1f2; font-size:0.76rem; padding:4px 10px;" onclick="disconnectCloudAccount()">Sign Out</button>
+          </div>
+        </div>
+
+        <!-- Collapsible Advanced Firebase URL Setting -->
+        <details style="font-size:0.76rem; color:var(--muted);">
+          <summary style="cursor:pointer; font-weight:700; user-select:none;">Advanced: Firebase Database URL</summary>
+          <div style="margin-top:6px; background:#f8fafc; border:1px solid var(--border-strong); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;">
+            <input type="url" id="cloudFirebaseUrlInput" placeholder="https://your-project-default-rtdb.firebaseio.com" onchange="saveFirebaseUrlFromInput()" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:7px 9px; font-size:0.8rem; font-family:monospace;" />
+          </div>
+        </details>
       </div>
 
-      <!-- Firebase Database URL Configuration Box (Visible both signed-in and signed-out) -->
-      <div style="background:#f8fafc; border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:6px;">
-        <label style="font-size:0.75rem; font-weight:800; color:#1e293b; display:flex; justify-content:space-between; align-items:center;">
-          <span>🔥 Firebase Realtime Database URL</span>
-          <span style="font-size:0.7rem; color:var(--primary); font-weight:700;">console.firebase.google.com</span>
-        </label>
-        <input type="url" id="cloudFirebaseUrlInput" placeholder="https://your-project-default-rtdb.firebaseio.com" onchange="saveFirebaseUrlFromInput()" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:8px 10px; font-size:0.82rem; font-family:monospace;" />
-        <div style="font-size:0.72rem; color:var(--muted);">Paste your Firebase Realtime Database URL above (or tell your assistant to embed it into <code>index.html</code> so it's pre-filled on all devices).</div>
-      </div>
-
-      <!-- Signed-Out View: Clean Email & Password Form -->
-      <div id="cloudAuthFormBox" style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:10px;">
-        <div>
-          <label style="font-size:0.76rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Email Address</label>
-          <input type="email" id="cloudEmailInput" placeholder="you@example.com" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:9px 11px; font-size:0.88rem;" />
+      <!-- SECTION 2: PRINT SCHEDULE & WALLET CARDS -->
+      <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; color:var(--muted);">🖨️ Print Schedule &amp; Wallet Cards</span>
+          <select id="settingsPrintWeeksSelect" onchange="onChangePrintWeeksCount(this.value)" style="padding:4px 8px; border-radius:7px; border:1px solid var(--border-strong); font-size:0.78rem; font-weight:700; background:var(--surface);">
+            <option value="2">2 Weeks (1 Page)</option>
+            <option value="4">4 Weeks (2 Pages)</option>
+            <option value="6">6 Weeks (3 Pages)</option>
+          </select>
         </div>
-        <div>
-          <label style="font-size:0.76rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Password</label>
-          <input type="password" id="cloudPasswordInput" placeholder="Enter password..." onkeydown="if(event.key==='Enter'){event.preventDefault();signInOrCreateCloudAccount();}" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:9px 11px; font-size:0.88rem;" />
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <button onclick="closeDriveModal(); triggerPrintMode('full');" style="background:#1d4ed8; color:#fff; border-color:#1d4ed8; justify-content:center; padding:9px;">🖨️ Print Full Sheet</button>
+          <button onclick="closeDriveModal(); triggerPrintMode('pocket');" style="background:#0f766e; color:#fff; border-color:#0f766e; justify-content:center; padding:9px;">✂️ Print Wallet Size</button>
         </div>
-        <div id="cloudAuthErrorMsg" style="display:none; color:#be123c; font-size:0.78rem; font-weight:700;"></div>
-        <button class="btn-primary-add" style="width:100%; justify-content:center; padding:10px; margin-top:4px;" id="btnCloudSignInSubmit" onclick="signInOrCreateCloudAccount()">
-          ☁️ Sign In &amp; Sync
+        <button onclick="closeDriveModal(); switchMainView('week');" style="width:100%; justify-content:center; font-size:0.8rem; padding:7px;">
+          🔍 Open Print &amp; Wallet Preview
         </button>
       </div>
 
-      <!-- Signed-In View: Account Status -->
-      <div id="cloudSignedInBox" style="display:none; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px; flex-direction:column; gap:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-size:0.75rem; color:var(--muted); font-weight:700;">SIGNED IN AS</div>
-            <div style="font-size:0.95rem; font-weight:800; color:var(--text);" id="cloudSignedInEmailLabel">—</div>
-          </div>
-          <span style="background:#d1fae5; color:#047857; padding:3px 9px; border-radius:999px; font-size:0.74rem; font-weight:800;" id="driveModalStatusBadge">✓ Auto-Sync ON</span>
+      <!-- SECTION 3: SCHEDULE TOOLS & PREFERENCES -->
+      <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; flex-direction:column; gap:10px;">
+        <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; color:var(--muted);">📅 Schedule Options</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+          <label for="todayCatPrefSelect" style="font-size:0.82rem; font-weight:700; color:var(--text);">Selected Day Category Filter:</label>
+          <select id="todayCatPrefSelect" onchange="onChangeDayCategoryPref(this.value)" style="padding:6px 10px; border-radius:8px; border:1px solid var(--border-strong); font-size:0.8rem; font-weight:700; background:var(--surface);">
+          </select>
         </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-          <span style="font-size:0.75rem; color:#047857; font-weight:700;">⚡ Real-time push sync active (zero polling)</span>
-          <button style="color:#be123c; border-color:#fda4af; background:#fff1f2; font-size:0.78rem; padding:5px 12px;" onclick="disconnectCloudAccount()">Sign Out</button>
-        </div>
+        <button type="button" onclick="closeDriveModal(); reorganizeSchedule();" style="width:100%; justify-content:center; background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-weight:800; padding:9px;">
+          🔄 Reorganize Entire Schedule Starting Today
+        </button>
       </div>
     </div>
   </div>
@@ -3097,19 +3104,24 @@
 
       const lowBtn = document.getElementById('btnTodayLowEnergy');
       lowBtn.classList.toggle('active', !!meta.lowEnergy);
-      lowBtn.textContent = meta.lowEnergy ? '🔋 Low Energy Mode (ON)' : '🔋 Low Energy Mode';
+      lowBtn.textContent = meta.lowEnergy ? '🔋 Low Energy (ON)' : '🔋 Low Energy';
 
-      // Populate Day Category Preference dropdown
+      // Populate Day Category Preference dropdown (in Settings Modal)
       const catSel = document.getElementById('todayCatPrefSelect');
-      catSel.innerHTML = `<option value="all">All Categories</option>` +
-        appState.categories.map(c => `<option value="${c.id}" ${meta.preferredCategory === c.id ? 'selected' : ''}>Prefer ${escapeHtml(c.name)}</option>`).join('');
+      if (catSel) {
+        catSel.innerHTML = `<option value="all">All Categories</option>` +
+          appState.categories.map(c => `<option value="${c.id}" ${meta.preferredCategory === c.id ? 'selected' : ''}>Prefer ${escapeHtml(c.name)}</option>`).join('');
+      }
 
-      // 1. Render Daily Habits Strip
+      // 1. Render Daily Habits Strip (Hidden completely when 0 habits exist so the view stays clean)
       const habits = appState.tasks.filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit');
+      const habitsCardEl = document.getElementById('todayHabitsCard');
       const habitsListEl = document.getElementById('todayHabitsList');
       if (habits.length === 0) {
-        habitsListEl.innerHTML = `<span style="font-size:0.8rem; color:var(--muted);">No daily routines yet. Tap <strong>+ Add Daily Habit</strong> for recurring habits (like reading or exercise) so they don't take up your 1 Minor / 1 Major slot.</span>`;
+        if (habitsCardEl) habitsCardEl.style.display = 'none';
+        habitsListEl.innerHTML = '';
       } else {
+        if (habitsCardEl) habitsCardEl.style.display = 'flex';
         habitsListEl.innerHTML = habits.map(h => {
           const hKey = `${dStr}_${h.id}`;
           const isDone = !!appState.habitCompletions[hKey];
@@ -3134,7 +3146,7 @@
 
     function buildFocusCardHtml(dateStr, slotSize, task, partialWinRecord) {
       const isMinor = slotSize === 'minor';
-      const badgeText = isMinor ? '✓ MINOR THING (<30m Quick Win)' : '★ MAJOR THING (Main Focus)';
+      const badgeText = isMinor ? '✓ MINOR THING' : '★ MAJOR THING';
 
       // Check if user already claimed a Model C Partial Subtask Win for this slot today
       if (!task && partialWinRecord) {
@@ -3171,11 +3183,9 @@
                 <span class="slot-badge">${badgeText}</span>
               </div>
               <div style="padding:24px 8px; text-align:center; color:var(--muted);">
-                <div style="font-size:1rem; font-weight:700; margin-bottom:6px;">No ${isMinor ? 'Minor' : 'Major'} Thing Scheduled</div>
-                <div style="font-size:0.82rem; margin-bottom:14px;">Pick an existing task from your list or create a new one:</div>
+                <div style="font-size:1rem; font-weight:700; margin-bottom:10px;">No ${isMinor ? 'Minor' : 'Major'} Thing Scheduled</div>
                 <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
                   <button onclick="openRoadblockModal(null, '${dateStr}', '${slotSize}')" style="background:#fff; border:1.5px solid var(--border-strong); font-weight:700;">📋 Pick from Task List</button>
-                  <button class="btn-primary-add" onclick="openTaskWizard({ defaultSize: '${slotSize}', targetDate: '${dateStr}' })">+ Create New Task</button>
                 </div>
               </div>
             </div>
@@ -3216,8 +3226,6 @@
         </div>
       `;
 
-      const effScore = getEffectiveScore(task);
-      const totalBoost = getTaskAgeBonus(task) + getTaskBumpBonus(task);
       const recBadge = getRecurrenceBadgeText(task);
 
       return `
@@ -3226,11 +3234,9 @@
             <div class="focus-card-top">
               <span class="slot-badge">${badgeText}</span>
               <div class="slot-meta-tags">
-                ${task.backlogCatchUp ? `<span class="tag-pill" style="background:#fef3c7; color:#b45309;">🕰️ Oldest Backlog Pick</span>` : ''}
                 ${recBadge ? `<span class="tag-pill" style="background:#eff6ff; color:#1d4ed8;">${escapeHtml(recBadge)}</span>` : ''}
                 <span class="tag-pill">${escapeHtml(catLabel)}</span>
                 <span class="tag-pill">${energyLabel}</span>
-                <span class="tag-pill" title="Base ${task.score || 80} pts + ${getTaskAgeBonus(task)} age + ${getTaskBumpBonus(task)} bump">${effScore} pts${totalBoost > 0 ? ` (+${totalBoost})` : ''}</span>
               </div>
             </div>
 
@@ -3240,7 +3246,7 @@
               </div>
               <div class="focus-title-wrap" onclick="openTaskWizard({ editTaskId: '${task.id}' })" title="Tap to edit details & notes">
                 <div class="focus-task-title">${escapeHtml(task.title)}</div>
-                ${task.notes ? `<div class="focus-task-notes">${escapeHtml(task.notes)}</div>` : `<div class="focus-task-notes" style="color:var(--muted); font-style:italic;">+ Tap to add notes or details...</div>`}
+                ${task.notes ? `<div class="focus-task-notes">${escapeHtml(task.notes)}</div>` : ''}
               </div>
             </div>
 
@@ -3248,8 +3254,8 @@
           </div>
 
           <div class="focus-card-footer">
-            <button class="btn-card-action" onclick="openTaskWizard({ editTaskId: '${task.id}' })">📝 Details / Notes</button>
-            <button class="btn-card-action" onclick="openRoadblockModal('${task.id}', '${dateStr}')">⏭️ Delay / Roadblock / Swap</button>
+            <button class="btn-card-action" onclick="openTaskWizard({ editTaskId: '${task.id}' })">📝 Edit / Notes</button>
+            <button class="btn-card-action" onclick="openRoadblockModal('${task.id}', '${dateStr}')">⏭️ Delay / Swap</button>
           </div>
         </div>
       `;
@@ -3408,14 +3414,17 @@
       appState.selectedSunday = sunStr;
 
       const rangeText = formatWeekRangeLabel(sunDate);
-      document.getElementById('weekRangeHeading').textContent = rangeText;
-      document.getElementById('weekDatePickerInput').value = sunStr;
-      document.getElementById('printWeeksSelect').value = String(appState.weeksCount || 2);
+      const wkHeading = document.getElementById('weekRangeHeading');
+      const wkPicker = document.getElementById('weekDatePickerInput');
+      const prtSel = document.getElementById('printWeeksSelect');
+      const setPrtSel = document.getElementById('settingsPrintWeeksSelect');
+      if (wkHeading) wkHeading.textContent = rangeText;
+      if (wkPicker) wkPicker.value = sunStr;
+      if (prtSel) prtSel.value = String(appState.weeksCount || 2);
+      if (setPrtSel) setPrtSel.value = String(appState.weeksCount || 2);
 
       const mainRangeEl = document.getElementById('mainWeekRangeHeading');
-      const mainPickerEl = document.getElementById('mainWeekDatePickerInput');
       if (mainRangeEl) mainRangeEl.textContent = rangeText;
-      if (mainPickerEl) mainPickerEl.value = sunStr;
 
       const rowsContainer = document.getElementById('weeklyGridRows');
       const mainScreenRowsContainer = document.getElementById('mainScreenWeeklyGridRows');
@@ -3432,14 +3441,13 @@
         return `
           <div class="week-row-grid" style="${isToday ? 'background:#f8fafc; border-radius:12px; padding:10px;' : ''}">
             <div class="week-day-col">
-              <div>
+              <div style="cursor:pointer;" onclick="openDayInTodayView('${dStr}')" title="Open ${day.name} in Daily View">
                 <div style="font-size:0.86rem; font-weight:800; color:${isToday ? 'var(--primary)' : 'var(--text)'};">
                   ${day.short} ${isToday ? '• TODAY' : ''}
                 </div>
                 <div style="font-size:0.8rem; color:var(--muted);">${formatShortDate(cellDate)}</div>
               </div>
-              <div style="display:flex; gap:6px; margin-top:6px;">
-                <button style="font-size:0.72rem; padding:3px 8px;" onclick="openDayInTodayView('${dStr}')">☀️ Daily View</button>
+              <div style="display:flex; gap:6px; margin-top:4px;">
                 <button style="font-size:0.72rem; padding:3px 7px; ${meta.lowEnergy ? 'background:var(--low-bg); border-color:#eab308;' : ''}" onclick="toggleDayLowEnergy('${dStr}')" title="Toggle Low Energy">🔋</button>
               </div>
             </div>
@@ -3457,18 +3465,15 @@
     }
 
     function buildWeekSlotCellHtml(dateStr, slotSize, task) {
-      const label = slotSize === 'minor' ? '✓ Minor Thing' : '★ Major Thing';
+      const label = slotSize === 'minor' ? '✓ Minor' : '★ Major';
       if (!task) {
         return `
           <div class="week-slot-card ${slotSize}" style="opacity:0.75;">
             <div style="display:flex; justify-content:space-between; font-size:0.72rem; font-weight:800; opacity:0.85;">
               <span>${label}</span>
-              <div style="display:flex; gap:4px;">
-                <button style="font-size:0.7rem; padding:2px 7px;" onclick="openRoadblockModal(null, '${dateStr}', '${slotSize}')">📋 Pick</button>
-                <button style="font-size:0.7rem; padding:2px 7px;" onclick="openTaskWizard({ defaultSize: '${slotSize}', targetDate: '${dateStr}' })">+ New</button>
-              </div>
+              <button style="font-size:0.7rem; padding:2px 7px;" onclick="openRoadblockModal(null, '${dateStr}', '${slotSize}')">📋 Pick</button>
             </div>
-            <div style="font-size:0.82rem; color:var(--muted); font-style:italic;">Open slot</div>
+            <div style="font-size:0.82rem; color:var(--muted); font-style:italic;">Open</div>
           </div>
         `;
       }
@@ -3478,9 +3483,7 @@
         <div class="week-slot-card ${slotSize}">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase;">${label}</span>
-            <div style="display:flex; gap:4px;">
-              <button style="font-size:0.7rem; padding:2px 7px;" onclick="openRoadblockModal('${task.id}', '${dateStr}')">Delay / Swap</button>
-            </div>
+            <button style="font-size:0.7rem; padding:2px 7px;" onclick="openRoadblockModal('${task.id}', '${dateStr}')">Swap</button>
           </div>
           <div style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="openTaskWizard({ editTaskId: '${task.id}' })">
             <input type="checkbox" ${isDone ? 'checked' : ''} onclick="event.stopPropagation(); toggleTaskComplete('${task.id}')" style="width:16px; height:16px;" />
@@ -3635,9 +3638,12 @@
       document.getElementById('viewTasks').style.display = (view === 'tasks') ? 'block' : 'none';
       document.getElementById('viewWeek').style.display = (view === 'week') ? 'block' : 'none';
 
-      document.getElementById('navBtnToday').classList.toggle('active', view === 'today');
-      document.getElementById('navBtnTasks').classList.toggle('active', view === 'tasks');
-      document.getElementById('navBtnWeek').classList.toggle('active', view === 'week');
+      const navBtnToday = document.getElementById('navBtnToday');
+      const navBtnTasks = document.getElementById('navBtnTasks');
+      const navBtnWeek = document.getElementById('navBtnWeek');
+      if (navBtnToday) navBtnToday.classList.toggle('active', view === 'today' || view === 'week');
+      if (navBtnTasks) navBtnTasks.classList.toggle('active', view === 'tasks');
+      if (navBtnWeek) navBtnWeek.classList.toggle('active', view === 'week');
 
       const mNavToday = document.getElementById('mNavToday');
       const mNavTasks = document.getElementById('mNavTasks');
@@ -3645,6 +3651,9 @@
       if (mNavToday) mNavToday.classList.toggle('active', view === 'today' || view === 'week');
       if (mNavTasks) mNavTasks.classList.toggle('active', view === 'tasks');
       if (mNavWeek) mNavWeek.classList.toggle('active', view === 'week');
+
+      const fabBtn = document.getElementById('mobileFabAddBtn');
+      if (fabBtn) fabBtn.style.display = (view === 'tasks') ? '' : 'none';
 
       renderAll();
     };
@@ -4349,9 +4358,11 @@
     };
 
     window.openDriveModal = function() {
-      const isSignedIn = !!(cloudAccount && cloudAccount.vaultId);
+      const isSignedIn = !!(cloudAccount && (cloudAccount.emailHash || cloudAccount.vaultId));
       const fbInp = document.getElementById('cloudFirebaseUrlInput');
       if (fbInp) fbInp.value = getActiveFirebaseDbUrl() || '';
+      const setPrtSel = document.getElementById('settingsPrintWeeksSelect');
+      if (setPrtSel) setPrtSel.value = String(appState.weeksCount || 2);
       document.getElementById('cloudAuthFormBox').style.display = isSignedIn ? 'none' : 'flex';
       document.getElementById('cloudSignedInBox').style.display = isSignedIn ? 'flex' : 'none';
       document.getElementById('cloudAuthErrorMsg').style.display = 'none';
