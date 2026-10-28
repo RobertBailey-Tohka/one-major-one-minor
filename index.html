@@ -1,0 +1,4387 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>1 Minor + 1 Major</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="1 Minor + 1 Major" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><text x='50' y='68' font-family='sans-serif' font-size='56' font-weight='800' fill='white' text-anchor='middle'>1</text></svg>" />
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-subtle: #f1f5f9;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
+
+      /* Minor Card Palette (Calm Mint Green) */
+      --minor-bg: #ecfdf5;
+      --minor-border: #6ee7b7;
+      --minor-badge-bg: #d1fae5;
+      --minor-accent: #047857;
+
+      /* Major Card Palette (Calm Lavender Blue) */
+      --major-bg: #eef2ff;
+      --major-border: #93c5fd;
+      --major-badge-bg: #dbeafe;
+      --major-accent: #1d4ed8;
+
+      /* Habits / Routine Palette */
+      --habit-bg: #f8fafc;
+      --habit-border: #cbd5e1;
+      --habit-accent: #475569;
+
+      /* Low Energy Palette */
+      --low-bg: #fefce8;
+      --low-border: #fde047;
+      --low-accent: #a16207;
+
+      /* Blocked / Roadblock Palette */
+      --blocked-bg: #fff1f2;
+      --blocked-border: #fda4af;
+      --blocked-accent: #be123c;
+
+      --primary: #2563eb;
+      --primary-grad: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 84px;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      padding: 7px 13px;
+      border-radius: 9px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button:hover {
+      background: var(--surface-subtle);
+    }
+
+    input, textarea, select {
+      font-family: inherit;
+      color: var(--text);
+    }
+
+    /* =====================================================
+       APP SHELL & TOP NAVIGATION BAR
+       ===================================================== */
+    .app-shell {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 16px 20px 40px;
+    }
+
+    .top-navbar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: #0f172a;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 800;
+    }
+
+    .main-nav-tabs {
+      display: inline-flex;
+      background: var(--surface-subtle);
+      padding: 4px;
+      border-radius: 11px;
+      gap: 3px;
+    }
+
+    .nav-tab-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .nav-tab-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .nav-tab-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .nav-right-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sync-status-pill {
+      border-radius: 999px;
+      padding: 6px 13px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .sync-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+    }
+
+    .sync-dot.syncing {
+      background: #f59e0b;
+      animation: pulse 1s infinite;
+    }
+
+    .sync-dot.local {
+      background: #94a3b8;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    .btn-primary-add {
+      background: var(--primary-grad);
+      color: #fff;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 10px;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.22);
+    }
+
+    .btn-primary-add:hover {
+      background: var(--primary-grad);
+      opacity: 0.94;
+    }
+
+    /* =====================================================
+       VIEW 1: CALM SINGLE-FOCUS DAILY ("TODAY") VIEW
+       ===================================================== */
+    .today-view-container {
+      max-width: 880px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .today-header-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+
+    .today-date-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .today-date-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .today-subtitle {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .today-controls-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .low-energy-btn {
+      border-radius: 999px;
+      padding: 6px 13px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 1.5px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--muted);
+    }
+
+    .low-energy-btn.active {
+      background: var(--low-bg);
+      border-color: #eab308;
+      color: var(--low-accent);
+    }
+
+    /* Main Screen Daily / Weekly Switcher */
+    .main-view-mode-switch {
+      display: inline-flex;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-strong);
+      padding: 3px;
+      border-radius: 11px;
+      gap: 3px;
+    }
+
+    .mode-switch-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mode-switch-btn:hover {
+      color: var(--text);
+    }
+
+    .mode-switch-btn.active {
+      background: #0f172a;
+      color: #fff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.16);
+    }
+
+    /* Daily Habits / Routines Compact Strip */
+    .habits-strip-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .habits-strip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+
+    .habits-pills-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .habit-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      font-size: 0.83rem;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .habit-pill.done {
+      background: #ecfdf5;
+      border-color: #6ee7b7;
+      color: #047857;
+      text-decoration: line-through;
+    }
+
+    /* Strictly 2 Focus Cards Grid (1 Minor + 1 Major) */
+    .focus-cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .focus-card {
+      border-radius: 18px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .focus-card.minor {
+      background: var(--minor-bg);
+      border: 2px solid var(--minor-border);
+    }
+
+    .focus-card.major {
+      background: var(--major-bg);
+      border: 2px solid var(--major-border);
+    }
+
+    .focus-card.is-completed {
+      opacity: 0.82;
+    }
+
+    .focus-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .slot-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .focus-card.minor .slot-badge {
+      background: var(--minor-badge-bg);
+      color: var(--minor-accent);
+    }
+
+    .focus-card.major .slot-badge {
+      background: var(--major-badge-bg);
+      color: var(--major-accent);
+    }
+
+    .slot-meta-tags {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .tag-pill {
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .focus-main-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .big-check-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2.5px solid #475569;
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #fff;
+      transition: all 0.15s ease;
+    }
+
+    .focus-card.minor .big-check-circle {
+      border-color: var(--minor-accent);
+    }
+
+    .focus-card.major .big-check-circle {
+      border-color: var(--major-accent);
+    }
+
+    .big-check-circle.checked {
+      background: #10b981;
+      border-color: #10b981;
+    }
+
+    .focus-title-wrap {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .focus-task-title {
+      font-size: 1.18rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.3;
+      cursor: pointer;
+      word-break: break-word;
+    }
+
+    .focus-card.is-completed .focus-task-title {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .focus-task-notes {
+      margin-top: 5px;
+      font-size: 0.86rem;
+      color: #334155;
+      white-space: pre-wrap;
+      cursor: pointer;
+    }
+
+    /* Inline Subtasks Checklist inside Today Card */
+    .subtasks-box {
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .subtask-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+
+    .subtask-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #0f172a;
+    }
+
+    .subtask-item.done span {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .subtask-quick-add {
+      display: flex;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .subtask-quick-add input {
+      flex: 1;
+      border: 1px solid var(--border-strong);
+      border-radius: 7px;
+      padding: 5px 9px;
+      font-size: 0.8rem;
+      background: #fff;
+    }
+
+    /* Model C Button: Count Progress as Today's Win & Continue Tomorrow */
+    .btn-partial-win {
+      width: 100%;
+      justify-content: center;
+      background: #059669;
+      color: #fff;
+      border: none;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+    }
+
+    .btn-partial-win:hover {
+      background: #047857;
+    }
+
+    .focus-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(15, 23, 42, 0.08);
+      flex-wrap: wrap;
+    }
+
+    .btn-card-action {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(15, 23, 42, 0.14);
+      padding: 5px 11px;
+      border-radius: 8px;
+      font-size: 0.77rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .btn-card-action:hover {
+      background: #fff;
+    }
+
+    /* =====================================================
+       VIEW 2: MICROSOFT TO DO / GOOGLE TASKS STYLE LIST VIEW
+       ===================================================== */
+    .tasks-view-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .categories-sidebar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .cat-nav-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #334155;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+
+    .cat-nav-item:hover {
+      background: var(--surface-subtle);
+    }
+
+    .cat-nav-item.active {
+      background: #eff6ff;
+      color: var(--primary);
+    }
+
+    .cat-count-badge {
+      font-size: 0.74rem;
+      background: var(--surface-subtle);
+      color: var(--muted);
+      padding: 2px 7px;
+      border-radius: 999px;
+    }
+
+    .cat-nav-item.active .cat-count-badge {
+      background: #dbeafe;
+      color: var(--primary);
+    }
+
+    .tasks-main-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tasks-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .todo-item-row {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--surface);
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .todo-item-row:hover {
+      border-color: var(--border-strong);
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+    }
+
+    .todo-item-left {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .todo-check {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #64748b;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      color: #fff;
+      background: #fff;
+    }
+
+    .todo-check.minor {
+      border-color: var(--minor-accent);
+    }
+
+    .todo-check.major {
+      border-color: var(--major-accent);
+    }
+
+    .todo-check.checked {
+      background: #10b981;
+      border-color: #10b981;
+    }
+
+    .todo-item-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .todo-item-row.completed .todo-item-title {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .todo-item-submeta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 5px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .badge-size-minor {
+      background: var(--minor-badge-bg);
+      color: var(--minor-accent);
+      padding: 1px 7px;
+      border-radius: 6px;
+      font-weight: 800;
+    }
+
+    .badge-size-major {
+      background: var(--major-badge-bg);
+      color: var(--major-accent);
+      padding: 1px 7px;
+      border-radius: 6px;
+      font-weight: 800;
+    }
+
+    .badge-blocked {
+      background: var(--blocked-bg);
+      color: var(--blocked-accent);
+      border: 1px solid var(--blocked-border);
+      padding: 1px 7px;
+      border-radius: 6px;
+      font-weight: 800;
+    }
+
+    .badge-snoozed {
+      background: #fef3c7;
+      color: #b45309;
+      padding: 1px 7px;
+      border-radius: 6px;
+      font-weight: 800;
+    }
+
+    .completed-accordion-btn {
+      width: 100%;
+      justify-content: space-between;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      padding: 9px 14px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    /* =====================================================
+       VIEW 3: WEEKLY 7-DAY SCHEDULE & PRINT VIEW
+       ===================================================== */
+    .weekly-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .week-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .week-row-grid {
+      display: grid;
+      grid-template-columns: 125px 1fr 1fr;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--surface-subtle);
+      align-items: stretch;
+    }
+
+    .week-day-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding-right: 8px;
+    }
+
+    .week-slot-card {
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .week-slot-card.minor {
+      background: var(--minor-bg);
+      border: 1.5px solid var(--minor-border);
+    }
+
+    .week-slot-card.major {
+      background: var(--major-bg);
+      border: 1.5px solid var(--major-border);
+    }
+
+    /* =====================================================
+       MODALS (4-QUESTION WIZARD, TASK DETAIL, ROADBLOCK, CLOUD)
+       ===================================================== */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.48);
+      z-index: 1500;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-sheet {
+      background: var(--surface);
+      width: 100%;
+      max-width: 520px;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+      max-height: 92vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .q-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--surface-subtle);
+    }
+
+    .q-label {
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .pill-group {
+      display: inline-flex;
+      background: var(--surface-subtle);
+      padding: 3px;
+      border-radius: 9px;
+      gap: 3px;
+    }
+
+    .choice-pill {
+      padding: 5px 11px;
+      border-radius: 7px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .choice-pill.selected {
+      background: #0f172a;
+      color: #fff;
+    }
+
+    /* =====================================================
+       MOBILE BOTTOM NAVIGATION BAR (Responsive Android UI)
+       ===================================================== */
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 6px 12px 10px;
+      z-index: 1100;
+      justify-content: space-around;
+      box-shadow: 0 -2px 10px rgba(15, 23, 42, 0.05);
+    }
+
+    .m-nav-btn {
+      border: none;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      padding: 4px 12px;
+    }
+
+    .m-nav-btn.active {
+      color: var(--primary);
+    }
+
+    .m-fab-add {
+      display: none;
+      position: fixed;
+      right: 18px;
+      bottom: 72px;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: var(--primary-grad);
+      color: #fff;
+      border: none;
+      font-size: 1.7rem;
+      font-weight: 600;
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.38);
+      z-index: 1150;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 780px) {
+      .app-shell {
+        padding: 8px 10px 92px;
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+      }
+      .top-navbar {
+        padding: 8px 12px;
+        margin-bottom: 12px;
+        gap: 8px;
+      }
+      .brand-logo {
+        font-size: 0.95rem;
+        gap: 7px;
+      }
+      .nav-right-actions {
+        gap: 6px;
+        max-width: 100%;
+      }
+      .sync-status-pill {
+        padding: 5px 10px;
+        font-size: 0.73rem;
+        max-width: 175px;
+      }
+      #syncStatusLabel {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .top-navbar .btn-primary-add {
+        display: none; /* Floating + button (.m-fab-add) handles adding tasks on mobile */
+      }
+      .main-nav-tabs {
+        display: none;
+      }
+      .mobile-bottom-nav {
+        display: flex;
+      }
+      .m-fab-add {
+        display: inline-flex;
+      }
+      .today-header-card {
+        padding: 12px 14px;
+        gap: 10px;
+      }
+      .today-date-nav {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .today-date-title {
+        font-size: 1.12rem;
+      }
+      .today-controls-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .today-controls-right select {
+        flex: 1;
+        min-width: 0;
+      }
+      .habits-strip-card {
+        padding: 10px 12px;
+      }
+      .habits-strip-header {
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .focus-cards-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+      }
+      .focus-card {
+        padding: 16px 14px;
+        min-width: 0;
+        max-width: 100%;
+      }
+      .tasks-view-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+        width: 100%;
+        max-width: 100%;
+      }
+      /* Only the horizontal category strip scrolls left-to-right on mobile! */
+      .categories-sidebar {
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding: 8px 10px;
+        gap: 6px;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+      }
+      .cat-nav-item {
+        white-space: nowrap;
+        width: auto;
+        flex-shrink: 0;
+        padding: 7px 11px;
+        font-size: 0.8rem;
+        gap: 6px;
+      }
+      .tasks-main-panel {
+        padding: 14px 12px;
+        min-width: 0;
+        max-width: 100%;
+      }
+      .todo-item-row {
+        padding: 10px 11px;
+        gap: 8px;
+        min-width: 0;
+        max-width: 100%;
+      }
+      .todo-item-title {
+        word-break: break-word;
+      }
+      .weekly-panel {
+        padding: 14px 12px;
+        min-width: 0;
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+      .week-row-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+        padding: 12px 0;
+      }
+      .pocket-cards-container {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        align-items: flex-start;
+      }
+      .q-row {
+        flex-wrap: wrap;
+      }
+      .pill-group {
+        flex-wrap: wrap;
+      }
+    }
+
+    /* =====================================================
+       PRINTABLE FULL-SHEET & WALLET SIZE (5.5" x 2.4") CSS
+       ===================================================== */
+    .pocket-cards-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.18in;
+      margin-top: 14px;
+    }
+
+    .pocket-card {
+      width: 5.5in;
+      height: 2.4in;
+      border: 1.5px dashed #334155;
+      background: #fff;
+      padding: 0.05in;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .pocket-cut-guide {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.52rem;
+      font-weight: 700;
+      color: #475569;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 1px;
+    }
+
+    .pocket-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.08in;
+      flex: 1;
+      margin-top: 2px;
+    }
+
+    .pocket-half {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pocket-half.left-half {
+      border-right: 1px dashed #94a3b8;
+      padding-right: 0.04in;
+    }
+
+    .pocket-col-headers {
+      display: grid;
+      grid-template-columns: 36px 1fr 1fr;
+      background: #f1f5f9;
+      border: 1px solid #334155;
+      border-bottom: none;
+      font-size: 0.5rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 1px 3px;
+    }
+
+    .pocket-day-row {
+      display: grid;
+      grid-template-columns: 36px 1fr 1fr;
+      border: 1px solid #334155;
+      border-top: none;
+      height: 0.5in;
+      overflow: hidden;
+    }
+
+    .pocket-day-row:first-of-type {
+      border-top: 1px solid #334155;
+    }
+
+    .pocket-day-cell {
+      border-right: 1px solid #64748b;
+      padding: 1px 3px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: #f8fafc;
+    }
+
+    .pocket-day-cell .p-day {
+      font-size: 0.55rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      line-height: 1.05;
+    }
+
+    .pocket-day-cell .p-date {
+      font-size: 0.48rem;
+      color: #475569;
+    }
+
+    .pocket-task-col {
+      padding: 1px 3px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .pocket-task-col.p-minor {
+      border-right: 1px dotted #94a3b8;
+    }
+
+    .pocket-title-line {
+      display: flex;
+      align-items: flex-start;
+      gap: 2px;
+    }
+
+    .pocket-checkbox {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border: 1px solid #000;
+      line-height: 6px;
+      text-align: center;
+      font-size: 6px;
+      font-weight: bold;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .pocket-task-title {
+      font-weight: 700;
+      font-size: 0.54rem;
+      line-height: 1.08;
+      max-height: 18px;
+      overflow: hidden;
+    }
+
+    .pocket-task-notes {
+      font-size: 0.48rem;
+      color: #334155;
+      height: 14px;
+      line-height: 1.05;
+      overflow: hidden;
+    }
+
+    .pocket-notes-row {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      border: 1px solid #334155;
+      border-top: none;
+      height: 0.5in;
+      overflow: hidden;
+    }
+
+    .pocket-notes-content {
+      padding: 2px 4px;
+      font-size: 0.5rem;
+      white-space: pre-wrap;
+      line-height: 1.1;
+      overflow: hidden;
+    }
+
+    .full-print-sheets, #StandalonePocketPrint {
+      display: none;
+    }
+
+    .print-week-sheet {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .print-week-sheet.print-top-half {
+      padding-bottom: 0.14in;
+      border-bottom: 1.5px dashed #666;
+      margin-bottom: 0.14in;
+    }
+
+    .print-page-break {
+      page-break-after: always !important;
+      break-after: page !important;
+    }
+
+    @media print {
+      @page {
+        size: portrait;
+        margin: 0.25in 0.3in;
+      }
+      body {
+        background: #fff;
+        padding: 0;
+      }
+      .app-shell, .mobile-bottom-nav, .m-fab-add, .modal-backdrop {
+        display: none !important;
+      }
+      body:not(.print-pocket-mode) .full-print-sheets {
+        display: flex !important;
+        flex-direction: column;
+      }
+      body.print-pocket-mode #StandalonePocketPrint {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.14in;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- TOP BAR -->
+    <header class="top-navbar">
+      <div class="brand-logo">
+        <span class="brand-icon">1</span>
+        <span>1 Minor + 1 Major</span>
+      </div>
+
+      <!-- Main Navigation (Always starts on Calm Daily View!) -->
+      <nav class="main-nav-tabs">
+        <button class="nav-tab-btn active" id="navBtnToday" onclick="switchMainView('today')">â˜€ï¸ Today Focus</button>
+        <button class="nav-tab-btn" id="navBtnTasks" onclick="switchMainView('tasks')">â˜‘ï¸ Task List (<span id="navActiveTaskCount">0</span>)</button>
+        <button class="nav-tab-btn" id="navBtnWeek" onclick="switchMainView('week')">ðŸ—“ï¸ Weekly &amp; Print</button>
+      </nav>
+
+      <div class="nav-right-actions">
+        <button class="sync-status-pill" onclick="openDriveModal()" title="Cloud Auto-Sync Account">
+          <span class="sync-dot" id="syncStatusDot"></span>
+          <span id="syncStatusLabel">Auto-Sync Ready</span>
+        </button>
+        <button class="btn-primary-add" onclick="openTaskWizard()">+ New Task</button>
+      </div>
+    </header>
+
+    <!-- =====================================================
+         VIEW 1: MAIN SCREEN (STARTS ON DAILY VIEW, TOGGLES TO WEEKLY VIEW)
+         ===================================================== -->
+    <section id="viewToday" class="today-view-container">
+      <div class="today-header-card">
+        <!-- Prominent Daily / Weekly View Switcher + Reorganize & Print Actions on the Main Screen -->
+        <div style="width:100%; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding-bottom:10px; border-bottom:1px solid var(--surface-subtle);">
+          <div class="main-view-mode-switch" role="tablist" aria-label="Main Screen View Mode">
+            <button type="button" class="mode-switch-btn active" id="btnMainModeDaily" onclick="setMainScreenScheduleMode('daily')">â˜€ï¸ Daily View</button>
+            <button type="button" class="mode-switch-btn" id="btnMainModeWeekly" onclick="setMainScreenScheduleMode('weekly')">ðŸ—“ï¸ Weekly View</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <button type="button" id="btnReorganizeMain" onclick="reorganizeSchedule()" style="background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-size:0.78rem; padding:6px 12px; font-weight:800;" title="Clear schedule & reprioritize everything starting Today">
+              ðŸ”„ Reorganize
+            </button>
+            <button type="button" onclick="switchMainView('week')" style="font-size:0.78rem; padding:6px 11px; font-weight:700;" title="Open Weekly & Print Screen">
+              ðŸ–¨ï¸ Weekly &amp; Print
+            </button>
+          </div>
+        </div>
+
+        <!-- Daily Date Navigation & Controls (Visible when Daily View is active) -->
+        <div id="mainDailyHeaderControls" style="width:100%; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div class="today-date-nav">
+            <button onclick="shiftFocusDate(-1)" title="Previous Day">â®</button>
+            <div>
+              <div class="today-date-title" id="todayDateHeading">Today</div>
+              <div class="today-subtitle" id="todayDateSubheading">Focus on 1 quick win &amp; 1 main priority</div>
+            </div>
+            <button onclick="shiftFocusDate(1)" title="Next Day">â¯</button>
+            <button id="btnJumpToday" onclick="jumpFocusToToday()" style="font-size:0.76rem; padding:5px 10px; display:none;">Jump to Today</button>
+          </div>
+
+          <div class="today-controls-right">
+            <select id="todayCatPrefSelect" onchange="onChangeDayCategoryPref(this.value)" style="padding:6px 10px; border-radius:999px; border:1px solid var(--border-strong); font-size:0.78rem; font-weight:700; background:var(--surface);">
+            </select>
+            <button class="low-energy-btn" id="btnTodayLowEnergy" onclick="toggleDayLowEnergy(appState.focusDate)">
+              ðŸ”‹ Low Energy Mode
+            </button>
+          </div>
+        </div>
+
+        <!-- Weekly Date Navigation & Controls (Visible on Main Screen when Weekly View is active) -->
+        <div id="mainWeeklyHeaderControls" style="width:100%; display:none; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <button onclick="shiftSelectedWeek(-7)" title="Previous Week">â®</button>
+            <strong style="font-size:1.15rem; font-weight:800;" id="mainWeekRangeHeading">Sun â€“ Sat</strong>
+            <input type="date" id="mainWeekDatePickerInput" onchange="onPickWeekDate(this.value)" style="padding:4px 8px; border-radius:7px; border:1px solid var(--border-strong); font-size:0.8rem;" />
+            <button onclick="shiftSelectedWeek(7)" title="Next Week">â¯</button>
+            <button onclick="jumpWeekToCurrent()" style="font-size:0.76rem; padding:5px 10px;">This Week</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <button onclick="switchMainView('week')" style="font-size:0.76rem; padding:5px 10px;" title="Open Print Options & Wallet Preview">ðŸ–¨ï¸ Print Options</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compact Daily Habits / Routines Strip (Doesn't steal the 1 Minor / 1 Major slot!) -->
+      <div class="habits-strip-card" id="todayHabitsCard">
+        <div class="habits-strip-header">
+          <span>ðŸ”„ Daily Habits &amp; Routines</span>
+          <button style="font-size:0.73rem; padding:3px 9px; border-radius:999px;" onclick="openTaskWizard({ defaultHabit: true })">+ Add Daily Habit</button>
+        </div>
+        <div class="habits-pills-wrap" id="todayHabitsList"></div>
+      </div>
+
+      <!-- Strictly 1 Minor Thing + 1 Major Thing Cards (Daily Mode on Main Screen) -->
+      <div class="focus-cards-grid" id="todayFocusCardsGrid"></div>
+
+      <!-- 7-Day Weekly Schedule (Weekly Mode on Main Screen) -->
+      <div class="weekly-panel" id="mainScreenWeeklyPanel" style="display:none; padding:16px 18px;">
+        <div id="mainScreenWeeklyGridRows"></div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         VIEW 2: MICROSOFT TO DO / GOOGLE TASKS STYLE LIST VIEW
+         ===================================================== -->
+    <section id="viewTasks" style="display:none;">
+      <div class="tasks-view-layout">
+        <!-- Categories & Smart Lists Sidebar -->
+        <aside class="categories-sidebar" id="categoriesSidebar"></aside>
+
+        <!-- Main Tasks List Panel -->
+        <div class="tasks-main-panel">
+          <div class="tasks-panel-header">
+            <div>
+              <h2 style="font-size:1.2rem; font-weight:800;" id="currentListTitle">All Active Tasks</h2>
+              <p style="font-size:0.8rem; color:var(--muted);" id="currentListSubtitle">Sorted by effective priority (includes +2/day aging &amp; +5 bump boosts â€¢ Saturdays reserve oldest task)</p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="button" id="btnReorganizeTasks" onclick="reorganizeSchedule()" style="background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-weight:800;">ðŸ”„ Reorganize</button>
+              <button class="btn-primary-add" onclick="openTaskWizard()">+ Add Task (4 Questions)</button>
+            </div>
+          </div>
+
+          <!-- Active Tasks List -->
+          <div id="todoActiveList" style="display:flex; flex-direction:column; gap:10px;"></div>
+
+          <!-- Collapsible Completed Section (Just like MS To Do / Google Tasks) -->
+          <div id="todoCompletedSection" style="margin-top:8px;">
+            <button class="completed-accordion-btn" onclick="toggleCompletedAccordion()">
+              <span>âœ“ Completed (<span id="completedCountLabel">0</span>)</span>
+              <span id="completedAccordionArrow">â–¾</span>
+            </button>
+            <div id="todoCompletedList" style="display:none; flex-direction:column; gap:8px; margin-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         VIEW 3: 7-DAY WEEKLY SCHEDULE & PRINT GUIDES
+         ===================================================== -->
+    <section id="viewWeek" style="display:none;">
+      <div class="weekly-panel">
+        <div class="week-toolbar">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <button onclick="switchMainView('today')" style="font-size:0.78rem; font-weight:800; background:var(--surface-subtle);">â† Back to Today</button>
+            <button onclick="shiftSelectedWeek(-7)">â®</button>
+            <strong style="font-size:1.1rem; font-weight:800;" id="weekRangeHeading">Sun â€“ Sat</strong>
+            <input type="date" id="weekDatePickerInput" onchange="onPickWeekDate(this.value)" style="padding:4px 8px; border-radius:7px; border:1px solid var(--border-strong); font-size:0.8rem;" />
+            <button onclick=" shiftSelectedWeek(7)">â¯</button>
+            <button onclick="jumpWeekToCurrent()" style="font-size:0.76rem;">This Week</button>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <button type="button" onclick="reorganizeSchedule()" style="background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-size:0.78rem; font-weight:800;">ðŸ”„ Reorganize</button>
+            <select id="printWeeksSelect" onchange="onChangePrintWeeksCount(this.value)" style="padding:6px 10px; border-radius:8px; border:1px solid var(--border-strong); font-size:0.8rem; font-weight:600;">
+              <option value="2">Print: 2 Weeks (1 Page)</option>
+              <option value="4">Print: 4 Weeks (2 Pages)</option>
+              <option value="6">Print: 6 Weeks (3 Pages)</option>
+            </select>
+            <button onclick="triggerPrintMode('full')" style="background:#1d4ed8; color:#fff; border-color:#1d4ed8;">ðŸ–¨ï¸ Print Full Sheet</button>
+            <button onclick="triggerPrintMode('pocket')" style="background:#0f766e; color:#fff; border-color:#0f766e;">âœ‚ï¸ Print Wallet Size</button>
+          </div>
+        </div>
+
+        <div id="weeklyGridRows"></div>
+
+        <!-- Wallet Card Live Preview -->
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+          <h3 style="font-size:0.95rem; font-weight:800; margin-bottom:4px;">Wallet Size Preview (5.5" Ã— 2.4" Single-Fold â€¢ 2 Weeks per Page)</h3>
+          <p style="font-size:0.8rem; color:var(--muted);">Left column = âœ“ Minor Thing, Right column = â˜… Major Thing.</p>
+          <div class="pocket-cards-container" id="walletPreviewContainer"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Floating '+' Button & Bottom Navigation for Android Phone (Weekly & Print tab removed; accessed via Today screen) -->
+  <button class="m-fab-add" onclick="openTaskWizard()" title="Add Task">+</button>
+  <nav class="mobile-bottom-nav">
+    <button class="m-nav-btn active" id="mNavToday" onclick="switchMainView('today')">
+      <span style="font-size:1.15rem;">â˜€ï¸</span>
+      <span>Today</span>
+    </button>
+    <button class="m-nav-btn" id="mNavTasks" onclick="switchMainView('tasks')">
+      <span style="font-size:1.15rem;">â˜‘ï¸</span>
+      <span>Task List</span>
+    </button>
+    <button class="m-nav-btn" id="mNavSync" onclick="openDriveModal()">
+      <span style="font-size:1.15rem;">â˜ï¸</span>
+      <span>Drive Sync</span>
+    </button>
+  </nav>
+
+  <!-- =====================================================
+       MODAL 1: 4-QUESTION PRIORITY WIZARD & TASK EDITOR
+       ===================================================== -->
+  <div class="modal-backdrop" id="taskWizardModal">
+    <div class="modal-sheet">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:1.1rem; font-weight:800;" id="wizModalTitle">New Task (4 Priority Questions)</h3>
+        <button style="border:none; background:transparent; font-size:1.1rem;" onclick="closeTaskWizard()">âœ•</button>
+      </div>
+
+      <div>
+        <input type="text" id="wizTitleInput" placeholder="What needs to get done?" style="width:100%; border:1.5px solid var(--border-strong); border-radius:10px; padding:10px 12px; font-size:0.98rem; font-weight:700; margin-bottom:8px;" />
+        <textarea id="wizNotesInput" rows="3" placeholder="Notes, phone numbers, part numbers, or details..." style="width:100%; border:1px solid var(--border-strong); border-radius:10px; padding:8px 12px; font-size:0.85rem; resize:vertical;"></textarea>
+      </div>
+
+      <!-- Category & Recurrence Row -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div>
+          <label style="font-size:0.75rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Category / List</label>
+          <select id="wizCategorySelect" style="width:100%; padding:8px 10px; border-radius:9px; border:1px solid var(--border-strong); font-size:0.84rem; font-weight:600;"></select>
+        </div>
+        <div>
+          <label style="font-size:0.75rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Repeat / Routine</label>
+          <select id="wizRecurrenceSelect" onchange="onWizRecurrenceChange()" style="width:100%; padding:8px 10px; border-radius:9px; border:1px solid var(--border-strong); font-size:0.84rem; font-weight:600;">
+            <option value="none">One-Time Task</option>
+            <option value="daily_habit">ðŸ”„ Daily Habit Strip (Above Cards)</option>
+            <option value="daily_slot">ðŸ“… Repeat Daily in Minor/Major Slot</option>
+            <option value="weekdays_slot">ðŸ’¼ Weekdays (Monâ€“Fri) in Slot</option>
+            <option value="weekly_slot">ðŸ—“ï¸ Repeat Weekly (Pick Day)...</option>
+            <option value="monthly_date_slot">ðŸ“† Repeat Monthly on Date (e.g. 1st, 15th)...</option>
+            <option value="monthly_weekday_slot">ðŸ“† Repeat Monthly on Pattern (e.g. 1st Mon)...</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Dynamic Weekly / Monthly Recurrence Schedule Picker -->
+      <div id="wizRecurrenceDetailBox" style="display:none; background:#eff6ff; border:1px solid #93c5fd; border-radius:12px; padding:10px 14px; flex-direction:column; gap:8px;">
+        <!-- Weekly Day Picker -->
+        <div id="wizWeeklyPickerRow" style="display:none; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <label style="font-size:0.8rem; font-weight:800; color:#1e3a8a;">ðŸ—“ï¸ Which day of the week?</label>
+          <select id="wizWeeklyDaySelect" style="padding:6px 10px; border-radius:8px; border:1px solid #93c5fd; font-size:0.84rem; font-weight:700; background:#fff;">
+            <option value="0">Every Sunday</option>
+            <option value="1" selected>Every Monday</option>
+            <option value="2">Every Tuesday</option>
+            <option value="3">Every Wednesday</option>
+            <option value="4">Every Thursday</option>
+            <option value="5">Every Friday</option>
+            <option value="6">Every Saturday</option>
+          </select>
+        </div>
+
+        <!-- Monthly Date Picker (e.g. 1st of the month, 15th, Last day) -->
+        <div id="wizMonthlyDatePickerRow" style="display:none; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <label style="font-size:0.8rem; font-weight:800; color:#1e3a8a;">ðŸ“† Which day of the month?</label>
+          <select id="wizMonthlyDateSelect" style="padding:6px 10px; border-radius:8px; border:1px solid #93c5fd; font-size:0.84rem; font-weight:700; background:#fff;"></select>
+        </div>
+
+        <!-- Monthly Nth Weekday Picker (e.g. First Monday, Last Friday) -->
+        <div id="wizMonthlyWeekdayPickerRow" style="display:none; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <label style="font-size:0.8rem; font-weight:800; color:#1e3a8a;">ðŸ“† Which weekday each month?</label>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <select id="wizMonthlyNthSelect" style="padding:6px 10px; border-radius:8px; border:1px solid #93c5fd; font-size:0.84rem; font-weight:700; background:#fff;">
+              <option value="1">1st (First)</option>
+              <option value="2">2nd (Second)</option>
+              <option value="3">3rd (Third)</option>
+              <option value="4">4th (Fourth)</option>
+              <option value="last">Last</option>
+            </select>
+            <select id="wizMonthlyWeekdaySelect" style="padding:6px 10px; border-radius:8px; border:1px solid #93c5fd; font-size:0.84rem; font-weight:700; background:#fff;">
+              <option value="0">Sunday</option>
+              <option value="1" selected>Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3">Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Mandatory Priority Questions -->
+      <div id="wizPriorityQuestionsBox" style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:10px 14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:0.76rem; font-weight:800; text-transform:uppercase; color:var(--muted);">4 Quick Priority Questions</span>
+          <span style="background:#0f172a; color:#fff; padding:2px 10px; border-radius:999px; font-size:0.78rem; font-weight:800;" id="wizScoreBadge">85 pts</span>
+        </div>
+
+        <div class="q-row">
+          <span class="q-label">1. Size</span>
+          <div class="pill-group" id="qGroupSize">
+            <div class="choice-pill selected" data-val="minor" onclick="setWizAnswer('size', 'minor')">âœ“ Minor (&lt;30m)</div>
+            <div class="choice-pill" data-val="major" onclick="setWizAnswer('size', 'major')">â˜… Major (1â€“3h)</div>
+          </div>
+        </div>
+
+        <div class="q-row">
+          <span class="q-label">2. Urgency</span>
+          <div class="pill-group" id="qGroupUrgency">
+            <div class="choice-pill" data-val="10" onclick="setWizAnswer('urgency', 10)">Low</div>
+            <div class="choice-pill" data-val="25" onclick="setWizAnswer('urgency', 25)">Med</div>
+            <div class="choice-pill selected" data-val="40" onclick="setWizAnswer('urgency', 40)">High</div>
+          </div>
+        </div>
+
+        <div class="q-row">
+          <span class="q-label">3. Impact</span>
+          <div class="pill-group" id="qGroupImpact">
+            <div class="choice-pill" data-val="15" onclick="setWizAnswer('impact', 15)">Low</div>
+            <div class="choice-pill selected" data-val="35" onclick="setWizAnswer('impact', 35)">High</div>
+          </div>
+        </div>
+
+        <div class="q-row" style="border-bottom:none;">
+          <span class="q-label">4. Energy Needed</span>
+          <div class="pill-group" id="qGroupEnergy">
+            <div class="choice-pill selected" data-val="low" onclick="setWizAnswer('energy', 'low')">ðŸ”‹ Low</div>
+            <div class="choice-pill" data-val="med" onclick="setWizAnswer('energy', 'med')">âš¡ Med</div>
+            <div class="choice-pill" data-val="high" onclick="setWizAnswer('energy', 'high')">ðŸ”¥ High</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subtasks / Steps Builder (Just like MS To Do / Google Tasks) -->
+      <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:10px 14px;">
+        <div style="font-size:0.78rem; font-weight:800; color:#334155; margin-bottom:6px;">Subtasks / Step-by-Step Checklist</div>
+        <div id="wizSubtasksList" style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;"></div>
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="wizNewSubtaskInput" placeholder="Add a step (press Enter or click +)..." onkeydown="if(event.key==='Enter'){event.preventDefault();addWizSubtask();}" style="flex:1; border:1px solid var(--border-strong); border-radius:8px; padding:6px 10px; font-size:0.82rem;" />
+          <button type="button" onclick="addWizSubtask()">+ Step</button>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:4px;">
+        <button id="btnDeleteTaskInModal" style="color:#be123c; border-color:#fda4af; background:#fff1f2; display:none;" onclick="deleteTaskFromModal()">ðŸ—‘ï¸ Delete</button>
+        <div style="display:flex; gap:8px; flex:1; justify-content:flex-end;">
+          <button onclick="closeTaskWizard()">Cancel</button>
+          <button class="btn-primary-add" onclick="saveTaskFromWizard()">Save &amp; Auto-Sync</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       MODAL 2: DELAY / SNOOZE / ROADBLOCK / SWAP MODAL
+       ===================================================== -->
+  <div class="modal-backdrop" id="roadblockModal">
+    <div class="modal-sheet">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:1.08rem; font-weight:800;" id="rbModalTitle">Delay, Snooze, or Pick Task</h3>
+        <button style="border:none; background:transparent; font-size:1.1rem;" onclick="closeRoadblockModal()">âœ•</button>
+      </div>
+      <p id="rbModalSubtitle" style="font-size:0.84rem; color:var(--muted);"></p>
+
+      <!-- Section A: What happens to the current task? (Hidden when slot is empty) -->
+      <div id="rbSectionCurrentTask" style="display:flex; flex-direction:column; gap:8px;">
+        <div style="font-size:0.76rem; font-weight:800; text-transform:uppercase; color:var(--muted);">1. What should happen to this task?</div>
+
+        <button style="width:100%; justify-content:space-between; padding:11px 14px;" onclick="executeRoadblockAction('tomorrow')">
+          <span><strong>â­ï¸ Push to Tomorrow (+1 Day)</strong> &amp; auto-fill today</span>
+          <span>âž”</span>
+        </button>
+
+        <div style="border:1px solid var(--border-strong); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:0.84rem; font-weight:700;">â³ Snooze for a Few Days (Hide until date)</div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+            <button style="font-size:0.76rem; padding:5px 10px;" onclick="executeRoadblockAction('snooze_2')">+2 Days</button>
+            <button style="font-size:0.76rem; padding:5px 10px;" onclick="executeRoadblockAction('snooze_3')">+3 Days</button>
+            <button style="font-size:0.76rem; padding:5px 10px;" onclick="executeRoadblockAction('snooze_7')">Next Week (+7d)</button>
+            <input type="date" id="rbSnoozeDateInput" onchange="if(this.value) executeRoadblockAction('snooze_custom', this.value)" style="padding:4px 8px; border-radius:7px; border:1px solid var(--border-strong); font-size:0.76rem;" />
+          </div>
+        </div>
+
+        <div style="border:1px solid var(--blocked-border); background:var(--blocked-bg); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:0.84rem; font-weight:800; color:var(--blocked-accent);">ðŸš§ Mark as Blocked / Waiting on Something</div>
+          <p style="font-size:0.76rem; color:#881337;">Moves task to your "ðŸš§ Blocked / Waiting" list so the auto-scheduler skips it until you unblock it.</p>
+          <div style="display:flex; gap:6px;">
+            <input type="text" id="rbBlockerNoteInput" placeholder="Optional: Waiting on parts / reply..." style="flex:1; border:1px solid var(--blocked-border); border-radius:7px; padding:6px 10px; font-size:0.8rem; background:#fff;" />
+            <button style="background:var(--blocked-accent); color:#fff; border:none; font-size:0.78rem;" onclick="executeRoadblockAction('block')">Mark Blocked</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section B: Pick a specific task from your Task List -->
+      <div style="border-top:1px solid var(--border); padding-top:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+          <span style="font-size:0.76rem; font-weight:800; text-transform:uppercase; color:var(--muted);" id="rbPickSectionTitle">Pick a Task from Your List:</span>
+          <div class="pill-group" id="rbFilterGroup">
+            <div class="choice-pill selected" data-f="match" onclick="setRbFilter('match')">Matching Size</div>
+            <div class="choice-pill" data-f="all" onclick="setRbFilter('all')">All Tasks</div>
+          </div>
+        </div>
+        <div id="rbManualSwapList" style="max-height:230px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       MODAL 3: FIREBASE REALTIME CLOUD ACCOUNT SYNC
+       ===================================================== -->
+  <div class="modal-backdrop" id="driveSyncModal">
+    <div class="modal-sheet" style="max-width:460px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:1.08rem; font-weight:800;">â˜ï¸ Cloud Sync (Google Firebase)</h3>
+        <button style="border:none; background:transparent; font-size:1.1rem;" onclick="closeDriveModal()">âœ•</button>
+      </div>
+
+      <div style="background:#ecfdf5; border:1px solid #6ee7b7; border-radius:12px; padding:11px 14px; font-size:0.81rem; color:#065f46;">
+        <strong>âœ“ End-to-End Encrypted â€¢ Event-Driven Push (Zero Polling):</strong><br/>
+        Your tasks are encrypted in your browser with your password and pushed in real time via your Google Firebase Realtime Database.
+      </div>
+
+      <!-- Firebase Database URL Configuration Box (Visible both signed-in and signed-out) -->
+      <div style="background:#f8fafc; border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:6px;">
+        <label style="font-size:0.75rem; font-weight:800; color:#1e293b; display:flex; justify-content:space-between; align-items:center;">
+          <span>ðŸ”¥ Firebase Realtime Database URL</span>
+          <span style="font-size:0.7rem; color:var(--primary); font-weight:700;">console.firebase.google.com</span>
+        </label>
+        <input type="url" id="cloudFirebaseUrlInput" placeholder="https://your-project-default-rtdb.firebaseio.com" onchange="saveFirebaseUrlFromInput()" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:8px 10px; font-size:0.82rem; font-family:monospace;" />
+        <div style="font-size:0.72rem; color:var(--muted);">Paste your Firebase Realtime Database URL above (or tell your assistant to embed it into <code>index.html</code> so it's pre-filled on all devices).</div>
+      </div>
+
+      <!-- Signed-Out View: Clean Email & Password Form -->
+      <div id="cloudAuthFormBox" style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:10px;">
+        <div>
+          <label style="font-size:0.76rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Email Address</label>
+          <input type="email" id="cloudEmailInput" placeholder="you@example.com" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:9px 11px; font-size:0.88rem;" />
+        </div>
+        <div>
+          <label style="font-size:0.76rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Password</label>
+          <input type="password" id="cloudPasswordInput" placeholder="Enter password..." onkeydown="if(event.key==='Enter'){event.preventDefault();signInOrCreateCloudAccount();}" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:9px 11px; font-size:0.88rem;" />
+        </div>
+        <div id="cloudAuthErrorMsg" style="display:none; color:#be123c; font-size:0.78rem; font-weight:700;"></div>
+        <button class="btn-primary-add" style="width:100%; justify-content:center; padding:10px; margin-top:4px;" id="btnCloudSignInSubmit" onclick="signInOrCreateCloudAccount()">
+          â˜ï¸ Sign In &amp; Sync
+        </button>
+      </div>
+
+      <!-- Signed-In View: Account Status -->
+      <div id="cloudSignedInBox" style="display:none; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px; flex-direction:column; gap:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:0.75rem; color:var(--muted); font-weight:700;">SIGNED IN AS</div>
+            <div style="font-size:0.95rem; font-weight:800; color:var(--text);" id="cloudSignedInEmailLabel">â€”</div>
+          </div>
+          <span style="background:#d1fae5; color:#047857; padding:3px 9px; border-radius:999px; font-size:0.74rem; font-weight:800;" id="driveModalStatusBadge">âœ“ Auto-Sync ON</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+          <span style="font-size:0.75rem; color:#047857; font-weight:700;">âš¡ Real-time push sync active (zero polling)</span>
+          <button style="color:#be123c; border-color:#fda4af; background:#fff1f2; font-size:0.78rem; padding:5px 12px;" onclick="disconnectCloudAccount()">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       PRINT-ONLY CONTAINERS (2 Weeks Per Page)
+       ===================================================== -->
+  <div class="full-print-sheets" id="fullPrintSheetsContainer"></div>
+  <div id="StandalonePocketPrint"></div>
+
+  <!-- Official Google Firebase Realtime Database SDK for instant push sync -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script>
+    // =====================================================
+    // 1. CONSTANTS & DATE UTILITIES (Sunday - Saturday)
+    // =====================================================
+    const DAYS = [
+      { id: 'sun', name: 'Sunday', short: 'SUN', mShort: 'Sun', offset: 0 },
+      { id: 'mon', name: 'Monday', short: 'MON', mShort: 'Mon', offset: 1 },
+      { id: 'tue', name: 'Tuesday', short: 'TUE', mShort: 'Tue', offset: 2 },
+      { id: 'wed', name: 'Wednesday', short: 'WED', mShort: 'Wed', offset: 3 },
+      { id: 'thu', name: 'Thursday', short: 'THU', mShort: 'Thu', offset: 4 },
+      { id: 'fri', name: 'Friday', short: 'FRI', mShort: 'Fri', offset: 5 },
+      { id: 'sat', name: 'Saturday', short: 'SAT', mShort: 'Sat', offset: 6 }
+    ];
+
+    const STORAGE_KEY_V4 = 'one_minor_one_major_v4';
+    const LEGACY_KEY_V3 = 'one_major_one_minor_saved_snapshot_v3';
+    const LEGACY_KEY_V2 = 'one_major_one_minor_v2';
+
+    function toDateStr(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseDateStr(str) {
+      const parts = (str || '').split('-').map(Number);
+      if (parts.length !== 3 || !parts[0]) return new Date();
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function addDays(dateObj, n) {
+      return new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate() + n);
+    }
+
+    function getSundayOfWeek(dateObj) {
+      const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+      d.setDate(d.getDate() - d.getDay());
+      return d;
+    }
+
+    function formatShortDate(dateObj) {
+      return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function formatFullDayHeading(dateStr) {
+      const d = parseDateStr(dateStr);
+      const todayStr = toDateStr(new Date());
+      const tomStr = toDateStr(addDays(new Date(), 1));
+      const yestStr = toDateStr(addDays(new Date(), -1));
+      const formatted = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+      if (dateStr === todayStr) return `Today â€¢ ${formatted}`;
+      if (dateStr === tomStr) return `Tomorrow â€¢ ${formatted}`;
+      if (dateStr === yestStr) return `Yesterday â€¢ ${formatted}`;
+      return formatted;
+    }
+
+    function formatWeekRangeLabel(sundayObj) {
+      const satObj = addDays(sundayObj, 6);
+      return `Sun, ${formatShortDate(sundayObj)} â€“ Sat, ${formatShortDate(satObj)}`;
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // =====================================================
+    // 2. UNIFIED V4 STATE & AUTOMATIC LEGACY MIGRATION
+    // =====================================================
+    const DEFAULT_CATEGORIES = [
+      { id: 'house', name: 'ðŸ  House' },
+      { id: 'work', name: 'ðŸ’¼ Work' },
+      { id: 'school', name: 'ðŸŽ“ School' },
+      { id: 'errands', name: 'ðŸš— Errands' },
+      { id: 'personal', name: 'âœ¨ Personal' }
+    ];
+
+    function createInitialState() {
+      const todayStr = toDateStr(new Date());
+      const sunStr = toDateStr(getSundayOfWeek(new Date()));
+
+      // 1. Check if v4 state already exists
+      try {
+        const rawV4 = localStorage.getItem(STORAGE_KEY_V4);
+        if (rawV4) {
+          const parsed = JSON.parse(rawV4);
+          if (parsed && Array.isArray(parsed.tasks)) {
+            parsed.focusDate = todayStr; // Always open on Today!
+            if (!parsed.selectedSunday) parsed.selectedSunday = sunStr;
+            if (!Array.isArray(parsed.categories)) parsed.categories = DEFAULT_CATEGORIES;
+            if (!parsed.dayMeta) parsed.dayMeta = {};
+            if (!parsed.habitCompletions) parsed.habitCompletions = {};
+            return parsed;
+          }
+        }
+      } catch (e) {}
+
+      // 2. Migrate any existing tasks from v3 / v2 localStorage so zero data is lost
+      const state = {
+        version: 4,
+        updatedAt: 0,
+        focusDate: todayStr,
+        selectedSunday: sunStr,
+        weeksCount: 2,
+        categories: DEFAULT_CATEGORIES,
+        tasks: [],
+        dayMeta: {}, // { 'YYYY-MM-DD': { lowEnergy: false, preferredCategory: 'all', partialWinMinor: null, partialWinMajor: null } }
+        habitCompletions: {} // { 'YYYY-MM-DD_taskId': true }
+      };
+
+      try {
+        const legacyRaw = localStorage.getItem(LEGACY_KEY_V3) || localStorage.getItem(LEGACY_KEY_V2);
+        if (legacyRaw) {
+          const leg = JSON.parse(legacyRaw);
+          // Migrate scheduled week tasks
+          if (leg.weeks) {
+            Object.keys(leg.weeks).forEach(weekKey => {
+              const sunDate = parseDateStr(weekKey);
+              const wk = leg.weeks[weekKey] || {};
+              DAYS.forEach(day => {
+                const dObj = wk[day.id];
+                if (!dObj) return;
+                const dateStr = toDateStr(addDays(sunDate, day.offset));
+                if (dObj.minorTitle && dObj.minorTitle.trim()) {
+                  state.tasks.push({
+                    id: 'mig_min_' + dateStr + '_' + Math.random().toString(36).slice(2, 6),
+                    title: dObj.minorTitle.trim(),
+                    notes: (dObj.minorNotes || '').trim(),
+                    size: 'minor',
+                    urgency: 40,
+                    impact: 35,
+                    energy: dObj.minorEnergy || 'low',
+                    score: 85,
+                    category: 'personal',
+                    recurrence: 'none',
+                    subtasks: [],
+                    status: dObj.minorDone ? 'completed' : 'active',
+                    scheduledDate: dateStr,
+                    snoozedUntil: null,
+                    blockerNote: '',
+                    completedAt: dObj.minorDone ? Date.now() : null,
+                    createdAt: Date.now()
+                  });
+                }
+                if (dObj.majorTitle && dObj.majorTitle.trim()) {
+                  state.tasks.push({
+                    id: 'mig_maj_' + dateStr + '_' + Math.random().toString(36).slice(2, 6),
+                    title: dObj.majorTitle.trim(),
+                    notes: (dObj.majorNotes || '').trim(),
+                    size: 'major',
+                    urgency: 40,
+                    impact: 35,
+                    energy: dObj.majorEnergy || 'med',
+                    score: 80,
+                    category: 'personal',
+                    recurrence: 'none',
+                    subtasks: [],
+                    status: dObj.majorDone ? 'completed' : 'active',
+                    scheduledDate: dateStr,
+                    snoozedUntil: null,
+                    blockerNote: '',
+                    completedAt: dObj.majorDone ? Date.now() : null,
+                    createdAt: Date.now()
+                  });
+                }
+              });
+            });
+          }
+          // Migrate unscheduled taskPool
+          if (Array.isArray(leg.taskPool)) {
+            leg.taskPool.forEach(t => {
+              if (!t || !t.title) return;
+              state.tasks.push({
+                id: t.id || ('mig_q_' + Math.random().toString(36).slice(2, 7)),
+                title: t.title.trim(),
+                notes: (t.notes || '').trim(),
+                size: t.size === 'major' ? 'major' : 'minor',
+                urgency: 40,
+                impact: 35,
+                energy: t.energy || 'low',
+                score: t.score || 80,
+                category: 'personal',
+                recurrence: 'none',
+                subtasks: [],
+                status: 'active',
+                scheduledDate: null,
+                snoozedUntil: null,
+                blockerNote: '',
+                completedAt: null,
+                createdAt: Date.now()
+              });
+            });
+          }
+        }
+      } catch (e) {}
+
+      return state;
+    }
+
+    let appState = createInitialState();
+    let currentMainView = 'today'; // Always starts on 'today'!
+    let mainScreenScheduleMode = 'daily'; // Always starts on 'daily' on the main screen, toggleable to 'weekly'!
+    let selectedListFilter = 'all'; // 'all', categoryId, 'habits', 'snoozed', 'blocked'
+    let showCompletedAccordion = false;
+
+    function ensureDayMeta(dateStr) {
+      if (!appState.dayMeta[dateStr]) {
+        appState.dayMeta[dateStr] = {
+          lowEnergy: false,
+          preferredCategory: 'all',
+          partialWinMinor: null,
+          partialWinMajor: null
+        };
+      }
+      return appState.dayMeta[dateStr];
+    }
+
+    function computePriorityScore(urgency, impact, energy) {
+      const eBonus = energy === 'low' ? 10 : (energy === 'med' ? 5 : 0);
+      return 10 + Number(urgency || 25) + Number(impact || 15) + eBonus;
+    }
+
+    // Option A: Automatic Aging Boost (+2 pts per full day waiting since created)
+    function getTaskAgeBonus(t) {
+      if (!t || !t.createdAt) return 0;
+      const daysWaiting = Math.max(0, Math.floor((Date.now() - Number(t.createdAt)) / 86400000));
+      return daysWaiting * 2;
+    }
+
+    // Option B: Bumped-in-Line Boost (+5 pts each time a task gets bumped back)
+    function getTaskBumpBonus(t) {
+      return Number((t && t.bumpPoints) || 0);
+    }
+
+    // Combined Effective Priority Score (Base + Option A Aging + Option B Bump)
+    function getEffectiveScore(t) {
+      if (!t) return 0;
+      const base = Number(t.score || computePriorityScore(t.urgency, t.impact, t.energy));
+      return base + getTaskAgeBonus(t) + getTaskBumpBonus(t);
+    }
+
+    // =====================================================
+    // 3. AUTO-SCHEDULER, REORGANIZER & ANTI-STARVATION ENGINE
+    //    (Combines Option A Aging + Option B Bump + Option C Weekly Oldest Slot)
+    // =====================================================
+    function getTaskSlot(t) {
+      return t.slotOverride || t.size || 'minor';
+    }
+
+    function getOrdinalSuffix(n) {
+      const num = parseInt(n, 10);
+      if (isNaN(num)) return String(n);
+      const v = num % 100;
+      if (v >= 11 && v <= 13) return num + 'th';
+      switch (num % 10) {
+        case 1: return num + 'st';
+        case 2: return num + 'nd';
+        case 3: return num + 'rd';
+        default: return num + 'th';
+      }
+    }
+
+    function getDaysInMonth(year, monthIdx) {
+      return new Date(year, monthIdx + 1, 0).getDate();
+    }
+
+    function getNthWeekdayOfMonth(year, monthIdx, nth, dow) {
+      const targetDow = Number(dow ?? 1);
+      if (nth === 'last') {
+        let d = new Date(year, monthIdx + 1, 0);
+        while (d.getDay() !== targetDow) {
+          d = addDays(d, -1);
+        }
+        return d;
+      }
+      const n = Math.max(1, Math.min(4, parseInt(nth, 10) || 1));
+      const firstOfMonth = new Date(year, monthIdx, 1);
+      const offset = (targetDow - firstOfMonth.getDay() + 7) % 7;
+      return new Date(year, monthIdx, 1 + offset + (n - 1) * 7);
+    }
+
+    function isFixedDateRecurrence(rec) {
+      return rec === 'weekly_slot' || rec === 'monthly_date_slot' || rec === 'monthly_weekday_slot';
+    }
+
+    function computeNextRecurrenceDate(baseDateObj, task, includeBaseDate) {
+      let startD = new Date(baseDateObj.getFullYear(), baseDateObj.getMonth(), baseDateObj.getDate());
+      if (!includeBaseDate) {
+        startD = addDays(startD, 1);
+      }
+      const rec = task.recurrence || 'none';
+      if (rec === 'daily_slot') {
+        return startD;
+      }
+      if (rec === 'weekdays_slot') {
+        while (startD.getDay() === 0 || startD.getDay() === 6) {
+          startD = addDays(startD, 1);
+        }
+        return startD;
+      }
+      if (rec === 'weekly_slot') {
+        const targetDow = (task.recurrenceDayOfWeek !== undefined && task.recurrenceDayOfWeek !== null)
+          ? Number(task.recurrenceDayOfWeek)
+          : startD.getDay();
+        while (startD.getDay() !== targetDow) {
+          startD = addDays(startD, 1);
+        }
+        return startD;
+      }
+      if (rec === 'monthly_date_slot') {
+        const mDay = task.recurrenceMonthDay || '1';
+        const y = startD.getFullYear();
+        const m = startD.getMonth();
+        const maxCur = getDaysInMonth(y, m);
+        const dayCur = (mDay === 'last') ? maxCur : Math.min(parseInt(mDay, 10) || 1, maxCur);
+        const candCur = new Date(y, m, dayCur);
+        if (candCur >= startD) return candCur;
+
+        const nextMonthFirst = new Date(y, m + 1, 1);
+        const ny = nextMonthFirst.getFullYear();
+        const nm = nextMonthFirst.getMonth();
+        const maxNext = getDaysInMonth(ny, nm);
+        const dayNext = (mDay === 'last') ? maxNext : Math.min(parseInt(mDay, 10) || 1, maxNext);
+        return new Date(ny, nm, dayNext);
+      }
+      if (rec === 'monthly_weekday_slot') {
+        const nth = task.recurrenceMonthNth || '1';
+        const dow = (task.recurrenceDayOfWeek !== undefined && task.recurrenceDayOfWeek !== null)
+          ? Number(task.recurrenceDayOfWeek)
+          : 1;
+        const y = startD.getFullYear();
+        const m = startD.getMonth();
+        const candCur = getNthWeekdayOfMonth(y, m, nth, dow);
+        if (candCur >= startD) return candCur;
+
+        const nextMonthFirst = new Date(y, m + 1, 1);
+        return getNthWeekdayOfMonth(nextMonthFirst.getFullYear(), nextMonthFirst.getMonth(), nth, dow);
+      }
+      return startD;
+    }
+
+    function getRecurrenceBadgeText(task) {
+      if (!task || !task.recurrence || task.recurrence === 'none' || task.recurrence === 'daily_habit') return '';
+      const rec = task.recurrence;
+      if (rec === 'daily_slot') return 'ðŸ“… Daily';
+      if (rec === 'weekdays_slot') return 'ðŸ’¼ Monâ€“Fri';
+      if (rec === 'weekly_slot') {
+        const dow = (task.recurrenceDayOfWeek !== undefined && task.recurrenceDayOfWeek !== null) ? Number(task.recurrenceDayOfWeek) : 1;
+        const dayObj = DAYS.find(d => d.offset === dow) || DAYS[1];
+        return `ðŸ—“ï¸ Every ${dayObj.mShort}`;
+      }
+      if (rec === 'monthly_date_slot') {
+        const mDay = task.recurrenceMonthDay || '1';
+        return `ðŸ“† Monthly (${mDay === 'last' ? 'Last day' : getOrdinalSuffix(mDay)})`;
+      }
+      if (rec === 'monthly_weekday_slot') {
+        const nth = task.recurrenceMonthNth || '1';
+        const dow = (task.recurrenceDayOfWeek !== undefined && task.recurrenceDayOfWeek !== null) ? Number(task.recurrenceDayOfWeek) : 1;
+        const dayObj = DAYS.find(d => d.offset === dow) || DAYS[1];
+        const nthLabel = (nth === 'last') ? 'Last' : getOrdinalSuffix(nth);
+        return `ðŸ“† Monthly (${nthLabel} ${dayObj.mShort})`;
+      }
+      return '';
+    }
+
+    function findBestCandidateIndex(pool, slotSize, isLow, prefCat, useOldestFirst) {
+      const matchesFilter = (t, relaxCat, allowMinorInMajor, allowAnyEnergy) => {
+        const sizeOk = allowMinorInMajor ? (t.size === 'minor') : (t.size === slotSize);
+        if (!sizeOk) return false;
+        const catOk = relaxCat || prefCat === 'all' || t.category === prefCat;
+        if (!catOk) return false;
+        if (!isLow || allowAnyEnergy) return true;
+        return t.energy === 'low';
+      };
+
+      const pickFromPass = (predicate) => {
+        if (!useOldestFirst) {
+          return pool.findIndex(predicate);
+        }
+        // Option C: Pick the oldest waiting task (lowest createdAt; tie-break by effective score)
+        let bestIdx = -1;
+        let bestCreated = Infinity;
+        let bestEff = -Infinity;
+        for (let i = 0; i < pool.length; i++) {
+          const t = pool[i];
+          if (!predicate(t)) continue;
+          const cAt = Number(t.createdAt || Date.now());
+          const eff = getEffectiveScore(t);
+          if (cAt < bestCreated || (cAt === bestCreated && eff > bestEff)) {
+            bestCreated = cAt;
+            bestEff = eff;
+            bestIdx = i;
+          }
+        }
+        return bestIdx;
+      };
+
+      let idx = pickFromPass(t => matchesFilter(t, false, false, false));
+      if (idx === -1 && prefCat !== 'all') {
+        idx = pickFromPass(t => matchesFilter(t, true, false, false));
+      }
+      if (idx === -1 && isLow && slotSize === 'major') {
+        idx = pickFromPass(t => matchesFilter(t, true, true, false));
+      }
+      if (idx === -1 && isLow) {
+        idx = pickFromPass(t => t.size === slotSize && t.energy === 'med');
+        if (idx === -1) idx = pickFromPass(t => t.size === slotSize);
+      }
+      // Final fallback: if no task of this exact size is available, allow any remaining active task to fill the open slot
+      if (idx === -1) {
+        idx = pickFromPass(t => !isLow || t.energy === 'low');
+        if (idx === -1) idx = pickFromPass(() => true);
+      }
+      return idx;
+    }
+
+    function getSlotTaskForDate(dateStr, slotSize) {
+      // 1. Always prefer an active scheduled task in this slot
+      const activeMatch = appState.tasks.find(t =>
+        t.status === 'active' &&
+        t.recurrence !== 'daily_habit' &&
+        t.scheduledDate === dateStr &&
+        getTaskSlot(t) === slotSize
+      );
+      if (activeMatch) return activeMatch;
+
+      // 2. Only show a completed task in a slot on or before Today (never on a future date)
+      const todayStr = toDateStr(new Date());
+      if (dateStr <= todayStr) {
+        return appState.tasks.find(t =>
+          t.status === 'completed' &&
+          t.recurrence !== 'daily_habit' &&
+          t.scheduledDate === dateStr &&
+          getTaskSlot(t) === slotSize
+        ) || null;
+      }
+      return null;
+    }
+
+    function runAutoScheduler() {
+      const todayStr = toDateStr(new Date());
+
+      // 0. If any task was completed early (sitting on a future scheduledDate > todayStr), detach it from that future slot so an active task replaces it
+      appState.tasks.forEach(t => {
+        if (t.status === 'completed' && t.scheduledDate && t.scheduledDate > todayStr) {
+          t.scheduledDate = null;
+          t.slotOverride = null;
+        }
+      });
+
+      // 1. Wake up any snoozed tasks whose snooze date has arrived
+      appState.tasks.forEach(t => {
+        if (t.status === 'snoozed' && t.snoozedUntil && t.snoozedUntil <= todayStr) {
+          t.status = 'active';
+          t.snoozedUntil = null;
+        }
+      });
+
+      // 2. Roll over any unfinished tasks scheduled in the past (< todayStr) so nothing is ever lost or "overdue"
+      appState.tasks.forEach(t => {
+        if (t.status === 'active' && t.recurrence !== 'daily_habit' && t.scheduledDate && t.scheduledDate < todayStr) {
+          t.scheduledDate = null;
+          t.slotOverride = null;
+          t.rolledOver = true;
+        }
+      });
+
+      // 3. Enforce at most 1 active Minor and 1 active Major task per date
+      const slotMap = {}; // { 'YYYY-MM-DD_minor': task, 'YYYY-MM-DD_major': task }
+      appState.tasks.forEach(t => {
+        if (t.status === 'active' && t.recurrence !== 'daily_habit' && t.scheduledDate) {
+          const key = `${t.scheduledDate}_${getTaskSlot(t)}`;
+          if (!slotMap[key]) {
+            slotMap[key] = t;
+          } else {
+            t.scheduledDate = null;
+            t.slotOverride = null;
+          }
+        }
+      });
+
+      // 4. Sort unscheduled active pool by (rolledOver first, then Effective Score [Base + Age + Bump] descending)
+      const unscheduled = appState.tasks.filter(t =>
+        t.status === 'active' &&
+        t.recurrence !== 'daily_habit' &&
+        !t.scheduledDate
+      ).sort((a, b) => {
+        if (!!b.rolledOver !== !!a.rolledOver) return b.rolledOver ? 1 : -1;
+        const diff = getEffectiveScore(b) - getEffectiveScore(a);
+        if (diff !== 0) return diff;
+        return Number(a.createdAt || 0) - Number(b.createdAt || 0);
+      });
+
+      // 5. Auto-fill Today + next 13 days (2 weeks)
+      const startObj = new Date();
+      for (let i = 0; i < 14; i++) {
+        const dayObj = addDays(startObj, i);
+        const dStr = toDateStr(dayObj);
+        const isSaturdayBacklogDay = (dayObj.getDay() === 6); // Option C: Saturday reserves slots for oldest waiting tasks
+        const meta = ensureDayMeta(dStr);
+        const isLow = !!meta.lowEnergy;
+        const prefCat = meta.preferredCategory || 'all';
+
+        ['minor', 'major'].forEach(slotSize => {
+          if (slotSize === 'minor' && meta.partialWinMinor) return;
+          if (slotSize === 'major' && meta.partialWinMajor) return;
+
+          const existing = appState.tasks.find(t =>
+            (t.status === 'active' || (dStr === todayStr && t.status === 'completed')) &&
+            t.recurrence !== 'daily_habit' &&
+            t.scheduledDate === dStr &&
+            getTaskSlot(t) === slotSize
+          );
+          if (existing) return;
+
+          const idx = findBestCandidateIndex(unscheduled, slotSize, isLow, prefCat, isSaturdayBacklogDay);
+          if (idx !== -1) {
+            const picked = unscheduled.splice(idx, 1)[0];
+            picked.scheduledDate = dStr;
+            picked.slotOverride = (picked.size !== slotSize) ? slotSize : null;
+            picked.backlogCatchUp = isSaturdayBacklogDay;
+          }
+        });
+      }
+    }
+
+    function bumpSlotForwardFromDate(dateStr, slotSize) {
+      const occupant = appState.tasks.find(t =>
+        t.status === 'active' &&
+        t.recurrence !== 'daily_habit' &&
+        t.scheduledDate === dateStr &&
+        getTaskSlot(t) === slotSize
+      );
+      if (!occupant) return;
+      const nextDateStr = toDateStr(addDays(parseDateStr(dateStr), 1));
+      bumpSlotForwardFromDate(nextDateStr, slotSize);
+      occupant.scheduledDate = nextDateStr;
+      // Option B: Task got bumped back in line, grant +5 bump priority boost
+      occupant.bumpPoints = Number(occupant.bumpPoints || 0) + 5;
+    }
+
+    // One-Tap Reorganizer: Clears current/future schedule, reprioritizes from Today forward, and boosts bumped tasks
+    window.reorganizeSchedule = function() {
+      const todayStr = toDateStr(new Date());
+      const prevDates = {};
+
+      // Wake up any snoozed tasks and ensure any task missing a status is active
+      appState.tasks.forEach(t => {
+        if (!t.status || t.status === 'snoozed') {
+          t.status = 'active';
+          t.snoozedUntil = null;
+        }
+      });
+
+      const activeTasks = appState.tasks.filter(t => t.status === 'active' && t.recurrence !== 'daily_habit');
+      if (activeTasks.length === 0) {
+        if (!cloudAccount) {
+          alert('Your Task List currently has 0 tasks in this browser tab (see "Task List (0)" at the top).\n\nâ€¢ If your tasks are in your Cloud Sync account, click "â˜ï¸ Sign In to Sync" in the top-right corner to pull them in.\nâ€¢ If your tasks were saved on your local index.html file, open that tab and sign into Cloud Sync there first.\nâ€¢ Or click "+ New Task" to add tasks!');
+        } else {
+          alert('You currently have 0 active tasks in your Task List to schedule. Click "+ New Task" to add some!');
+        }
+        return;
+      }
+
+      // Clear any partial-win slot locks from Today forward so every slot can be freshly filled
+      if (appState.dayMeta) {
+        Object.keys(appState.dayMeta).forEach(dKey => {
+          if (dKey >= todayStr && appState.dayMeta[dKey]) {
+            appState.dayMeta[dKey].partialWinMinor = null;
+            appState.dayMeta[dKey].partialWinMajor = null;
+          }
+        });
+      }
+
+      // 1. Record previous scheduled dates & clear non-fixed active tasks' scheduled dates
+      //    (Also detach any completed task sitting on Today so Reorganize can fill Today with fresh active tasks!)
+      appState.tasks.forEach(t => {
+        if (t.status === 'completed' && t.scheduledDate && t.scheduledDate >= todayStr) {
+          t.scheduledDate = null;
+          t.slotOverride = null;
+          return;
+        }
+        if (t.status === 'active' && t.recurrence !== 'daily_habit') {
+          if (t.scheduledDate) {
+            prevDates[t.id] = t.scheduledDate;
+            if (t.scheduledDate < todayStr) {
+              t.rolledOver = true;
+            }
+          }
+          // Keep future fixed-date recurring tasks (e.g. Every Monday, 1st of Month) pinned to their target date
+          if (isFixedDateRecurrence(t.recurrence) && t.scheduledDate && t.scheduledDate > todayStr) {
+            return;
+          }
+          t.scheduledDate = null;
+          t.slotOverride = null;
+          t.backlogCatchUp = false;
+        }
+      });
+
+      // 2. Run auto-scheduler to deal tasks from Today forward in fresh priority order
+      runAutoScheduler();
+
+      // 3. Option B: Any task that was previously scheduled and got pushed to a later date (or off the 2-week board) gets +5 pts!
+      let boostedCount = 0;
+      appState.tasks.forEach(t => {
+        const oldDate = prevDates[t.id];
+        if (oldDate && (!t.scheduledDate || t.scheduledDate > oldDate)) {
+          t.bumpPoints = Number(t.bumpPoints || 0) + 5;
+          boostedCount++;
+        }
+      });
+
+      // If bump points changed scores, re-clear and immediately re-run runAutoScheduler() so slots are filled!
+      if (boostedCount > 0) {
+        appState.tasks.forEach(t => {
+          if (t.status === 'active' && t.recurrence !== 'daily_habit') {
+            if (isFixedDateRecurrence(t.recurrence) && t.scheduledDate && t.scheduledDate > todayStr) {
+              return;
+            }
+            t.scheduledDate = null;
+            t.slotOverride = null;
+            t.backlogCatchUp = false;
+          }
+        });
+        runAutoScheduler();
+      }
+
+      appState.focusDate = todayStr;
+      appState.selectedSunday = toDateStr(getSundayOfWeek(new Date()));
+      persistAndSync();
+
+      // Visual feedback on the Reorganize buttons
+      ['btnReorganizeMain', 'btnReorganizeTasks'].forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          const orig = btn.innerHTML;
+          btn.innerHTML = 'âœ“ Reorganized!';
+          setTimeout(() => { btn.innerHTML = orig; }, 1600);
+        }
+      });
+    };
+
+    // =====================================================
+    // 4. PERSISTENCE & GOOGLE FIREBASE REALTIME CLOUD SYNC
+    // =====================================================
+    const CLOUD_AUTH_STORAGE_KEY = 'one_minor_one_major_cloud_account_v4';
+    const FIREBASE_URL_STORAGE_KEY = 'one_minor_one_major_firebase_url_v4';
+    // Once you create your Firebase Realtime Database, we can also put its URL right here so it's pre-configured on every device:
+    const DEFAULT_FIREBASE_DB_URL = 'https://one-minor-one-major-default-rtdb.firebaseio.com';
+    const KVDB_BUCKET_URL = 'https://kvdb.io/C8a1jp7J38SN8ZeH8VdVFv';
+
+    // Built-in recovery backup of robert_leebailey@yahoo.com's encrypted vault so zero tasks are ever lost during migration
+    const RECOVERED_VAULT_SEED = null;
+
+    let syncDebounceTimer = null;
+    let isSyncingNow = false;
+    let hasPendingLocalEdit = false;
+    let liveSseSource = null;
+    let activeFirebaseRef = null;
+    let activeFirebaseUrl = null;
+
+    let cloudAccount = (() => {
+      try {
+        return JSON.parse(localStorage.getItem(CLOUD_AUTH_STORAGE_KEY)) || null;
+      } catch (e) {
+        return null;
+      }
+    })();
+
+    function normalizeFirebaseDbUrl(rawUrl) {
+      const clean = String(rawUrl || '').trim().replace(/\/+$/, '');
+      if (!clean || !clean.startsWith('https://')) return '';
+      return clean;
+    }
+
+    function getActiveFirebaseDbUrl() {
+      const fromInputEl = document.getElementById('cloudFirebaseUrlInput');
+      if (fromInputEl && fromInputEl.value && fromInputEl.value.trim()) {
+        const norm = normalizeFirebaseDbUrl(fromInputEl.value);
+        if (norm) return norm;
+      }
+      const saved = normalizeFirebaseDbUrl(localStorage.getItem(FIREBASE_URL_STORAGE_KEY));
+      if (saved) return saved;
+      if (cloudAccount && cloudAccount.firebaseDbUrl) {
+        return normalizeFirebaseDbUrl(cloudAccount.firebaseDbUrl);
+      }
+      return normalizeFirebaseDbUrl(DEFAULT_FIREBASE_DB_URL);
+    }
+
+    window.saveFirebaseUrlFromInput = function() {
+      const el = document.getElementById('cloudFirebaseUrlInput');
+      if (!el) return;
+      const norm = normalizeFirebaseDbUrl(el.value);
+      if (norm) {
+        localStorage.setItem(FIREBASE_URL_STORAGE_KEY, norm);
+        if (cloudAccount) {
+          cloudAccount.firebaseDbUrl = norm;
+          localStorage.setItem(CLOUD_AUTH_STORAGE_KEY, JSON.stringify(cloudAccount));
+          pushStateToCloud();
+          startLiveCrossDeviceListener();
+        }
+      } else {
+        localStorage.removeItem(FIREBASE_URL_STORAGE_KEY);
+      }
+    };
+
+    function getFirebaseDbInstance(dbUrl) {
+      if (!dbUrl || typeof firebase === 'undefined') return null;
+      try {
+        if (!firebase.apps || firebase.apps.length === 0) {
+          firebase.initializeApp({ databaseURL: dbUrl });
+          activeFirebaseUrl = dbUrl;
+        } else if (activeFirebaseUrl !== dbUrl) {
+          const appName = 'app_' + btoa(dbUrl).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
+          const existing = firebase.apps.find(a => a.name === appName);
+          const app = existing || firebase.initializeApp({ databaseURL: dbUrl }, appName);
+          return firebase.database(app);
+        }
+        return firebase.database();
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function getVaultTopicForEmailHash(emailHash) {
+      return '1m1m_vault_' + String(emailHash || '').slice(0, 24);
+    }
+
+    function getVaultKeyForEmailHash(emailHash) {
+      return 'vault_' + String(emailHash || '').slice(0, 24);
+    }
+
+    function generateChangeId() {
+      return 'chg_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+    }
+
+    async function fetchCloudEnvelope(emailHash) {
+      const key = getVaultKeyForEmailHash(emailHash);
+      const fbUrl = getActiveFirebaseDbUrl();
+
+      // 1. Primary: Official Google Firebase Realtime Database
+      if (fbUrl) {
+        try {
+          const fbRes = await fetch(`${fbUrl}/vaults/${key}.json?_=${Date.now()}`, { cache: 'no-store' });
+          if (fbRes.ok) {
+            const envObj = await fbRes.json();
+            if (envObj && envObj.cipher) return envObj;
+          }
+        } catch (e) {}
+      }
+
+      // 2. Fallback: KVDB bucket (if migrating from previous sync)
+      try {
+        const res = await fetch(`${KVDB_BUCKET_URL}/${key}?_=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) {
+          const envObj = await res.json();
+          if (envObj && envObj.cipher) return envObj;
+        }
+      } catch (e) {}
+
+      // 3. Built-in encrypted recovery seed for robert_leebailey@yahoo.com
+      if (key === 'vault_e7fb13be337db5a4137cbd30' && RECOVERED_VAULT_SEED && RECOVERED_VAULT_SEED.cipher) {
+        return RECOVERED_VAULT_SEED;
+      }
+
+      return null;
+    }
+
+    function checkAndAutoUpdateHostedBuild() {
+      // No-op: Hosted permanently on GitHub Pages (never redirects to third-party pastebins)
+    }
+
+    function utf8ToBytes(str) {
+      return new TextEncoder().encode(str);
+    }
+
+    function bytesToUtf8(bytes) {
+      return new TextDecoder().decode(bytes);
+    }
+
+    function bytesToHex(bytes) {
+      return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function hexToBytes(hex) {
+      const out = new Uint8Array(hex.length / 2);
+      for (let i = 0; i < out.length; i++) {
+        out[i] = parseInt(hex.substr(i * 2, 2), 16);
+      }
+      return out;
+    }
+
+    const SHA256_K = new Uint32Array([
+      0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+      0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+      0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+      0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+      0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+      0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+      0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+    ]);
+
+    function sha256Bytes(msgBytes) {
+      const l = msgBytes.length;
+      const bitLenHi = Math.floor((l * 8) / 0x100000000);
+      const bitLenLo = (l * 8) >>> 0;
+      const padLen = ((l + 9 + 63) & ~63);
+      const buf = new Uint8Array(padLen);
+      buf.set(msgBytes);
+      buf[l] = 0x80;
+      const dv = new DataView(buf.buffer);
+      dv.setUint32(padLen - 8, bitLenHi, false);
+      dv.setUint32(padLen - 4, bitLenLo, false);
+
+      let h0 = 0x6a09e667, h1 = 0xbb67ae85, h2 = 0x3c6ef372, h3 = 0xa54ff53a;
+      let h4 = 0x510e527f, h5 = 0x9b05688c, h6 = 0x1f83d9ab, h7 = 0x5be0cd19;
+      const w = new Uint32Array(64);
+
+      for (let off = 0; off < padLen; off += 64) {
+        for (let i = 0; i < 16; i++) w[i] = dv.getUint32(off + i * 4, false);
+        for (let i = 16; i < 64; i++) {
+          const s0 = ((w[i - 15] >>> 7) | (w[i - 15] << 25)) ^ ((w[i - 15] >>> 18) | (w[i - 15] << 14)) ^ (w[i - 15] >>> 3);
+          const s1 = ((w[i - 2] >>> 17) | (w[i - 2] << 15)) ^ ((w[i - 2] >>> 19) | (w[i - 2] << 13)) ^ (w[i - 2] >>> 10);
+          w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+        }
+        let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
+        for (let i = 0; i < 64; i++) {
+          const S1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
+          const ch = (e & f) ^ (~e & g);
+          const t1 = (h + S1 + ch + SHA256_K[i] + w[i]) >>> 0;
+          const S0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
+          const maj = (a & b) ^ (a & c) ^ (b & c);
+          const t2 = (S0 + maj) >>> 0;
+          h = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+        }
+        h0 = (h0 + a) >>> 0; h1 = (h1 + b) >>> 0; h2 = (h2 + c) >>> 0; h3 = (h3 + d) >>> 0;
+        h4 = (h4 + e) >>> 0; h5 = (h5 + f) >>> 0; h6 = (h6 + g) >>> 0; h7 = (h7 + h) >>> 0;
+      }
+
+      const out = new Uint8Array(32);
+      const outDv = new DataView(out.buffer);
+      [h0, h1, h2, h3, h4, h5, h6, h7].forEach((v, idx) => outDv.setUint32(idx * 4, v, false));
+      return out;
+    }
+
+    function deriveAccountKeys(email, password) {
+      const cleanEmail = email.toLowerCase().trim();
+      const emailHash = bytesToHex(sha256Bytes(utf8ToBytes('1m1m_email_v4:' + cleanEmail)));
+      let seed = utf8ToBytes(`1m1m_key_v4:${cleanEmail}:${password}`);
+      for (let i = 0; i < 2500; i++) {
+        const roundBuf = new Uint8Array(seed.length + 4);
+        roundBuf.set(seed);
+        roundBuf[seed.length] = (i >>> 24) & 0xff;
+        roundBuf[seed.length + 1] = (i >>> 16) & 0xff;
+        roundBuf[seed.length + 2] = (i >>> 8) & 0xff;
+        roundBuf[seed.length + 3] = i & 0xff;
+        seed = sha256Bytes(roundBuf);
+      }
+      const encKeyHex = bytesToHex(sha256Bytes(utf8ToBytes('enc:' + bytesToHex(seed))));
+      const macKeyHex = bytesToHex(sha256Bytes(utf8ToBytes('mac:' + bytesToHex(seed))));
+      const liveTopic = getVaultTopicForEmailHash(emailHash);
+      return { email: cleanEmail, emailHash, encKeyHex, macKeyHex, liveTopic };
+    }
+
+    function encryptStatePayload(plainObj, encKeyHex, macKeyHex) {
+      const plainBytes = utf8ToBytes(JSON.stringify(plainObj));
+      const nonceBytes = new Uint8Array(16);
+      if (window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(nonceBytes);
+      } else {
+        for (let i = 0; i < 16; i++) nonceBytes[i] = Math.floor(Math.random() * 256);
+      }
+      const nonceHex = bytesToHex(nonceBytes);
+      const cipherBytes = new Uint8Array(plainBytes.length);
+
+      for (let blockIdx = 0; blockIdx * 32 < plainBytes.length; blockIdx++) {
+        const ks = sha256Bytes(utf8ToBytes(`${encKeyHex}:${nonceHex}:${blockIdx}`));
+        const offset = blockIdx * 32;
+        for (let j = 0; j < 32 && offset + j < plainBytes.length; j++) {
+          cipherBytes[offset + j] = plainBytes[offset + j] ^ ks[j];
+        }
+      }
+
+      const cipherHex = bytesToHex(cipherBytes);
+      const macHex = bytesToHex(sha256Bytes(utf8ToBytes(`${macKeyHex}:${nonceHex}:${cipherHex}`)));
+      const verifyTag = bytesToHex(sha256Bytes(utf8ToBytes(`verify:${macKeyHex}`)));
+      return {
+        v: 4,
+        changeId: plainObj.changeId || generateChangeId(),
+        nonce: nonceHex,
+        cipher: cipherHex,
+        mac: macHex,
+        verifyTag,
+        updatedAt: plainObj.updatedAt || Date.now()
+      };
+    }
+
+    function decryptStatePayload(envelope, encKeyHex, macKeyHex) {
+      if (!envelope || !envelope.nonce || !envelope.cipher || !envelope.mac) {
+        throw new Error('INVALID_ENVELOPE');
+      }
+      const expectedMac = bytesToHex(sha256Bytes(utf8ToBytes(`${macKeyHex}:${envelope.nonce}:${envelope.cipher}`)));
+      if (expectedMac !== envelope.mac) {
+        throw new Error('WRONG_PASSWORD');
+      }
+      const cipherBytes = hexToBytes(envelope.cipher);
+      const plainBytes = new Uint8Array(cipherBytes.length);
+      for (let blockIdx = 0; blockIdx * 32 < cipherBytes.length; blockIdx++) {
+        const ks = sha256Bytes(utf8ToBytes(`${encKeyHex}:${envelope.nonce}:${blockIdx}`));
+        const offset = blockIdx * 32;
+        for (let j = 0; j < 32 && offset + j < cipherBytes.length; j++) {
+          plainBytes[offset + j] = cipherBytes[offset + j] ^ ks[j];
+        }
+      }
+      return JSON.parse(bytesToUtf8(plainBytes));
+    }
+
+    function setSyncBadge(state, text) {
+      const dot = document.getElementById('syncStatusDot');
+      const lbl = document.getElementById('syncStatusLabel');
+      const modalBadge = document.getElementById('driveModalStatusBadge');
+      if (dot) {
+        dot.className = 'sync-dot ' + (state === 'syncing' ? 'syncing' : (state === 'ok' ? '' : 'local'));
+      }
+      if (lbl) lbl.textContent = text;
+      if (modalBadge) modalBadge.textContent = text;
+    }
+
+    // Called whenever the user makes ANY change on this device
+    function persistAndSync() {
+      appState.updatedAt = Date.now();
+      appState.changeId = generateChangeId();
+      hasPendingLocalEdit = true;
+      runAutoScheduler();
+      localStorage.setItem(STORAGE_KEY_V4, JSON.stringify(appState));
+      renderAll();
+      scheduleCloudPush();
+    }
+
+    function scheduleCloudPush() {
+      if (!cloudAccount || !cloudAccount.emailHash) {
+        setSyncBadge('local', 'â˜ï¸ Sign In to Sync');
+        return;
+      }
+      setSyncBadge('syncing', 'Syncing...');
+      clearTimeout(syncDebounceTimer);
+      syncDebounceTimer = setTimeout(() => {
+        pushStateToCloud();
+      }, 60);
+    }
+
+    async function pushStateToCloud() {
+      if (!cloudAccount || !cloudAccount.emailHash) return;
+      if (isSyncingNow) {
+        setTimeout(() => { if (hasPendingLocalEdit) pushStateToCloud(); }, 250);
+        return;
+      }
+      isSyncingNow = true;
+      setSyncBadge('syncing', 'Syncing...');
+      try {
+        if (!appState.changeId) appState.changeId = generateChangeId();
+        const pushedChangeId = appState.changeId;
+        const encryptedEnvelope = encryptStatePayload(appState, cloudAccount.encKeyHex, cloudAccount.macKeyHex);
+        const vaultKey = getVaultKeyForEmailHash(cloudAccount.emailHash);
+        const vaultTopic = getVaultTopicForEmailHash(cloudAccount.emailHash);
+        const bodyStr = JSON.stringify(encryptedEnvelope);
+        const fbUrl = getActiveFirebaseDbUrl();
+
+        let pushedOk = false;
+
+        // 1. Primary: Official Google Firebase Realtime Database
+        if (fbUrl) {
+          try {
+            const fbRes = await fetch(`${fbUrl}/vaults/${vaultKey}.json`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: bodyStr
+            });
+            if (fbRes.ok) pushedOk = true;
+          } catch (fbErr) {}
+        }
+
+        // 2. Secondary backup mirror to KVDB + ntfy push notification
+        try {
+          const kvRes = await fetch(`${KVDB_BUCKET_URL}/${vaultKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+            body: bodyStr
+          });
+          if (kvRes.ok) pushedOk = true;
+        } catch (kvErr) {}
+
+        fetch(`https://ntfy.sh/${vaultTopic}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body: `SYNC:${pushedChangeId}`
+        }).catch(() => {});
+
+        if (!pushedOk && fbUrl) {
+          throw new Error('FIREBASE_PUSH_FAILED');
+        }
+
+        if (appState.changeId === pushedChangeId) {
+          hasPendingLocalEdit = false;
+        }
+        cloudAccount.vaultId = vaultKey;
+        cloudAccount.liveTopic = vaultTopic;
+        cloudAccount.lastSyncedChangeId = pushedChangeId;
+        if (fbUrl) cloudAccount.firebaseDbUrl = fbUrl;
+        localStorage.setItem(CLOUD_AUTH_STORAGE_KEY, JSON.stringify(cloudAccount));
+        localStorage.setItem(STORAGE_KEY_V4, JSON.stringify(appState));
+        setSyncBadge('ok', `âœ“ Synced â€¢ ${cloudAccount.email}`);
+      } catch (e) {
+        setSyncBadge('local', 'Offline â€¢ Saved Locally');
+      } finally {
+        isSyncingNow = false;
+      }
+    }
+
+    function applyIncomingCloudEnvelope(envObj) {
+      if (!envObj || !envObj.cipher || !cloudAccount) return;
+      const remoteChangeId = envObj.changeId || String(envObj.updatedAt || '');
+      const localChangeId = appState.changeId || String(appState.updatedAt || '');
+
+      if (remoteChangeId && remoteChangeId === localChangeId && cloudAccount.lastSyncedChangeId === remoteChangeId) {
+        setSyncBadge('ok', `âœ“ Synced â€¢ ${cloudAccount.email}`);
+        return;
+      }
+
+      const remoteState = decryptStatePayload(envObj, cloudAccount.encKeyHex, cloudAccount.macKeyHex);
+      if (remoteState && Array.isArray(remoteState.tasks)) {
+        // Safety guard: never overwrite non-empty local tasks with an empty remote state
+        if (remoteState.tasks.length === 0 && Array.isArray(appState.tasks) && appState.tasks.length > 0) {
+          pushStateToCloud();
+          return;
+        }
+        const keepFocus = appState.focusDate;
+        appState = remoteState;
+        appState.changeId = remoteChangeId;
+        appState.focusDate = keepFocus;
+        runAutoScheduler();
+        localStorage.setItem(STORAGE_KEY_V4, JSON.stringify(appState));
+        cloudAccount.lastSyncedChangeId = remoteChangeId;
+        localStorage.setItem(CLOUD_AUTH_STORAGE_KEY, JSON.stringify(cloudAccount));
+        renderAll();
+        setSyncBadge('ok', `âœ“ Synced â€¢ ${cloudAccount.email}`);
+      }
+    }
+
+    // Pulls changes from the cloud ONLY on initial load, app foreground focus, or when pushed via live event
+    async function pullStateFromCloud(isSilentPush) {
+      if (!cloudAccount || !cloudAccount.emailHash || isSyncingNow) return;
+      if (hasPendingLocalEdit) {
+        await pushStateToCloud();
+        return;
+      }
+      isSyncingNow = true;
+      if (!isSilentPush) {
+        setSyncBadge('syncing', 'Syncing...');
+      }
+      try {
+        const envObj = await fetchCloudEnvelope(cloudAccount.emailHash);
+        if (!envObj || !envObj.cipher) {
+          isSyncingNow = false;
+          if (Array.isArray(appState.tasks) && appState.tasks.length > 0) {
+            await pushStateToCloud();
+          } else {
+            setSyncBadge('ok', `âœ“ Synced â€¢ ${cloudAccount.email}`);
+          }
+          return;
+        }
+        applyIncomingCloudEnvelope(envObj);
+      } catch (e) {
+        if (!isSilentPush) {
+          setSyncBadge('local', 'Offline â€¢ Saved Locally');
+        }
+      } finally {
+        isSyncingNow = false;
+      }
+    }
+
+    // Pure event-driven push listener (ZERO background polling!)
+    function startLiveCrossDeviceListener() {
+      if (activeFirebaseRef) {
+        try { activeFirebaseRef.off(); } catch (e) {}
+        activeFirebaseRef = null;
+      }
+      if (liveSseSource) {
+        try { liveSseSource.close(); } catch (e) {}
+        liveSseSource = null;
+      }
+      if (!cloudAccount || !cloudAccount.emailHash) return;
+
+      const vaultKey = getVaultKeyForEmailHash(cloudAccount.emailHash);
+      const fbUrl = getActiveFirebaseDbUrl();
+
+      // 1. Official Google Firebase Realtime WebSocket Push Listener (<100ms latency, zero polling)
+      const fbDb = getFirebaseDbInstance(fbUrl);
+      if (fbDb) {
+        try {
+          activeFirebaseRef = fbDb.ref('vaults/' + vaultKey);
+          activeFirebaseRef.on('value', (snapshot) => {
+            try {
+              const envObj = snapshot ? snapshot.val() : null;
+              if (envObj && envObj.cipher && !hasPendingLocalEdit && !isSyncingNow) {
+                applyIncomingCloudEnvelope(envObj);
+              }
+            } catch (e) {}
+          });
+        } catch (e) {}
+      }
+
+      // 2. Also keep SSE push listener active for instant wakeups
+      if (typeof EventSource !== 'undefined') {
+        try {
+          const vaultTopic = getVaultTopicForEmailHash(cloudAccount.emailHash);
+          liveSseSource = new EventSource(`https://ntfy.sh/${vaultTopic}/sse`);
+          liveSseSource.onmessage = (ev) => {
+            try {
+              const msg = JSON.parse(ev.data);
+              const raw = String(msg.message || '');
+              if (raw.startsWith('SYNC:')) {
+                const parts = raw.split(':');
+                const incomingChangeId = (parts[1] || '').trim();
+                if (incomingChangeId && incomingChangeId !== appState.changeId && !hasPendingLocalEdit) {
+                  pullStateFromCloud(true);
+                }
+              }
+            } catch (e) {}
+          };
+        } catch (e) {}
+      }
+    }
+
+    window.signInOrCreateCloudAccount = async function() {
+      saveFirebaseUrlFromInput();
+      const email = (document.getElementById('cloudEmailInput').value || '').trim();
+      const password = document.getElementById('cloudPasswordInput').value || '';
+      const errEl = document.getElementById('cloudAuthErrorMsg');
+      const btn = document.getElementById('btnCloudSignInSubmit');
+      errEl.style.display = 'none';
+
+      if (!email || !email.includes('@')) {
+        errEl.textContent = 'Please enter a valid email address.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (password.length < 4) {
+        errEl.textContent = 'Please enter a password (at least 4 characters).';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Connecting & Encrypting...';
+
+      try {
+        const keys = deriveAccountKeys(email, password);
+        const expectedVerifyTag = bytesToHex(sha256Bytes(utf8ToBytes(`verify:${keys.macKeyHex}`)));
+
+        const envObj = await fetchCloudEnvelope(keys.emailHash);
+
+        if (envObj && envObj.cipher) {
+          if (envObj.verifyTag && envObj.verifyTag.slice(0, 16) !== expectedVerifyTag.slice(0, 16)) {
+            errEl.textContent = 'Incorrect password for this email account.';
+            errEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'â˜ï¸ Sign In & Sync';
+            return;
+          }
+          try {
+            const remoteState = decryptStatePayload(envObj, keys.encKeyHex, keys.macKeyHex);
+            if (remoteState && Array.isArray(remoteState.tasks) && remoteState.tasks.length > 0) {
+              const keepFocus = appState.focusDate;
+              appState = remoteState;
+              appState.changeId = envObj.changeId || remoteState.changeId || generateChangeId();
+              appState.focusDate = keepFocus;
+              hasPendingLocalEdit = false;
+            }
+          } catch (decErr) {
+            errEl.textContent = 'Incorrect password for this email account.';
+            errEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'â˜ï¸ Sign In & Sync';
+            return;
+          }
+        }
+
+        const fbUrl = getActiveFirebaseDbUrl();
+        cloudAccount = {
+          email: keys.email,
+          emailHash: keys.emailHash,
+          encKeyHex: keys.encKeyHex,
+          macKeyHex: keys.macKeyHex,
+          liveTopic: keys.liveTopic,
+          vaultId: getVaultKeyForEmailHash(keys.emailHash),
+          firebaseDbUrl: fbUrl || null,
+          lastSyncedChangeId: appState.changeId || null
+        };
+        localStorage.setItem(CLOUD_AUTH_STORAGE_KEY, JSON.stringify(cloudAccount));
+        runAutoScheduler();
+        localStorage.setItem(STORAGE_KEY_V4, JSON.stringify(appState));
+        renderAll();
+        if (Array.isArray(appState.tasks) && appState.tasks.length > 0) {
+          appState.changeId = appState.changeId || generateChangeId();
+          await pushStateToCloud();
+        } else {
+          setSyncBadge('ok', `âœ“ Synced â€¢ ${cloudAccount.email}`);
+        }
+        startLiveCrossDeviceListener();
+        closeDriveModal();
+      } catch (err) {
+        errEl.textContent = err.message || 'Sign-in failed. Please try again.';
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'â˜ï¸ Sign In & Sync';
+      }
+    };
+
+    window.disconnectCloudAccount = function() {
+      cloudAccount = null;
+      localStorage.removeItem(CLOUD_AUTH_STORAGE_KEY);
+      if (activeFirebaseRef) {
+        try { activeFirebaseRef.off(); } catch (e) {}
+        activeFirebaseRef = null;
+      }
+      if (liveSseSource) {
+        try { liveSseSource.close(); } catch (e) {}
+        liveSseSource = null;
+      }
+      setSyncBadge('local', 'â˜ï¸ Sign In to Sync');
+      openDriveModal();
+    };
+
+    window.addEventListener('focus', () => {
+      checkAndAutoUpdateHostedBuild();
+      if (cloudAccount) pullStateFromCloud(true);
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkAndAutoUpdateHostedBuild();
+        if (cloudAccount) pullStateFromCloud(true);
+      }
+    });
+
+    // =====================================================
+    // 5. RENDERING ENGINE (TODAY, TASK LIST, WEEKLY/PRINT)
+    // =====================================================
+    function renderAll() {
+      runAutoScheduler();
+
+      // Update active task counter in navbar
+      const activeCount = appState.tasks.filter(t => t.status === 'active' && t.recurrence !== 'daily_habit').length;
+      document.getElementById('navActiveTaskCount').textContent = String(activeCount);
+
+      renderTodayFocusView();
+      renderTaskListView();
+      renderWeeklyAndPrintView();
+    }
+
+    // -----------------------------------------------------
+    // VIEW 1: MAIN SCREEN (STARTS ON DAILY VIEW, TOGGLES TO WEEKLY VIEW)
+    // -----------------------------------------------------
+    function renderTodayFocusView() {
+      const dStr = appState.focusDate || toDateStr(new Date());
+      const todayStr = toDateStr(new Date());
+      const meta = ensureDayMeta(dStr);
+      const isWeeklyMode = (mainScreenScheduleMode === 'weekly');
+
+      // Update Main Screen Daily / Weekly Switcher UI
+      const btnDaily = document.getElementById('btnMainModeDaily');
+      const btnWeekly = document.getElementById('btnMainModeWeekly');
+      const hintLbl = document.getElementById('mainModeHintLabel');
+      const dailyHdr = document.getElementById('mainDailyHeaderControls');
+      const weeklyHdr = document.getElementById('mainWeeklyHeaderControls');
+      const dailyGrid = document.getElementById('todayFocusCardsGrid');
+      const weeklyPanel = document.getElementById('mainScreenWeeklyPanel');
+
+      if (btnDaily) btnDaily.classList.toggle('active', !isWeeklyMode);
+      if (btnWeekly) btnWeekly.classList.toggle('active', isWeeklyMode);
+      if (hintLbl) {
+        hintLbl.textContent = isWeeklyMode
+          ? 'Showing 7-day weekly view on main screen'
+          : 'Showing 1 Minor + 1 Major for selected day';
+      }
+      if (dailyHdr) dailyHdr.style.display = isWeeklyMode ? 'none' : 'flex';
+      if (weeklyHdr) weeklyHdr.style.display = isWeeklyMode ? 'flex' : 'none';
+      if (dailyGrid) dailyGrid.style.display = isWeeklyMode ? 'none' : 'grid';
+      if (weeklyPanel) weeklyPanel.style.display = isWeeklyMode ? 'flex' : 'none';
+
+      document.getElementById('todayDateHeading').textContent = formatFullDayHeading(dStr);
+      document.getElementById('btnJumpToday').style.display = (dStr !== todayStr) ? 'inline-flex' : 'none';
+
+      const lowBtn = document.getElementById('btnTodayLowEnergy');
+      lowBtn.classList.toggle('active', !!meta.lowEnergy);
+      lowBtn.textContent = meta.lowEnergy ? 'ðŸ”‹ Low Energy Mode (ON)' : 'ðŸ”‹ Low Energy Mode';
+
+      // Populate Day Category Preference dropdown
+      const catSel = document.getElementById('todayCatPrefSelect');
+      catSel.innerHTML = `<option value="all">All Categories</option>` +
+        appState.categories.map(c => `<option value="${c.id}" ${meta.preferredCategory === c.id ? 'selected' : ''}>Prefer ${escapeHtml(c.name)}</option>`).join('');
+
+      // 1. Render Daily Habits Strip
+      const habits = appState.tasks.filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit');
+      const habitsListEl = document.getElementById('todayHabitsList');
+      if (habits.length === 0) {
+        habitsListEl.innerHTML = `<span style="font-size:0.8rem; color:var(--muted);">No daily routines yet. Tap <strong>+ Add Daily Habit</strong> for recurring habits (like reading or exercise) so they don't take up your 1 Minor / 1 Major slot.</span>`;
+      } else {
+        habitsListEl.innerHTML = habits.map(h => {
+          const hKey = `${dStr}_${h.id}`;
+          const isDone = !!appState.habitCompletions[hKey];
+          return `
+            <div class="habit-pill ${isDone ? 'done' : ''}" onclick="toggleDailyHabit('${dStr}', '${h.id}')">
+              <span>${isDone ? 'âœ“' : 'â—‹'}</span>
+              <span>${escapeHtml(h.title)}</span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 2. Render Strictly 2 Cards: 1 Minor Thing + 1 Major Thing
+      const minorTask = getSlotTaskForDate(dStr, 'minor');
+      const majorTask = getSlotTaskForDate(dStr, 'major');
+
+      const gridEl = document.getElementById('todayFocusCardsGrid');
+      gridEl.innerHTML =
+        buildFocusCardHtml(dStr, 'minor', minorTask, meta.partialWinMinor) +
+        buildFocusCardHtml(dStr, 'major', majorTask, meta.partialWinMajor);
+    }
+
+    function buildFocusCardHtml(dateStr, slotSize, task, partialWinRecord) {
+      const isMinor = slotSize === 'minor';
+      const badgeText = isMinor ? 'âœ“ MINOR THING (<30m Quick Win)' : 'â˜… MAJOR THING (Main Focus)';
+
+      // Check if user already claimed a Model C Partial Subtask Win for this slot today
+      if (!task && partialWinRecord) {
+        return `
+          <div class="focus-card ${slotSize} is-completed">
+            <div>
+              <div class="focus-card-top">
+                <span class="slot-badge">${badgeText}</span>
+                <span class="tag-pill" style="background:#d1fae5; color:#047857;">âœ“ Today's Progress Win!</span>
+              </div>
+              <div class="focus-main-row" style="margin-top:14px;">
+                <div class="big-check-circle checked">âœ“</div>
+                <div class="focus-title-wrap">
+                  <div class="focus-task-title">${escapeHtml(partialWinRecord.title)}</div>
+                  <div class="focus-task-notes" style="text-decoration:none; color:#047857; font-weight:700;">
+                    Completed ${partialWinRecord.doneCount} of ${partialWinRecord.totalCount} steps today! Remaining steps rolled to tomorrow.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="focus-card-footer">
+              <span style="font-size:0.76rem; color:var(--muted);">Slot completed for today</span>
+              <button class="btn-card-action" onclick="clearPartialWinAndFill('${dateStr}', '${slotSize}')">Pull Another Task Anyway</button>
+            </div>
+          </div>
+        `;
+      }
+
+      if (!task) {
+        return `
+          <div class="focus-card ${slotSize}">
+            <div>
+              <div class="focus-card-top">
+                <span class="slot-badge">${badgeText}</span>
+              </div>
+              <div style="padding:24px 8px; text-align:center; color:var(--muted);">
+                <div style="font-size:1rem; font-weight:700; margin-bottom:6px;">No ${isMinor ? 'Minor' : 'Major'} Thing Scheduled</div>
+                <div style="font-size:0.82rem; margin-bottom:14px;">Pick an existing task from your list or create a new one:</div>
+                <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+                  <button onclick="openRoadblockModal(null, '${dateStr}', '${slotSize}')" style="background:#fff; border:1.5px solid var(--border-strong); font-weight:700;">ðŸ“‹ Pick from Task List</button>
+                  <button class="btn-primary-add" onclick="openTaskWizard({ defaultSize: '${slotSize}', targetDate: '${dateStr}' })">+ Create New Task</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      const isCompleted = task.status === 'completed';
+      const catObj = appState.categories.find(c => c.id === task.category);
+      const catLabel = catObj ? catObj.name : 'âœ¨ Personal';
+      const energyLabel = task.energy === 'low' ? 'ðŸ”‹ Low' : (task.energy === 'med' ? 'âš¡ Med' : 'ðŸ”¥ High');
+
+      const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
+      const doneSteps = subtasks.filter(s => s.done).length;
+      const hasPartialProgress = !isCompleted && subtasks.length > 0 && doneSteps > 0 && doneSteps < subtasks.length;
+
+      const subtasksHtml = `
+        <div class="subtasks-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.74rem; font-weight:800; color:var(--muted);">
+            <span>STEPS / CHECKLIST (${doneSteps}/${subtasks.length})</span>
+            ${subtasks.length > 0 ? `<span>${Math.round((doneSteps / subtasks.length) * 100)}%</span>` : ''}
+          </div>
+          ${subtasks.map(st => `
+            <label class="subtask-item ${st.done ? 'done' : ''}">
+              <input type="checkbox" ${st.done ? 'checked' : ''} onchange="toggleSubtaskOnCard('${task.id}', '${st.id}', this.checked)" />
+              <span>${escapeHtml(st.title)}</span>
+            </label>
+          `).join('')}
+          <div class="subtask-quick-add">
+            <input type="text" id="quickSub_${task.id}" placeholder="+ Add a step..." onkeydown="if(event.key==='Enter'){event.preventDefault();quickAddSubtask('${task.id}');}" />
+            <button style="padding:4px 9px; font-size:0.75rem;" onclick="quickAddSubtask('${task.id}')">Add</button>
+          </div>
+          ${hasPartialProgress ? `
+            <button class="btn-partial-win" onclick="claimPartialSubtaskWin('${dateStr}', '${task.id}')">
+              âœ“ Count Progress (${doneSteps}/${subtasks.length} steps) as Today's Win &amp; Continue Tomorrow
+            </button>
+          ` : ''}
+        </div>
+      `;
+
+      const effScore = getEffectiveScore(task);
+      const totalBoost = getTaskAgeBonus(task) + getTaskBumpBonus(task);
+      const recBadge = getRecurrenceBadgeText(task);
+
+      return `
+        <div class="focus-card ${slotSize} ${isCompleted ? 'is-completed' : ''}">
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="focus-card-top">
+              <span class="slot-badge">${badgeText}</span>
+              <div class="slot-meta-tags">
+                ${task.backlogCatchUp ? `<span class="tag-pill" style="background:#fef3c7; color:#b45309;">ðŸ•°ï¸ Oldest Backlog Pick</span>` : ''}
+                ${recBadge ? `<span class="tag-pill" style="background:#eff6ff; color:#1d4ed8;">${escapeHtml(recBadge)}</span>` : ''}
+                <span class="tag-pill">${escapeHtml(catLabel)}</span>
+                <span class="tag-pill">${energyLabel}</span>
+                <span class="tag-pill" title="Base ${task.score || 80} pts + ${getTaskAgeBonus(task)} age + ${getTaskBumpBonus(task)} bump">${effScore} pts${totalBoost > 0 ? ` (+${totalBoost})` : ''}</span>
+              </div>
+            </div>
+
+            <div class="focus-main-row">
+              <div class="big-check-circle ${isCompleted ? 'checked' : ''}" onclick="toggleTaskComplete('${task.id}')">
+                ${isCompleted ? 'âœ“' : ''}
+              </div>
+              <div class="focus-title-wrap" onclick="openTaskWizard({ editTaskId: '${task.id}' })" title="Tap to edit details & notes">
+                <div class="focus-task-title">${escapeHtml(task.title)}</div>
+                ${task.notes ? `<div class="focus-task-notes">${escapeHtml(task.notes)}</div>` : `<div class="focus-task-notes" style="color:var(--muted); font-style:italic;">+ Tap to add notes or details...</div>`}
+              </div>
+            </div>
+
+            ${subtasksHtml}
+          </div>
+
+          <div class="focus-card-footer">
+            <button class="btn-card-action" onclick="openTaskWizard({ editTaskId: '${task.id}' })">ðŸ“ Details / Notes</button>
+            <button class="btn-card-action" onclick="openRoadblockModal('${task.id}', '${dateStr}')">â­ï¸ Delay / Roadblock / Swap</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // -----------------------------------------------------
+    // VIEW 2: MICROSOFT TO DO / GOOGLE TASKS LIST VIEW
+    // -----------------------------------------------------
+    function renderTaskListView() {
+      const sidebarEl = document.getElementById('categoriesSidebar');
+      const activeRegular = appState.tasks.filter(t => t.status === 'active' && t.recurrence !== 'daily_habit');
+      const habitsCount = appState.tasks.filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit').length;
+      const snoozedCount = appState.tasks.filter(t => t.status === 'snoozed').length;
+      const blockedCount = appState.tasks.filter(t => t.status === 'blocked').length;
+
+      let catHtml = `
+        <button class="cat-nav-item ${selectedListFilter === 'all' ? 'active' : ''}" onclick="selectTaskListFilter('all')">
+          <span>ðŸ“‹ All Active Tasks</span>
+          <span class="cat-count-badge">${activeRegular.length}</span>
+        </button>
+      `;
+
+      appState.categories.forEach(c => {
+        const cnt = activeRegular.filter(t => t.category === c.id).length;
+        catHtml += `
+          <button class="cat-nav-item ${selectedListFilter === c.id ? 'active' : ''}" onclick="selectTaskListFilter('${c.id}')">
+            <span>${escapeHtml(c.name)}</span>
+            <span class="cat-count-badge">${cnt}</span>
+          </button>
+        `;
+      });
+
+      catHtml += `
+        <div style="height:1px; background:var(--border); margin:6px 0;"></div>
+        <button class="cat-nav-item ${selectedListFilter === 'habits' ? 'active' : ''}" onclick="selectTaskListFilter('habits')">
+          <span>ðŸ”„ Daily Habits</span>
+          <span class="cat-count-badge">${habitsCount}</span>
+        </button>
+        <button class="cat-nav-item ${selectedListFilter === 'snoozed' ? 'active' : ''}" onclick="selectTaskListFilter('snoozed')">
+          <span>â³ Snoozed</span>
+          <span class="cat-count-badge">${snoozedCount}</span>
+        </button>
+        <button class="cat-nav-item ${selectedListFilter === 'blocked' ? 'active' : ''}" onclick="selectTaskListFilter('blocked')">
+          <span>ðŸš§ Blocked / Waiting</span>
+          <span class="cat-count-badge">${blockedCount}</span>
+        </button>
+        <button class="cat-nav-item" style="color:var(--primary); margin-top:4px;" onclick="promptNewCategory()">
+          <span>+ New Category List</span>
+        </button>
+      `;
+      sidebarEl.innerHTML = catHtml;
+
+      // Filter tasks for main panel
+      let filtered = [];
+      let title = 'All Active Tasks';
+      if (selectedListFilter === 'all') {
+        filtered = activeRegular;
+      } else if (selectedListFilter === 'habits') {
+        filtered = appState.tasks.filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit');
+        title = 'ðŸ”„ Daily Habits & Routines';
+      } else if (selectedListFilter === 'snoozed') {
+        filtered = appState.tasks.filter(t => t.status === 'snoozed');
+        title = 'â³ Snoozed Tasks';
+      } else if (selectedListFilter === 'blocked') {
+        filtered = appState.tasks.filter(t => t.status === 'blocked');
+        title = 'ðŸš§ Blocked / Waiting Tasks';
+      } else {
+        const cObj = appState.categories.find(c => c.id === selectedListFilter);
+        title = cObj ? cObj.name : 'Category Tasks';
+        filtered = activeRegular.filter(t => t.category === selectedListFilter);
+      }
+
+      filtered.sort((a, b) => getEffectiveScore(b) - getEffectiveScore(a));
+      document.getElementById('currentListTitle').textContent = title;
+
+      const listEl = document.getElementById('todoActiveList');
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div style="text-align:center; padding:32px 16px; color:var(--muted); border:1.5px dashed var(--border-strong); border-radius:12px;">
+            No tasks in this list right now. Click <strong>+ Add Task</strong> to add one!
+          </div>
+        `;
+      } else {
+        listEl.innerHTML = filtered.map(t => buildTodoRowHtml(t, false)).join('');
+      }
+
+      // Render Collapsible Completed Section
+      const completedTasks = appState.tasks
+        .filter(t => t.status === 'completed')
+        .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
+
+      document.getElementById('completedCountLabel').textContent = String(completedTasks.length);
+      const compListEl = document.getElementById('todoCompletedList');
+      compListEl.style.display = showCompletedAccordion ? 'flex' : 'none';
+      document.getElementById('completedAccordionArrow').textContent = showCompletedAccordion ? 'â–´' : 'â–¾';
+      compListEl.innerHTML = completedTasks.map(t => buildTodoRowHtml(t, true)).join('');
+    }
+
+    function buildTodoRowHtml(task, isCompleted) {
+      const catObj = appState.categories.find(c => c.id === task.category);
+      const catName = catObj ? catObj.name : 'âœ¨ Personal';
+      const subTotal = Array.isArray(task.subtasks) ? task.subtasks.length : 0;
+      const subDone = subTotal > 0 ? task.subtasks.filter(s => s.done).length : 0;
+      const effScore = getEffectiveScore(task);
+      const ageBonus = getTaskAgeBonus(task);
+      const bumpBonus = getTaskBumpBonus(task);
+      const totalBoost = ageBonus + bumpBonus;
+      const recBadge = getRecurrenceBadgeText(task);
+
+      let statusBadge = '';
+      if (task.status === 'blocked') {
+        statusBadge = `<span class="badge-blocked">ðŸš§ Blocked${task.blockerNote ? ': ' + escapeHtml(task.blockerNote) : ''}</span>`;
+      } else if (task.status === 'snoozed') {
+        statusBadge = `<span class="badge-snoozed">â³ Snoozed until ${escapeHtml(task.snoozedUntil || '')}</span>`;
+      } else if (task.scheduledDate && !isCompleted) {
+        statusBadge = `<span style="color:var(--primary); font-weight:700;">ðŸ“… Scheduled: ${formatShortDate(parseDateStr(task.scheduledDate))}${task.backlogCatchUp ? ' (ðŸ•°ï¸ Oldest Backlog Slot)' : ''}</span>`;
+      }
+
+      return `
+        <div class="todo-item-row ${isCompleted ? 'completed' : ''}" onclick="openTaskWizard({ editTaskId: '${task.id}' })">
+          <div class="todo-item-left">
+            <div class="todo-check ${task.size} ${isCompleted ? 'checked' : ''}" onclick="event.stopPropagation(); toggleTaskComplete('${task.id}')">
+              ${isCompleted ? 'âœ“' : ''}
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div class="todo-item-title">${escapeHtml(task.title)}</div>
+              ${task.notes ? `<div style="font-size:0.8rem; color:#475569; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(task.notes)}</div>` : ''}
+              <div class="todo-item-submeta">
+                <span class="${task.size === 'minor' ? 'badge-size-minor' : 'badge-size-major'}">${task.size === 'minor' ? 'âœ“ Minor' : 'â˜… Major'}</span>
+                <span title="Base ${task.score || 80} pts + ${ageBonus} age + ${bumpBonus} bump">${effScore} pts${totalBoost > 0 ? ` (+${totalBoost} boost)` : ''}</span>
+                <span>${escapeHtml(catName)}</span>
+                ${recBadge ? `<span style="color:#1d4ed8; font-weight:700;">${escapeHtml(recBadge)}</span>` : ''}
+                ${subTotal > 0 ? `<span>â˜‘ï¸ ${subDone}/${subTotal} steps</span>` : ''}
+                ${statusBadge}
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:6px;" onclick="event.stopPropagation();">
+            ${task.status === 'blocked' || task.status === 'snoozed' ? `
+              <button style="font-size:0.75rem; padding:4px 9px; background:#ecfdf5; border-color:#6ee7b7; color:#047857;" onclick="unblockOrWakeTask('${task.id}')">Unblock / Wake</button>
+            ` : (!isCompleted && task.recurrence !== 'daily_habit' ? `
+              <button style="font-size:0.75rem; padding:4px 9px;" onclick="pinTaskToToday('${task.id}')" title="Slot directly into Today">âž” Today</button>
+            ` : '')}
+          </div>
+        </div>
+      `;
+    }
+
+    // -----------------------------------------------------
+    // VIEW 3: 7-DAY WEEKLY SCHEDULE & PRINT GUIDES
+    // -----------------------------------------------------
+    function renderWeeklyAndPrintView() {
+      const sunDate = getSundayOfWeek(parseDateStr(appState.selectedSunday));
+      const sunStr = toDateStr(sunDate);
+      appState.selectedSunday = sunStr;
+
+      const rangeText = formatWeekRangeLabel(sunDate);
+      document.getElementById('weekRangeHeading').textContent = rangeText;
+      document.getElementById('weekDatePickerInput').value = sunStr;
+      document.getElementById('printWeeksSelect').value = String(appState.weeksCount || 2);
+
+      const mainRangeEl = document.getElementById('mainWeekRangeHeading');
+      const mainPickerEl = document.getElementById('mainWeekDatePickerInput');
+      if (mainRangeEl) mainRangeEl.textContent = rangeText;
+      if (mainPickerEl) mainPickerEl.value = sunStr;
+
+      const rowsContainer = document.getElementById('weeklyGridRows');
+      const mainScreenRowsContainer = document.getElementById('mainScreenWeeklyGridRows');
+      const todayStr = toDateStr(new Date());
+
+      const weekRowsHtml = DAYS.map(day => {
+        const cellDate = addDays(sunDate, day.offset);
+        const dStr = toDateStr(cellDate);
+        const isToday = dStr === todayStr;
+        const meta = ensureDayMeta(dStr);
+        const minorTask = getSlotTaskForDate(dStr, 'minor');
+        const majorTask = getSlotTaskForDate(dStr, 'major');
+
+        return `
+          <div class="week-row-grid" style="${isToday ? 'background:#f8fafc; border-radius:12px; padding:10px;' : ''}">
+            <div class="week-day-col">
+              <div>
+                <div style="font-size:0.86rem; font-weight:800; color:${isToday ? 'var(--primary)' : 'var(--text)'};">
+                  ${day.short} ${isToday ? 'â€¢ TODAY' : ''}
+                </div>
+                <div style="font-size:0.8rem; color:var(--muted);">${formatShortDate(cellDate)}</div>
+              </div>
+              <div style="display:flex; gap:6px; margin-top:6px;">
+                <button style="font-size:0.72rem; padding:3px 8px;" onclick="openDayInTodayView('${dStr}')">â˜€ï¸ Daily View</button>
+                <button style="font-size:0.72rem; padding:3px 7px; ${meta.lowEnergy ? 'background:var(--low-bg); border-color:#eab308;' : ''}" onclick="toggleDayLowEnergy('${dStr}')" title="Toggle Low Energy">ðŸ”‹</button>
+              </div>
+            </div>
+
+            ${buildWeekSlotCellHtml(dStr, 'minor', minorTask)}
+            ${buildWeekSlotCellHtml(dStr, 'major', majorTask)}
+          </div>
+        `;
+      }).join('');
+
+      if (rowsContainer) rowsContainer.innerHTML = weekRowsHtml;
+      if (mainScreenRowsContainer) mainScreenRowsContainer.innerHTML = weekRowsHtml;
+
+      renderPrintableContainers(sunDate);
+    }
+
+    function buildWeekSlotCellHtml(dateStr, slotSize, task) {
+      const label = slotSize === 'minor' ? 'âœ“ Minor Thing' : 'â˜… Major Thing';
+      if (!task) {
+        return `
+          <div class="week-slot-card ${slotSize}" style="opacity:0.75;">
+            <div style="display:flex; justify-content:space-between; font-size:0.72rem; font-weight:800; opacity:0.85;">
+              <span>${label}</span>
+              <div style="display:flex; gap:4px;">
+                <button style="font-size:0.7rem; padding:2px 7px;" onclick="openRoadblockModal(null, '${dateStr}', '${slotSize}')">ðŸ“‹ Pick</button>
+                <button style="font-size:0.7rem; padding:2px 7px;" onclick="openTaskWizard({ defaultSize: '${slotSize}', targetDate: '${dateStr}' })">+ New</button>
+              </div>
+            </div>
+            <div style="font-size:0.82rem; color:var(--muted); font-style:italic;">Open slot</div>
+          </div>
+        `;
+      }
+
+      const isDone = task.status === 'completed';
+      return `
+        <div class="week-slot-card ${slotSize}">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase;">${label}</span>
+            <div style="display:flex; gap:4px;">
+              <button style="font-size:0.7rem; padding:2px 7px;" onclick="openRoadblockModal('${task.id}', '${dateStr}')">Delay / Swap</button>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="openTaskWizard({ editTaskId: '${task.id}' })">
+            <input type="checkbox" ${isDone ? 'checked' : ''} onclick="event.stopPropagation(); toggleTaskComplete('${task.id}')" style="width:16px; height:16px;" />
+            <strong style="font-size:0.9rem; ${isDone ? 'text-decoration:line-through; color:var(--muted);' : ''}">${escapeHtml(task.title)}</strong>
+          </div>
+          ${task.notes ? `<div style="font-size:0.76rem; color:#475569;">${escapeHtml(task.notes)}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function renderPrintableContainers(baseSundayDate) {
+      const count = parseInt(appState.weeksCount, 10) || 2;
+      const colHeaderHtml = `
+        <div class="pocket-col-headers">
+          <span>Day</span>
+          <span>âœ“ Minor Thing</span>
+          <span>â˜… Major Thing</span>
+        </div>
+      `;
+
+      let pocketHtml = '';
+      let fullHtml = '';
+
+      for (let w = 0; w < count; w++) {
+        const weekSundayDate = addDays(baseSundayDate, w * 7);
+        const shouldBreakPageAfter = (w % 2 === 1) && (w < count - 1);
+        const isTopHalf = (w % 2 === 0) && (w < count - 1);
+
+        let leftDaysHtml = colHeaderHtml;
+        for (let i = 0; i < 4; i++) {
+          leftDaysHtml += buildPocketDayRowHtml(weekSundayDate, DAYS[i]);
+        }
+
+        let rightDaysHtml = colHeaderHtml;
+        for (let i = 4; i < 7; i++) {
+          rightDaysHtml += buildPocketDayRowHtml(weekSundayDate, DAYS[i]);
+        }
+
+        const topUnscheduled = appState.tasks
+          .filter(t => t.status === 'active' && t.recurrence !== 'daily_habit')
+          .slice(0, 4)
+          .map(t => `â€¢ ${t.title}`)
+          .join('\n');
+
+        rightDaysHtml += `
+          <div class="pocket-notes-row">
+            <div class="pocket-day-cell">
+              <span class="p-day">LIST</span>
+              <span class="p-date">Queue</span>
+            </div>
+            <div class="pocket-notes-content">${escapeHtml(topUnscheduled)}</div>
+          </div>
+        `;
+
+        pocketHtml += `
+          <div class="pocket-card ${shouldBreakPageAfter ? 'print-page-break' : ''}">
+            <div class="pocket-cut-guide">
+              <span>âœ‚ Cut Border â€¢ 1 Minor + 1 Major</span>
+              <span>â”† Fold</span>
+              <span>${formatWeekRangeLabel(weekSundayDate)}</span>
+            </div>
+            <div class="pocket-grid">
+              <div class="pocket-half left-half">${leftDaysHtml}</div>
+              <div class="pocket-half right-half">${rightDaysHtml}</div>
+            </div>
+          </div>
+        `;
+
+        // Full Sheet Half-Page Block
+        const fullRows = DAYS.map(day => {
+          const cellDate = addDays(weekSundayDate, day.offset);
+          const dStr = toDateStr(cellDate);
+          const minT = getSlotTaskForDate(dStr, 'minor');
+          const majT = getSlotTaskForDate(dStr, 'major');
+          return `
+            <div style="display:grid; grid-template-columns:68px 1fr 1fr; gap:6px; border:1px solid #000; border-radius:4px; padding:3px 6px; margin-bottom:3px;">
+              <div style="border-right:1px solid #999; padding-right:5px;">
+                <div style="font-size:8pt; font-weight:800;">${day.short}</div>
+                <div style="font-size:7pt;">${formatShortDate(cellDate)}</div>
+              </div>
+              <div style="border:1px solid #555; border-radius:3px; padding:2px 5px;">
+                <div style="font-size:6.5pt; font-weight:800;">âœ“ MINOR THING</div>
+                <div style="font-size:8pt; font-weight:700;">${minT && minT.status === 'completed' ? 'â˜‘' : 'â˜'} ${escapeHtml(minT ? minT.title : '')}</div>
+                <div style="font-size:7pt; height:14px; overflow:hidden;">${escapeHtml(minT ? minT.notes : '')}</div>
+              </div>
+              <div style="border:1px solid #555; border-radius:3px; padding:2px 5px;">
+                <div style="font-size:6.5pt; font-weight:800;">â˜… MAJOR THING</div>
+                <div style="font-size:8pt; font-weight:700;">${majT && majT.status === 'completed' ? 'â˜‘' : 'â˜'} ${escapeHtml(majT ? majT.title : '')}</div>
+                <div style="font-size:7pt; height:14px; overflow:hidden;">${escapeHtml(majT ? majT.notes : '')}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        fullHtml += `
+          <div class="print-week-sheet ${isTopHalf ? 'print-top-half' : ''} ${shouldBreakPageAfter ? 'print-page-break' : ''}">
+            <div style="display:flex; justify-content:space-between; border-bottom:1.5px solid #000; padding-bottom:3px; margin-bottom:5px;">
+              <strong style="font-size:11pt;">1 Minor + 1 Major</strong>
+              <strong style="font-size:9.5pt;">${formatWeekRangeLabel(weekSundayDate)}</strong>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 170px; gap:8px;">
+              <div>${fullRows}</div>
+              <div style="border:1px solid #000; border-radius:4px; padding:5px;">
+                <div style="font-size:7.5pt; font-weight:800; margin-bottom:4px;">TOP TASK LIST</div>
+                <div style="font-size:7.5pt; white-space:pre-wrap;">${escapeHtml(topUnscheduled)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('walletPreviewContainer').innerHTML = pocketHtml;
+      document.getElementById('StandalonePocketPrint').innerHTML = pocketHtml;
+      document.getElementById('fullPrintSheetsContainer').innerHTML = fullHtml;
+    }
+
+    function buildPocketDayRowHtml(weekSundayDate, day) {
+      const cellDate = addDays(weekSundayDate, day.offset);
+      const dStr = toDateStr(cellDate);
+      const minT = getSlotTaskForDate(dStr, 'minor');
+      const majT = getSlotTaskForDate(dStr, 'major');
+      return `
+        <div class="pocket-day-row">
+          <div class="pocket-day-cell">
+            <span class="p-day">${day.mShort}</span>
+            <span class="p-date">${formatShortDate(cellDate)}</span>
+          </div>
+          <div class="pocket-task-col p-minor">
+            <div class="pocket-title-line">
+              <span class="pocket-checkbox">${minT && minT.status === 'completed' ? 'âœ“' : ''}</span>
+              <span class="pocket-task-title">${escapeHtml(minT ? minT.title : '')}</span>
+            </div>
+            <div class="pocket-task-notes">${escapeHtml(minT ? minT.notes : '')}</div>
+          </div>
+          <div class="pocket-task-col p-major">
+            <div class="pocket-title-line">
+              <span class="pocket-checkbox">${majT && majT.status === 'completed' ? 'âœ“' : ''}</span>
+              <span class="pocket-task-title">${escapeHtml(majT ? majT.title : '')}</span>
+            </div>
+            <div class="pocket-task-notes">${escapeHtml(majT ? majT.notes : '')}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // =====================================================
+    // 6. USER ACTIONS & TASK / SUBTASK HANDLERS
+    // =====================================================
+    window.switchMainView = function(view) {
+      currentMainView = view;
+      document.getElementById('viewToday').style.display = (view === 'today') ? 'flex' : 'none';
+      document.getElementById('viewTasks').style.display = (view === 'tasks') ? 'block' : 'none';
+      document.getElementById('viewWeek').style.display = (view === 'week') ? 'block' : 'none';
+
+      document.getElementById('navBtnToday').classList.toggle('active', view === 'today');
+      document.getElementById('navBtnTasks').classList.toggle('active', view === 'tasks');
+      document.getElementById('navBtnWeek').classList.toggle('active', view === 'week');
+
+      const mNavToday = document.getElementById('mNavToday');
+      const mNavTasks = document.getElementById('mNavTasks');
+      const mNavWeek = document.getElementById('mNavWeek');
+      if (mNavToday) mNavToday.classList.toggle('active', view === 'today' || view === 'week');
+      if (mNavTasks) mNavTasks.classList.toggle('active', view === 'tasks');
+      if (mNavWeek) mNavWeek.classList.toggle('active', view === 'week');
+
+      renderAll();
+    };
+
+    window.setMainScreenScheduleMode = function(mode) {
+      mainScreenScheduleMode = (mode === 'weekly') ? 'weekly' : 'daily';
+      if (mainScreenScheduleMode === 'weekly' && appState.focusDate) {
+        appState.selectedSunday = toDateStr(getSundayOfWeek(parseDateStr(appState.focusDate)));
+      }
+      if (currentMainView !== 'today') {
+        switchMainView('today');
+      } else {
+        renderAll();
+      }
+    };
+
+    window.shiftFocusDate = function(delta) {
+      const cur = parseDateStr(appState.focusDate);
+      appState.focusDate = toDateStr(addDays(cur, delta));
+      renderAll();
+    };
+
+    window.jumpFocusToToday = function() {
+      appState.focusDate = toDateStr(new Date());
+      renderAll();
+    };
+
+    window.openDayInTodayView = function(dateStr) {
+      appState.focusDate = dateStr;
+      mainScreenScheduleMode = 'daily';
+      switchMainView('today');
+    };
+
+    window.onChangeDayCategoryPref = function(catId) {
+      const meta = ensureDayMeta(appState.focusDate);
+      meta.preferredCategory = catId;
+      // Release uncompleted tasks on this day that don't match so the preferred category slots in
+      if (catId !== 'all') {
+        appState.tasks.forEach(t => {
+          if (t.status === 'active' && t.scheduledDate === appState.focusDate && t.category !== catId) {
+            t.scheduledDate = null;
+          }
+        });
+      }
+      persistAndSync();
+    };
+
+    window.toggleDayLowEnergy = function(dateStr) {
+      const meta = ensureDayMeta(dateStr);
+      meta.lowEnergy = !meta.lowEnergy;
+
+      // Release auto-scheduled tasks on future days (> dateStr) so the scheduler can pull the best match into today!
+      appState.tasks.forEach(t => {
+        if (t.status === 'active' && t.recurrence !== 'daily_habit' && t.scheduledDate && t.scheduledDate > dateStr) {
+          t.scheduledDate = null;
+          t.slotOverride = null;
+        }
+      });
+
+      if (meta.lowEnergy) {
+        // Release high/med energy tasks on this day so low-energy tasks (or lowest available) slot in
+        appState.tasks.forEach(t => {
+          if (t.status === 'active' && t.scheduledDate === dateStr && t.energy !== 'low') {
+            t.scheduledDate = null;
+            t.slotOverride = null;
+          }
+        });
+      } else {
+        // Turning Low Energy OFF: release today's auto-slotted tasks so the highest-priority Major & Minor tasks reclaim today
+        appState.tasks.forEach(t => {
+          if (t.status === 'active' && t.scheduledDate === dateStr) {
+            t.scheduledDate = null;
+            t.slotOverride = null;
+          }
+        });
+      }
+      persistAndSync();
+    };
+
+    window.toggleDailyHabit = function(dateStr, habitId) {
+      const key = `${dateStr}_${habitId}`;
+      appState.habitCompletions[key] = !appState.habitCompletions[key];
+      persistAndSync();
+    };
+
+    function spawnNextRecurrenceIfNeeded(task) {
+      if (!task || !task.recurrence || task.recurrence === 'none' || task.recurrence === 'daily_habit') return;
+      const baseDate = parseDateStr(task.scheduledDate || toDateStr(new Date()));
+      const nextDate = computeNextRecurrenceDate(baseDate, task, false);
+      const nextStr = toDateStr(nextDate);
+      bumpSlotForwardFromDate(nextStr, task.size);
+      appState.tasks.push({
+        ...task,
+        id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        status: 'active',
+        completedAt: null,
+        scheduledDate: nextStr,
+        slotOverride: null,
+        rolledOver: false,
+        backlogCatchUp: false,
+        bumpPoints: 0,
+        createdAt: Date.now(),
+        subtasks: (task.subtasks || []).map(s => ({ ...s, done: false }))
+      });
+    }
+
+    function handleEarlyCompletionReplacement(task) {
+      if (!task) return;
+      const todayStr = toDateStr(new Date());
+      // If a task scheduled for a future day (> todayStr) is completed early, detach it from that future slot
+      // and release future auto-scheduled tasks from that day onward so an active task immediately replaces it!
+      if (task.scheduledDate && task.scheduledDate > todayStr) {
+        const clearedDate = task.scheduledDate;
+        task.scheduledDate = null;
+        task.slotOverride = null;
+        appState.tasks.forEach(t => {
+          if (t.status === 'active' && t.recurrence !== 'daily_habit' && t.scheduledDate && t.scheduledDate >= clearedDate) {
+            if (isFixedDateRecurrence(t.recurrence)) return;
+            t.scheduledDate = null;
+            t.slotOverride = null;
+            t.backlogCatchUp = false;
+          }
+        });
+      }
+    }
+
+    window.toggleTaskComplete = function(taskId) {
+      const task = appState.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      if (task.status === 'completed') {
+        task.status = 'active';
+        task.completedAt = null;
+      } else {
+        task.status = 'completed';
+        task.completedAt = Date.now();
+        // If it's a recurring slot task, spawn the next occurrence automatically!
+        spawnNextRecurrenceIfNeeded(task);
+        // If completed early from a future slot, clear it from the future date so an active task replaces it
+        handleEarlyCompletionReplacement(task);
+      }
+      persistAndSync();
+    };
+
+    window.toggleSubtaskOnCard = function(taskId, subtaskId, checked) {
+      const task = appState.tasks.find(t => t.id === taskId);
+      if (!task || !Array.isArray(task.subtasks)) return;
+      const st = task.subtasks.find(s => s.id === subtaskId);
+      if (st) st.done = checked;
+
+      // If all subtasks are now checked, automatically complete the parent task!
+      if (task.subtasks.length > 0 && task.subtasks.every(s => s.done)) {
+        const wasCompleted = (task.status === 'completed');
+        task.status = 'completed';
+        task.completedAt = Date.now();
+        if (!wasCompleted) {
+          spawnNextRecurrenceIfNeeded(task);
+          handleEarlyCompletionReplacement(task);
+        }
+      } else if (task.status === 'completed') {
+        task.status = 'active';
+        task.completedAt = null;
+      }
+      persistAndSync();
+    };
+
+    window.quickAddSubtask = function(taskId) {
+      const inp = document.getElementById('quickSub_' + taskId);
+      if (!inp || !inp.value.trim()) return;
+      const task = appState.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      if (!Array.isArray(task.subtasks)) task.subtasks = [];
+      task.subtasks.push({
+        id: 'st_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+        title: inp.value.trim(),
+        done: false
+      });
+      inp.value = '';
+      persistAndSync();
+    };
+
+    // Model C: Claim Partial Subtask Progress as Today's Win & Roll Remaining Steps to Tomorrow
+    window.claimPartialSubtaskWin = function(dateStr, taskId) {
+      const task = appState.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
+      const doneCount = subtasks.filter(s => s.done).length;
+      const totalCount = subtasks.length;
+
+      const meta = ensureDayMeta(dateStr);
+      const winObj = {
+        title: task.title,
+        doneCount,
+        totalCount,
+        timestamp: Date.now()
+      };
+      if (task.size === 'minor') meta.partialWinMinor = winObj;
+      else meta.partialWinMajor = winObj;
+
+      // Keep only unfinished subtasks on the rolling task (or keep checked ones visible for context)
+      const tomStr = toDateStr(addDays(parseDateStr(dateStr), 1));
+      bumpSlotForwardFromDate(tomStr, task.size);
+      task.scheduledDate = tomStr;
+      persistAndSync();
+    };
+
+    window.clearPartialWinAndFill = function(dateStr, slotSize) {
+      const meta = ensureDayMeta(dateStr);
+      if (slotSize === 'minor') meta.partialWinMinor = null;
+      else meta.partialWinMajor = null;
+      persistAndSync();
+    };
+
+    // =====================================================
+    // 7. 4-QUESTION WIZARD & TASK DETAIL MODAL
+    // =====================================================
+    let wizEditingTaskId = null;
+    let wizTargetDate = null;
+    let wizTempSubtasks = [];
+    let wizAnswers = { size: 'minor', urgency: 40, impact: 35, energy: 'low' };
+
+    window.setWizAnswer = function(field, val) {
+      wizAnswers[field] = val;
+      const groupMap = {
+        size: 'qGroupSize',
+        urgency: 'qGroupUrgency',
+        impact: 'qGroupImpact',
+        energy: 'qGroupEnergy'
+      };
+      const container = document.getElementById(groupMap[field]);
+      if (container) {
+        container.querySelectorAll('.choice-pill').forEach(el => {
+          el.classList.toggle('selected', el.getAttribute('data-val') === String(val));
+        });
+      }
+      const score = computePriorityScore(wizAnswers.urgency, wizAnswers.impact, wizAnswers.energy);
+      document.getElementById('wizScoreBadge').textContent = `${score} pts`;
+    };
+
+    function populateMonthlyDateOptions() {
+      const sel = document.getElementById('wizMonthlyDateSelect');
+      if (!sel || sel.options.length > 0) return;
+      let html = '';
+      for (let d = 1; d <= 31; d++) {
+        html += `<option value="${d}">${getOrdinalSuffix(d)} of the month</option>`;
+      }
+      html += `<option value="last">Last day of the month</option>`;
+      sel.innerHTML = html;
+    }
+
+    window.onWizRecurrenceChange = function() {
+      populateMonthlyDateOptions();
+      const rec = document.getElementById('wizRecurrenceSelect').value;
+      document.getElementById('wizPriorityQuestionsBox').style.display = (rec === 'daily_habit') ? 'none' : 'block';
+
+      const detailBox = document.getElementById('wizRecurrenceDetailBox');
+      const wkRow = document.getElementById('wizWeeklyPickerRow');
+      const mDateRow = document.getElementById('wizMonthlyDatePickerRow');
+      const mWdayRow = document.getElementById('wizMonthlyWeekdayPickerRow');
+
+      const showWeekly = (rec === 'weekly_slot');
+      const showMDate = (rec === 'monthly_date_slot');
+      const showMWday = (rec === 'monthly_weekday_slot');
+
+      if (detailBox) detailBox.style.display = (showWeekly || showMDate || showMWday) ? 'flex' : 'none';
+      if (wkRow) wkRow.style.display = showWeekly ? 'flex' : 'none';
+      if (mDateRow) mDateRow.style.display = showMDate ? 'flex' : 'none';
+      if (mWdayRow) mWdayRow.style.display = showMWday ? 'flex' : 'none';
+    };
+
+    function renderWizSubtasks() {
+      const el = document.getElementById('wizSubtasksList');
+      if (wizTempSubtasks.length === 0) {
+        el.innerHTML = `<div style="font-size:0.76rem; color:var(--muted);">No subtasks added yet.</div>`;
+        return;
+      }
+      el.innerHTML = wizTempSubtasks.map((s, idx) => `
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:#fff; padding:5px 9px; border-radius:7px; border:1px solid var(--border);">
+          <label style="display:flex; align-items:center; gap:7px; font-size:0.82rem; flex:1;">
+            <input type="checkbox" ${s.done ? 'checked' : ''} onchange="wizTempSubtasks[${idx}].done = this.checked" />
+            <span>${escapeHtml(s.title)}</span>
+          </label>
+          <button type="button" style="border:none; background:transparent; color:var(--muted); padding:2px 6px;" onclick="wizTempSubtasks.splice(${idx}, 1); renderWizSubtasks();">âœ•</button>
+        </div>
+      `).join('');
+    }
+
+    window.addWizSubtask = function() {
+      const inp = document.getElementById('wizNewSubtaskInput');
+      const val = (inp.value || '').trim();
+      if (!val) return;
+      wizTempSubtasks.push({
+        id: 'st_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+        title: val,
+        done: false
+      });
+      inp.value = '';
+      renderWizSubtasks();
+    };
+
+    window.openTaskWizard = function(opts = {}) {
+      wizEditingTaskId = opts.editTaskId || null;
+      wizTargetDate = opts.targetDate || null;
+      populateMonthlyDateOptions();
+
+      // Populate Category select
+      const catSel = document.getElementById('wizCategorySelect');
+      catSel.innerHTML = appState.categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+
+      const defaultDateObj = parseDateStr(wizTargetDate || appState.focusDate || toDateStr(new Date()));
+
+      if (wizEditingTaskId) {
+        const t = appState.tasks.find(x => x.id === wizEditingTaskId);
+        if (!t) return;
+        document.getElementById('wizModalTitle').textContent = 'Edit Task & Subtasks';
+        document.getElementById('wizTitleInput').value = t.title || '';
+        document.getElementById('wizNotesInput').value = t.notes || '';
+        catSel.value = t.category || 'personal';
+        document.getElementById('wizRecurrenceSelect').value = t.recurrence || 'none';
+        document.getElementById('wizWeeklyDaySelect').value = String(t.recurrenceDayOfWeek ?? defaultDateObj.getDay());
+        document.getElementById('wizMonthlyDateSelect').value = String(t.recurrenceMonthDay || '1');
+        document.getElementById('wizMonthlyNthSelect').value = String(t.recurrenceMonthNth || '1');
+        document.getElementById('wizMonthlyWeekdaySelect').value = String(t.recurrenceDayOfWeek ?? 1);
+        setWizAnswer('size', t.size || 'minor');
+        setWizAnswer('urgency', t.urgency || 40);
+        setWizAnswer('impact', t.impact || 35);
+        setWizAnswer('energy', t.energy || 'low');
+        wizTempSubtasks = JSON.parse(JSON.stringify(t.subtasks || []));
+        document.getElementById('btnDeleteTaskInModal').style.display = 'inline-flex';
+      } else {
+        document.getElementById('wizModalTitle').textContent = opts.defaultHabit ? 'New Daily Habit / Routine' : 'New Task (4 Priority Questions)';
+        document.getElementById('wizTitleInput').value = '';
+        document.getElementById('wizNotesInput').value = '';
+        catSel.value = (selectedListFilter !== 'all' && selectedListFilter !== 'habits' && selectedListFilter !== 'snoozed' && selectedListFilter !== 'blocked')
+          ? selectedListFilter
+          : 'house';
+        document.getElementById('wizRecurrenceSelect').value = opts.defaultHabit ? 'daily_habit' : 'none';
+        document.getElementById('wizWeeklyDaySelect').value = String(defaultDateObj.getDay());
+        document.getElementById('wizMonthlyDateSelect').value = String(defaultDateObj.getDate());
+        document.getElementById('wizMonthlyNthSelect').value = '1';
+        document.getElementById('wizMonthlyWeekdaySelect').value = '1';
+        setWizAnswer('size', opts.defaultSize || 'minor');
+        setWizAnswer('urgency', 40);
+        setWizAnswer('impact', 35);
+        setWizAnswer('energy', 'low');
+        wizTempSubtasks = [];
+        document.getElementById('btnDeleteTaskInModal').style.display = 'none';
+      }
+
+      onWizRecurrenceChange();
+      renderWizSubtasks();
+      document.getElementById('taskWizardModal').classList.add('open');
+      setTimeout(() => document.getElementById('wizTitleInput').focus(), 50);
+    };
+
+    window.closeTaskWizard = function() {
+      document.getElementById('taskWizardModal').classList.remove('open');
+      wizEditingTaskId = null;
+      wizTargetDate = null;
+    };
+
+    window.saveTaskFromWizard = function() {
+      const title = document.getElementById('wizTitleInput').value.trim();
+      if (!title) {
+        alert('Please enter a task title.');
+        return;
+      }
+      // Also capture any un-added text in the subtask input box
+      const pendingSub = document.getElementById('wizNewSubtaskInput').value.trim();
+      if (pendingSub) {
+        wizTempSubtasks.push({
+          id: 'st_' + Date.now() + '_p',
+          title: pendingSub,
+          done: false
+        });
+        document.getElementById('wizNewSubtaskInput').value = '';
+      }
+
+      const notes = document.getElementById('wizNotesInput').value.trim();
+      const category = document.getElementById('wizCategorySelect').value;
+      const recurrence = document.getElementById('wizRecurrenceSelect').value;
+      const score = computePriorityScore(wizAnswers.urgency, wizAnswers.impact, wizAnswers.energy);
+
+      let recurrenceDayOfWeek = null;
+      let recurrenceMonthDay = null;
+      let recurrenceMonthNth = null;
+
+      if (recurrence === 'weekly_slot') {
+        recurrenceDayOfWeek = parseInt(document.getElementById('wizWeeklyDaySelect').value, 10);
+      } else if (recurrence === 'monthly_date_slot') {
+        recurrenceMonthDay = document.getElementById('wizMonthlyDateSelect').value;
+      } else if (recurrence === 'monthly_weekday_slot') {
+        recurrenceMonthNth = document.getElementById('wizMonthlyNthSelect').value;
+        recurrenceDayOfWeek = parseInt(document.getElementById('wizMonthlyWeekdaySelect').value, 10);
+      }
+
+      if (wizEditingTaskId) {
+        const t = appState.tasks.find(x => x.id === wizEditingTaskId);
+        if (t) {
+          t.title = title;
+          t.notes = notes;
+          t.category = category;
+          t.recurrence = recurrence;
+          t.recurrenceDayOfWeek = recurrenceDayOfWeek;
+          t.recurrenceMonthDay = recurrenceMonthDay;
+          t.recurrenceMonthNth = recurrenceMonthNth;
+          t.size = wizAnswers.size;
+          t.urgency = wizAnswers.urgency;
+          t.impact = wizAnswers.impact;
+          t.energy = wizAnswers.energy;
+          t.score = score;
+          t.subtasks = wizTempSubtasks;
+
+          if (isFixedDateRecurrence(recurrence)) {
+            const nextDateObj = computeNextRecurrenceDate(new Date(), t, true);
+            const targetStr = toDateStr(nextDateObj);
+            if (t.scheduledDate !== targetStr) {
+              bumpSlotForwardFromDate(targetStr, t.size);
+              t.scheduledDate = targetStr;
+            }
+          }
+        }
+      } else {
+        const newTask = {
+          id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          title,
+          notes,
+          category,
+          recurrence,
+          recurrenceDayOfWeek,
+          recurrenceMonthDay,
+          recurrenceMonthNth,
+          size: wizAnswers.size,
+          urgency: wizAnswers.urgency,
+          impact: wizAnswers.impact,
+          energy: wizAnswers.energy,
+          score,
+          subtasks: wizTempSubtasks,
+          status: 'active',
+          scheduledDate: wizTargetDate || null,
+          snoozedUntil: null,
+          blockerNote: '',
+          completedAt: null,
+          createdAt: Date.now()
+        };
+
+        if (isFixedDateRecurrence(recurrence)) {
+          const baseObj = wizTargetDate ? parseDateStr(wizTargetDate) : new Date();
+          const nextDateObj = computeNextRecurrenceDate(baseObj, newTask, true);
+          const targetStr = toDateStr(nextDateObj);
+          bumpSlotForwardFromDate(targetStr, newTask.size);
+          newTask.scheduledDate = targetStr;
+        } else if (wizTargetDate && recurrence !== 'daily_habit') {
+          bumpSlotForwardFromDate(wizTargetDate, newTask.size);
+          newTask.scheduledDate = wizTargetDate;
+        }
+        appState.tasks.push(newTask);
+      }
+
+      closeTaskWizard();
+      persistAndSync();
+    };
+
+    window.deleteTaskFromModal = function() {
+      if (!wizEditingTaskId) return;
+      appState.tasks = appState.tasks.filter(t => t.id !== wizEditingTaskId);
+      closeTaskWizard();
+      persistAndSync();
+    };
+
+    // =====================================================
+    // 8. ROADBLOCK / SNOOZE / DELAY / SWAP MODAL
+    // =====================================================
+    let rbContext = null;
+    let rbFilterMode = 'match'; // 'match' | 'all'
+
+    window.setRbFilter = function(mode) {
+      rbFilterMode = mode;
+      const grp = document.getElementById('rbFilterGroup');
+      if (grp) {
+        grp.querySelectorAll('.choice-pill').forEach(el => {
+          el.classList.toggle('selected', el.getAttribute('data-f') === mode);
+        });
+      }
+      renderRbCandidateList();
+    };
+
+    function renderRbCandidateList() {
+      if (!rbContext) return;
+      const { taskId, slotSize } = rbContext;
+      const swapEl = document.getElementById('rbManualSwapList');
+
+      let candidates = appState.tasks
+        .filter(t => t.status === 'active' && t.recurrence !== 'daily_habit' && t.id !== taskId && (rbFilterMode === 'all' || t.size === slotSize))
+        .sort((a, b) => getEffectiveScore(b) - getEffectiveScore(a));
+
+      // If 'match' filter has 0 results, automatically show all active tasks so the user is never stuck!
+      if (candidates.length === 0 && rbFilterMode === 'match') {
+        candidates = appState.tasks
+          .filter(t => t.status === 'active' && t.recurrence !== 'daily_habit' && t.id !== taskId)
+          .sort((a, b) => getEffectiveScore(b) - getEffectiveScore(a));
+      }
+
+      if (candidates.length === 0) {
+        swapEl.innerHTML = `<div style="font-size:0.8rem; color:var(--muted); padding:10px; text-align:center;">No other active tasks in your Task List yet. Click <strong>+ New Task</strong> to add one!</div>`;
+        return;
+      }
+
+      swapEl.innerHTML = candidates.map(c => {
+        const eTag = c.energy === 'low' ? 'ðŸ”‹ Low' : (c.energy === 'med' ? 'âš¡ Med' : 'ðŸ”¥ High');
+        const sTag = c.size === 'major' ? 'â˜… Major' : 'âœ“ Minor';
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 12px; border:1px solid var(--border); border-radius:9px; background:var(--bg); cursor:pointer;" onclick="swapWithSpecificTask('${c.id}')">
+            <div>
+              <div style="font-size:0.86rem; font-weight:700;">${escapeHtml(c.title)}</div>
+              <div style="font-size:0.73rem; color:var(--muted); margin-top:2px;">
+                <strong>${sTag}</strong> â€¢ ${eTag} â€¢ ${getEffectiveScore(c)} pts â€¢ ${c.scheduledDate ? 'Scheduled ' + formatShortDate(parseDateStr(c.scheduledDate)) : 'Unscheduled'}
+              </div>
+            </div>
+            <span style="font-size:0.78rem; font-weight:800; color:var(--primary); white-space:nowrap; margin-left:8px;">Select âž”</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.openRoadblockModal = function(taskId, dateStr, emptySlotSize) {
+      const task = taskId ? appState.tasks.find(t => t.id === taskId) : null;
+      const slotSize = task ? getTaskSlot(task) : (emptySlotSize || 'major');
+      rbContext = { taskId: task ? task.id : null, dateStr, slotSize };
+
+      const secCurrent = document.getElementById('rbSectionCurrentTask');
+      if (task) {
+        secCurrent.style.display = 'flex';
+        document.getElementById('rbModalTitle').textContent = `Delay, Snooze, or Swap Task`;
+        document.getElementById('rbModalSubtitle').textContent = `"${task.title}" (${slotSize === 'minor' ? 'Minor Thing' : 'Major Thing'})`;
+        document.getElementById('rbBlockerNoteInput').value = task.blockerNote || '';
+        document.getElementById('rbSnoozeDateInput').value = '';
+        document.getElementById('rbPickSectionTitle').textContent = 'Or Swap With a Task From Your List:';
+      } else {
+        secCurrent.style.display = 'none';
+        document.getElementById('rbModalTitle').textContent = `Pick ${slotSize === 'minor' ? 'Minor' : 'Major'} Thing for ${formatShortDate(parseDateStr(dateStr))}`;
+        document.getElementById('rbModalSubtitle').textContent = `Select any active task from your list below to schedule it into this slot:`;
+        document.getElementById('rbPickSectionTitle').textContent = 'Available Tasks in Your List:';
+      }
+
+      setRbFilter('match');
+      document.getElementById('roadblockModal').classList.add('open');
+    };
+
+    window.closeRoadblockModal = function() {
+      document.getElementById('roadblockModal').classList.remove('open');
+      rbContext = null;
+    };
+
+    window.executeRoadblockAction = function(action, customDate) {
+      if (!rbContext || !rbContext.taskId) return;
+      const task = appState.tasks.find(t => t.id === rbContext.taskId);
+      if (!task) return;
+      const curDateObj = parseDateStr(rbContext.dateStr);
+
+      // Also release auto-scheduled future tasks so the scheduler can pull the next best task into today!
+      appState.tasks.forEach(t => {
+        if (t.status === 'active' && t.recurrence !== 'daily_habit' && t.id !== task.id && t.scheduledDate && t.scheduledDate > rbContext.dateStr) {
+          t.scheduledDate = null;
+          t.slotOverride = null;
+        }
+      });
+
+      if (action === 'tomorrow') {
+        const tomStr = toDateStr(addDays(curDateObj, 1));
+        task.scheduledDate = tomStr;
+        task.slotOverride = null;
+      } else if (action.startsWith('snooze_')) {
+        let wakeStr = customDate;
+        if (action === 'snooze_2') wakeStr = toDateStr(addDays(curDateObj, 2));
+        if (action === 'snooze_3') wakeStr = toDateStr(addDays(curDateObj, 3));
+        if (action === 'snooze_7') wakeStr = toDateStr(addDays(curDateObj, 7));
+        task.status = 'snoozed';
+        task.snoozedUntil = wakeStr;
+        task.scheduledDate = null;
+        task.slotOverride = null;
+      } else if (action === 'block') {
+        task.status = 'blocked';
+        task.blockerNote = document.getElementById('rbBlockerNoteInput').value.trim();
+        task.scheduledDate = null;
+        task.slotOverride = null;
+      }
+
+      closeRoadblockModal();
+      persistAndSync();
+    };
+
+    window.swapWithSpecificTask = function(replacementId) {
+      if (!rbContext) return;
+      const repTask = appState.tasks.find(t => t.id === replacementId);
+      if (!repTask) return;
+
+      if (rbContext.taskId) {
+        const curTask = appState.tasks.find(t => t.id === rbContext.taskId);
+        if (curTask) {
+          if (curTask.status === 'completed') {
+            // Detach completed task from the slot instead of pushing it onto tomorrow
+            curTask.scheduledDate = null;
+            curTask.slotOverride = null;
+          } else {
+            const tomStr = toDateStr(addDays(parseDateStr(rbContext.dateStr), 1));
+            curTask.scheduledDate = tomStr;
+            curTask.slotOverride = null;
+          }
+        }
+      }
+
+      // Also detach any completed task sitting in this slot on this date so the new active task replaces it
+      appState.tasks.forEach(t => {
+        if (t.status === 'completed' && t.scheduledDate === rbContext.dateStr && getTaskSlot(t) === rbContext.slotSize) {
+          t.scheduledDate = null;
+          t.slotOverride = null;
+        }
+      });
+
+      repTask.scheduledDate = rbContext.dateStr;
+      repTask.slotOverride = (repTask.size !== rbContext.slotSize) ? rbContext.slotSize : null;
+
+      closeRoadblockModal();
+      persistAndSync();
+    };
+
+    // =====================================================
+    // 9. LIST VIEW & WEEKLY VIEW HELPERS
+    // =====================================================
+    window.selectTaskListFilter = function(filterId) {
+      selectedListFilter = filterId;
+      renderTaskListView();
+    };
+
+    window.toggleCompletedAccordion = function() {
+      showCompletedAccordion = !showCompletedAccordion;
+      renderTaskListView();
+    };
+
+    window.promptNewCategory = function() {
+      const name = prompt('Enter new Category / List name (e.g. Yard, Kids, Finance):');
+      if (!name || !name.trim()) return;
+      const id = 'cat_' + Date.now();
+      appState.categories.push({ id, name: 'ðŸ“ ' + name.trim() });
+      selectedListFilter = id;
+      persistAndSync();
+    };
+
+    window.unblockOrWakeTask = function(taskId) {
+      const t = appState.tasks.find(x => x.id === taskId);
+      if (!t) return;
+      t.status = 'active';
+      t.snoozedUntil = null;
+      t.blockerNote = '';
+      persistAndSync();
+    };
+
+    window.pinTaskToToday = function(taskId) {
+      const t = appState.tasks.find(x => x.id === taskId);
+      if (!t) return;
+      const todayStr = appState.focusDate || toDateStr(new Date());
+      // Detach any completed task sitting in this slot on Today so the newly pinned task replaces it
+      appState.tasks.forEach(other => {
+        if (other.status === 'completed' && other.scheduledDate === todayStr && getTaskSlot(other) === t.size) {
+          other.scheduledDate = null;
+          other.slotOverride = null;
+        }
+      });
+      bumpSlotForwardFromDate(todayStr, t.size);
+      t.scheduledDate = todayStr;
+      persistAndSync();
+      switchMainView('today');
+    };
+
+    window.shiftSelectedWeek = function(delta) {
+      const cur = parseDateStr(appState.selectedSunday);
+      appState.selectedSunday = toDateStr(getSundayOfWeek(addDays(cur, delta)));
+      renderAll();
+    };
+
+    window.onPickWeekDate = function(val) {
+      if (!val) return;
+      appState.selectedSunday = toDateStr(getSundayOfWeek(parseDateStr(val)));
+      renderAll();
+    };
+
+    window.jumpWeekToCurrent = function() {
+      appState.selectedSunday = toDateStr(getSundayOfWeek(new Date()));
+      renderAll();
+    };
+
+    window.onChangePrintWeeksCount = function(val) {
+      appState.weeksCount = parseInt(val, 10) || 2;
+      persistAndSync();
+    };
+
+    window.triggerPrintMode = function(mode) {
+      renderWeeklyAndPrintView();
+      document.body.classList.toggle('print-pocket-mode', mode === 'pocket');
+      window.print();
+    };
+
+    window.openDriveModal = function() {
+      const isSignedIn = !!(cloudAccount && cloudAccount.vaultId);
+      const fbInp = document.getElementById('cloudFirebaseUrlInput');
+      if (fbInp) fbInp.value = getActiveFirebaseDbUrl() || '';
+      document.getElementById('cloudAuthFormBox').style.display = isSignedIn ? 'none' : 'flex';
+      document.getElementById('cloudSignedInBox').style.display = isSignedIn ? 'flex' : 'none';
+      document.getElementById('cloudAuthErrorMsg').style.display = 'none';
+      if (isSignedIn) {
+        document.getElementById('cloudSignedInEmailLabel').textContent = cloudAccount.email;
+      }
+      document.getElementById('driveSyncModal').classList.add('open');
+    };
+
+    window.closeDriveModal = function() {
+      document.getElementById('driveSyncModal').classList.remove('open');
+    };
+
+    // Register Service Worker for offline/PWA support
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+
+    // Initialize app on startup
+    renderAll();
+    checkAndAutoUpdateHostedBuild();
+    if (cloudAccount && cloudAccount.emailHash) {
+      setSyncBadge('ok', `âœ“ Synced â€¢ ${cloudAccount.email}`);
+      pullStateFromCloud(false);
+      startLiveCrossDeviceListener();
+    } else {
+      setSyncBadge('local', 'â˜ï¸ Sign In to Sync');
+    }
+  </script>
+</body>
+</html>
+
+
