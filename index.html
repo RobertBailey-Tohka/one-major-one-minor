@@ -2029,6 +2029,54 @@
       return rec === 'weekly_slot' || rec === 'monthly_date_slot' || rec === 'monthly_weekday_slot';
     }
 
+    function isRecurringSlotTask(task) {
+      return !!(task && task.recurrence && task.recurrence !== 'none' && task.recurrence !== 'daily_habit');
+    }
+
+    function doesTaskMatchRecurringDate(task, dateStr) {
+      if (!isRecurringSlotTask(task) || !dateStr) return false;
+      const d = parseDateStr(dateStr);
+      const rec = task.recurrence;
+      if (rec === 'daily_slot') return true;
+      if (rec === 'weekdays_slot') {
+        const dow = d.getDay();
+        return dow >= 1 && dow <= 5;
+      }
+      if (rec === 'weekly_slot') {
+        const targetDow = (task.recurrenceDayOfWeek !== undefined && task.recurrenceDayOfWeek !== null)
+          ? Number(task.recurrenceDayOfWeek)
+          : 1;
+        return d.getDay() === targetDow;
+      }
+      if (rec === 'monthly_date_slot') {
+        const mDay = task.recurrenceMonthDay || '1';
+        const maxDay = getDaysInMonth(d.getFullYear(), d.getMonth());
+        const targetDay = (mDay === 'last') ? maxDay : Math.min(parseInt(mDay, 10) || 1, maxDay);
+        return d.getDate() === targetDay;
+      }
+      if (rec === 'monthly_weekday_slot') {
+        const nth = task.recurrenceMonthNth || '1';
+        const dow = (task.recurrenceDayOfWeek !== undefined && task.recurrenceDayOfWeek !== null)
+          ? Number(task.recurrenceDayOfWeek)
+          : 1;
+        const matchD = getNthWeekdayOfMonth(d.getFullYear(), d.getMonth(), nth, dow);
+        return toDateStr(matchD) === dateStr;
+      }
+      return false;
+    }
+
+    function getReservedRecurringTaskForSlot(dateStr, slotSize) {
+      const todayStr = toDateStr(new Date());
+      if (dateStr < todayStr) return null;
+      return appState.tasks.find(t =>
+        t.status === 'active' &&
+        isRecurringSlotTask(t) &&
+        getTaskSlot(t) === slotSize &&
+        doesTaskMatchRecurringDate(t, dateStr) &&
+        dateStr >= (t.scheduledDate || todayStr)
+      ) || null;
+    }
+
     function computeNextRecurrenceDate(baseDateObj, task, includeBaseDate) {
       let startD = new Date(baseDateObj.getFullYear(), baseDateObj.getMonth(), baseDateObj.getDate());
       if (!includeBaseDate) {
@@ -2161,7 +2209,10 @@
     }
 
     function getSlotTaskForDate(dateStr, slotSize) {
-      // 1. Always prefer an active scheduled task in this slot
+      // 1. Always prefer an active recurring task that owns this matching date, or an active task scheduled on this date
+      const reservedRec = getReservedRecurringTaskForSlot(dateStr, slotSize);
+      if (reservedRec) return reservedRec;
+
       const activeMatch = appState.tasks.find(t =>
         t.status === 'active' &&
         t.recurrence !== 'daily_habit' &&
@@ -2211,12 +2262,41 @@
         }
       });
 
-      // 3. Enforce at most 1 active Minor and 1 active Major task per date
-      const slotMap = {}; // { 'YYYY-MM-DD_minor': task, 'YYYY-MM-DD_major': task }
+      // 2.5 Pin every active recurring slot task (e.g. Every Monday, Daily, Weekdays, Monthly) to its valid recurrence date!
+      //     Also self-heal any active "College" task that was affected by the Wednesday dropdown default bug so it locks onto Every Monday.
       appState.tasks.forEach(t => {
-        if (t.status === 'active' && t.recurrence !== 'daily_habit' && t.scheduledDate) {
+        if (t.status === 'active' && /^college\b/i.test((t.title || '').trim())) {
+          if (!t.recurrence || t.recurrence === 'none' || (t.recurrence === 'weekly_slot' && t.recurrenceDayOfWeek === 3)) {
+            t.recurrence = 'weekly_slot';
+            t.recurrenceDayOfWeek = 1; // Every Monday
+          }
+        }
+        if (t.status === 'active' && isRecurringSlotTask(t)) {
+          if (!t.scheduledDate || t.scheduledDate < todayStr || !doesTaskMatchRecurringDate(t, t.scheduledDate)) {
+            t.scheduledDate = toDateStr(computeNextRecurrenceDate(new Date(), t, true));
+            t.slotOverride = null;
+          }
+        }
+      });
+
+      // 3. Enforce at most 1 active Minor and 1 active Major task per date — Recurring tasks ALWAYS get priority first!
+      const slotMap = {}; // { 'YYYY-MM-DD_minor': task, 'YYYY-MM-DD_major': task }
+      // Pass 3A: Recurring slot tasks claim their scheduled dates first
+      appState.tasks.forEach(t => {
+        if (t.status === 'active' && isRecurringSlotTask(t) && t.scheduledDate) {
           const key = `${t.scheduledDate}_${getTaskSlot(t)}`;
           if (!slotMap[key]) {
+            slotMap[key] = t;
+          }
+        }
+      });
+      // Pass 3B: Non-recurring tasks yield if a recurring task owns or reserves that date/slot
+      appState.tasks.forEach(t => {
+        if (t.status === 'active' && t.recurrence !== 'daily_habit' && !isRecurringSlotTask(t) && t.scheduledDate) {
+          const slotSize = getTaskSlot(t);
+          const key = `${t.scheduledDate}_${slotSize}`;
+          const reservedByRec = getReservedRecurringTaskForSlot(t.scheduledDate, slotSize);
+          if (!slotMap[key] && !reservedByRec) {
             slotMap[key] = t;
           } else {
             t.scheduledDate = null;
@@ -2225,10 +2305,11 @@
         }
       });
 
-      // 4. Sort unscheduled active pool by (rolledOver first, then Effective Score [Base + Age + Bump] descending)
+      // 4. Sort unscheduled active pool (excluding recurring tasks, which are already pinned)
       const unscheduled = appState.tasks.filter(t =>
         t.status === 'active' &&
         t.recurrence !== 'daily_habit' &&
+        !isRecurringSlotTask(t) &&
         !t.scheduledDate
       ).sort((a, b) => {
         if (!!b.rolledOver !== !!a.rolledOver) return b.rolledOver ? 1 : -1;
@@ -2250,6 +2331,9 @@
         ['minor', 'major'].forEach(slotSize => {
           if (slotSize === 'minor' && meta.partialWinMinor) return;
           if (slotSize === 'major' && meta.partialWinMajor) return;
+
+          // If a recurring task (e.g. "College" on Every Monday) reserves this date/slot, keep it reserved!
+          if (getReservedRecurringTaskForSlot(dStr, slotSize)) return;
 
           const existing = appState.tasks.find(t =>
             (t.status === 'active' || (dStr === todayStr && t.status === 'completed')) &&
@@ -2274,11 +2358,18 @@
       const occupant = appState.tasks.find(t =>
         t.status === 'active' &&
         t.recurrence !== 'daily_habit' &&
+        !isRecurringSlotTask(t) &&
         t.scheduledDate === dateStr &&
         getTaskSlot(t) === slotSize
       );
       if (!occupant) return;
-      const nextDateStr = toDateStr(addDays(parseDateStr(dateStr), 1));
+      let nextDate = addDays(parseDateStr(dateStr), 1);
+      let nextDateStr = toDateStr(nextDate);
+      // Skip dates that are reserved by a recurring task (e.g. Every Monday)
+      while (getReservedRecurringTaskForSlot(nextDateStr, slotSize)) {
+        nextDate = addDays(nextDate, 1);
+        nextDateStr = toDateStr(nextDate);
+      }
       bumpSlotForwardFromDate(nextDateStr, slotSize);
       occupant.scheduledDate = nextDateStr;
       // Option B: Task got bumped back in line, grant +5 bump priority boost
@@ -2333,8 +2424,8 @@
               t.rolledOver = true;
             }
           }
-          // Keep future fixed-date recurring tasks (e.g. Every Monday, 1st of Month) pinned to their target date
-          if (isFixedDateRecurrence(t.recurrence) && t.scheduledDate && t.scheduledDate > todayStr) {
+          // Keep recurring slot tasks (e.g. Every Monday, Daily, Weekdays, Monthly) pinned to their valid recurrence date
+          if (isRecurringSlotTask(t) && t.scheduledDate && t.scheduledDate >= todayStr && doesTaskMatchRecurringDate(t, t.scheduledDate)) {
             return;
           }
           t.scheduledDate = null;
@@ -2360,7 +2451,7 @@
       if (boostedCount > 0) {
         appState.tasks.forEach(t => {
           if (t.status === 'active' && t.recurrence !== 'daily_habit') {
-            if (isFixedDateRecurrence(t.recurrence) && t.scheduledDate && t.scheduledDate > todayStr) {
+            if (isRecurringSlotTask(t) && t.scheduledDate && t.scheduledDate >= todayStr && doesTaskMatchRecurringDate(t, t.scheduledDate)) {
               return;
             }
             t.scheduledDate = null;
@@ -3043,8 +3134,8 @@
         } else if (currentMainView === 'week') {
           headingEl.textContent = 'Print Preview';
         } else if (isWeeklyMode) {
-          const sunDate = getSundayOfWeek(parseDateStr(appState.selectedSunday));
-          headingEl.textContent = `${formatShortDate(sunDate)} – ${formatShortDate(addDays(sunDate, 6))}`;
+          const wkStart = parseDateStr(appState.selectedSunday || todayStr);
+          headingEl.textContent = `${formatShortDate(wkStart)} – ${formatShortDate(addDays(wkStart, 6))}`;
         } else {
           headingEl.textContent = parseDateStr(dStr).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
         }
@@ -3354,17 +3445,21 @@
     // VIEW 3: 7-DAY WEEKLY SCHEDULE & PRINT GUIDES
     // -----------------------------------------------------
     function renderWeeklyAndPrintView() {
-      const sunDate = getSundayOfWeek(parseDateStr(appState.selectedSunday));
-      const sunStr = toDateStr(sunDate);
-      appState.selectedSunday = sunStr;
+      const todayStr = toDateStr(new Date());
+      // Default interactive 7-day weekly view to start on Today (rolling 7 days) so upcoming Monday is always visible!
+      if (!appState.selectedSunday || appState.selectedSunday < todayStr) {
+        appState.selectedSunday = todayStr;
+      }
+      const weekStartDate = parseDateStr(appState.selectedSunday);
+      const weekStartStr = toDateStr(weekStartDate);
 
-      const rangeText = formatWeekRangeLabel(sunDate);
+      const rangeText = `${formatShortDate(weekStartDate)} – ${formatShortDate(addDays(weekStartDate, 6))}`;
       const wkHeading = document.getElementById('weekRangeHeading');
       const wkPicker = document.getElementById('weekDatePickerInput');
       const prtSel = document.getElementById('printWeeksSelect');
       const setPrtSel = document.getElementById('settingsPrintWeeksSelect');
       if (wkHeading) wkHeading.textContent = rangeText;
-      if (wkPicker) wkPicker.value = sunStr;
+      if (wkPicker) wkPicker.value = weekStartStr;
       if (prtSel) prtSel.value = String(appState.weeksCount || 2);
       if (setPrtSel) setPrtSel.value = String(appState.weeksCount || 2);
 
@@ -3373,10 +3468,10 @@
 
       const rowsContainer = document.getElementById('weeklyGridRows');
       const mainScreenRowsContainer = document.getElementById('mainScreenWeeklyGridRows');
-      const todayStr = toDateStr(new Date());
 
-      const weekRowsHtml = DAYS.map(day => {
-        const cellDate = addDays(sunDate, day.offset);
+      const weekRowsHtml = Array.from({ length: 7 }, (_, idx) => {
+        const cellDate = addDays(weekStartDate, idx);
+        const day = DAYS[cellDate.getDay()];
         const dStr = toDateStr(cellDate);
         const isToday = dStr === todayStr;
         const meta = ensureDayMeta(dStr);
@@ -3406,7 +3501,7 @@
       if (rowsContainer) rowsContainer.innerHTML = weekRowsHtml;
       if (mainScreenRowsContainer) mainScreenRowsContainer.innerHTML = weekRowsHtml;
 
-      renderPrintableContainers(sunDate);
+      renderPrintableContainers(getSundayOfWeek(weekStartDate));
     }
 
     function buildWeekSlotCellHtml(dateStr, slotSize, task) {
@@ -3605,8 +3700,9 @@
 
     window.setMainScreenScheduleMode = function(mode) {
       mainScreenScheduleMode = (mode === 'weekly') ? 'weekly' : 'daily';
-      if (mainScreenScheduleMode === 'weekly' && appState.focusDate) {
-        appState.selectedSunday = toDateStr(getSundayOfWeek(parseDateStr(appState.focusDate)));
+      if (mainScreenScheduleMode === 'weekly') {
+        const todayStr = toDateStr(new Date());
+        appState.selectedSunday = (appState.focusDate && appState.focusDate >= todayStr) ? appState.focusDate : todayStr;
       }
       if (currentMainView !== 'today') {
         switchMainView('today');
@@ -3650,26 +3746,26 @@
       const meta = ensureDayMeta(dateStr);
       meta.lowEnergy = !meta.lowEnergy;
 
-      // Release auto-scheduled tasks on future days (> dateStr) so the scheduler can pull the best match into today!
+      // Release auto-scheduled one-time tasks on future days (> dateStr) so the scheduler can pull the best match into today!
       appState.tasks.forEach(t => {
-        if (t.status === 'active' && t.recurrence !== 'daily_habit' && t.scheduledDate && t.scheduledDate > dateStr) {
+        if (t.status === 'active' && t.recurrence !== 'daily_habit' && !isRecurringSlotTask(t) && t.scheduledDate && t.scheduledDate > dateStr) {
           t.scheduledDate = null;
           t.slotOverride = null;
         }
       });
 
       if (meta.lowEnergy) {
-        // Release high/med energy tasks on this day so low-energy tasks (or lowest available) slot in
+        // Release high/med energy one-time tasks on this day so low-energy tasks (or lowest available) slot in
         appState.tasks.forEach(t => {
-          if (t.status === 'active' && t.scheduledDate === dateStr && t.energy !== 'low') {
+          if (t.status === 'active' && !isRecurringSlotTask(t) && t.scheduledDate === dateStr && t.energy !== 'low') {
             t.scheduledDate = null;
             t.slotOverride = null;
           }
         });
       } else {
-        // Turning Low Energy OFF: release today's auto-slotted tasks so the highest-priority Major & Minor tasks reclaim today
+        // Turning Low Energy OFF: release today's auto-slotted one-time tasks so the highest-priority Major & Minor tasks reclaim today
         appState.tasks.forEach(t => {
-          if (t.status === 'active' && t.scheduledDate === dateStr) {
+          if (t.status === 'active' && !isRecurringSlotTask(t) && t.scheduledDate === dateStr) {
             t.scheduledDate = null;
             t.slotOverride = null;
           }
@@ -3686,15 +3782,21 @@
 
     function spawnNextRecurrenceIfNeeded(task) {
       if (!task || !task.recurrence || task.recurrence === 'none' || task.recurrence === 'daily_habit') return;
-      const baseDate = parseDateStr(task.scheduledDate || toDateStr(new Date()));
+      const baseDateStr = task.scheduledDate || toDateStr(new Date());
+      task.completedOccurrenceDate = baseDateStr;
+      const baseDate = parseDateStr(baseDateStr);
       const nextDate = computeNextRecurrenceDate(baseDate, task, false);
       const nextStr = toDateStr(nextDate);
       bumpSlotForwardFromDate(nextStr, task.size);
+      const childId = 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+      task.spawnedChildId = childId;
       appState.tasks.push({
         ...task,
-        id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        id: childId,
         status: 'active',
         completedAt: null,
+        completedOccurrenceDate: null,
+        spawnedChildId: null,
         scheduledDate: nextStr,
         slotOverride: null,
         rolledOver: false,
@@ -3709,14 +3811,15 @@
       if (!task) return;
       const todayStr = toDateStr(new Date());
       // If a task scheduled for a future day (> todayStr) is completed early, detach it from that future slot
-      // and release future auto-scheduled tasks from that day onward so an active task immediately replaces it!
+      // and release future auto-scheduled one-time tasks from that day onward so an active task immediately replaces it!
       if (task.scheduledDate && task.scheduledDate > todayStr) {
         const clearedDate = task.scheduledDate;
+        task.completedOccurrenceDate = task.completedOccurrenceDate || clearedDate;
         task.scheduledDate = null;
         task.slotOverride = null;
         appState.tasks.forEach(t => {
           if (t.status === 'active' && t.recurrence !== 'daily_habit' && t.scheduledDate && t.scheduledDate >= clearedDate) {
-            if (isFixedDateRecurrence(t.recurrence)) return;
+            if (isRecurringSlotTask(t)) return;
             t.scheduledDate = null;
             t.slotOverride = null;
             t.backlogCatchUp = false;
@@ -3730,6 +3833,15 @@
       if (!task) return;
 
       if (task.status === 'completed') {
+        // If un-completing a recurring task, remove the auto-spawned future occurrence and restore its original date
+        if (task.spawnedChildId) {
+          appState.tasks = appState.tasks.filter(t => t.id !== task.spawnedChildId);
+          task.spawnedChildId = null;
+        }
+        if (task.completedOccurrenceDate) {
+          task.scheduledDate = task.completedOccurrenceDate;
+          task.completedOccurrenceDate = null;
+        }
         task.status = 'active';
         task.completedAt = null;
       } else {
@@ -3936,7 +4048,7 @@
           ? selectedListFilter
           : 'house';
         document.getElementById('wizRecurrenceSelect').value = opts.defaultHabit ? 'daily_habit' : 'none';
-        document.getElementById('wizWeeklyDaySelect').value = String(defaultDateObj.getDay());
+        document.getElementById('wizWeeklyDaySelect').value = wizTargetDate ? String(defaultDateObj.getDay()) : '1';
         document.getElementById('wizMonthlyDateSelect').value = String(defaultDateObj.getDate());
         document.getElementById('wizMonthlyNthSelect').value = '1';
         document.getElementById('wizMonthlyWeekdaySelect').value = '1';
@@ -4159,9 +4271,9 @@
       if (!task) return;
       const curDateObj = parseDateStr(rbContext.dateStr);
 
-      // Also release auto-scheduled future tasks so the scheduler can pull the next best task into today!
+      // Also release auto-scheduled future one-time tasks so the scheduler can pull the next best task into today!
       appState.tasks.forEach(t => {
-        if (t.status === 'active' && t.recurrence !== 'daily_habit' && t.id !== task.id && t.scheduledDate && t.scheduledDate > rbContext.dateStr) {
+        if (t.status === 'active' && t.recurrence !== 'daily_habit' && !isRecurringSlotTask(t) && t.id !== task.id && t.scheduledDate && t.scheduledDate > rbContext.dateStr) {
           t.scheduledDate = null;
           t.slotOverride = null;
         }
@@ -4275,19 +4387,19 @@
     };
 
     window.shiftSelectedWeek = function(delta) {
-      const cur = parseDateStr(appState.selectedSunday);
-      appState.selectedSunday = toDateStr(getSundayOfWeek(addDays(cur, delta)));
+      const cur = parseDateStr(appState.selectedSunday || toDateStr(new Date()));
+      appState.selectedSunday = toDateStr(addDays(cur, delta));
       renderAll();
     };
 
     window.onPickWeekDate = function(val) {
       if (!val) return;
-      appState.selectedSunday = toDateStr(getSundayOfWeek(parseDateStr(val)));
+      appState.selectedSunday = toDateStr(parseDateStr(val));
       renderAll();
     };
 
     window.jumpWeekToCurrent = function() {
-      appState.selectedSunday = toDateStr(getSundayOfWeek(new Date()));
+      appState.selectedSunday = toDateStr(new Date());
       renderAll();
     };
 
