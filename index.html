@@ -1336,10 +1336,10 @@
          VIEW 1: MAIN SCHEDULE SCREEN (SIMPLE DAILY / WEEKLY VIEW)
          ===================================================== -->
     <section id="viewToday" class="today-view-container">
-      <!-- Compact Daily Habits Strip (Hidden automatically when no habits exist; habits are added in Task List) -->
+      <!-- Compact Habits Strip (Hidden automatically when no habits exist for today; habits are added in Task List) -->
       <div class="habits-strip-card" id="todayHabitsCard" style="display:none;">
         <div class="habits-strip-header" style="margin-bottom:6px;">
-          <span>🔄 Daily Habits</span>
+          <span>🔄 Habits</span>
         </div>
         <div class="habits-pills-wrap" id="todayHabitsList"></div>
       </div>
@@ -1368,7 +1368,7 @@
               <h2 style="font-size:1.2rem; font-weight:800;" id="currentListTitle">All Active Tasks</h2>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button type="button" onclick="openTaskWizard({ defaultHabit: true })" style="font-weight:700;">+ Daily Habit</button>
+              <button type="button" onclick="openTaskWizard({ defaultHabit: true })" style="font-weight:700;">+ Habits</button>
               <button class="btn-primary-add" onclick="openTaskWizard()">+ Add Task</button>
             </div>
           </div>
@@ -1468,7 +1468,7 @@
           <label style="font-size:0.75rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Repeat / Routine</label>
           <select id="wizRecurrenceSelect" onchange="onWizRecurrenceChange()" style="width:100%; padding:8px 10px; border-radius:9px; border:1px solid var(--border-strong); font-size:0.84rem; font-weight:600;">
             <option value="none">One-Time Task</option>
-            <option value="daily_habit">🔄 Daily Habit Strip (Above Cards)</option>
+            <option value="daily_habit">🔄 Habit Strip (Above Cards)</option>
             <option value="daily_slot">📅 Repeat Daily in Minor/Major Slot</option>
             <option value="weekdays_slot">💼 Weekdays (Mon–Fri) in Slot</option>
             <option value="weekly_slot">🗓️ Repeat Weekly (Pick Day)...</option>
@@ -1478,8 +1478,28 @@
         </div>
       </div>
 
-      <!-- Dynamic Weekly / Monthly Recurrence Schedule Picker -->
+      <!-- Dynamic Habit / Weekly / Monthly Recurrence Schedule Picker -->
       <div id="wizRecurrenceDetailBox" style="display:none; background:#eff6ff; border:1px solid #93c5fd; border-radius:12px; padding:10px 14px; flex-direction:column; gap:8px;">
+        <!-- Multi-Day Habit Picker (Which days of the week?) -->
+        <div id="wizHabitDaysRow" style="display:none; flex-direction:column; gap:8px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+            <label style="font-size:0.8rem; font-weight:800; color:#1e3a8a;">🔄 Which days of the week?</label>
+            <div style="display:flex; gap:4px;">
+              <button type="button" onclick="setHabitDaysPreset([0,1,2,3,4,5,6])" style="font-size:0.7rem; padding:3px 7px; border-radius:6px;">Every Day</button>
+              <button type="button" onclick="setHabitDaysPreset([1,2,3,4,5])" style="font-size:0.7rem; padding:3px 7px; border-radius:6px;">Mon–Fri</button>
+            </div>
+          </div>
+          <div id="wizHabitDayPills" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:5px;">
+            <button type="button" class="choice-pill selected" data-hday="0" onclick="toggleWizHabitDay(0)" style="padding:6px 2px; font-size:0.75rem;">Sun</button>
+            <button type="button" class="choice-pill selected" data-hday="1" onclick="toggleWizHabitDay(1)" style="padding:6px 2px; font-size:0.75rem;">Mon</button>
+            <button type="button" class="choice-pill selected" data-hday="2" onclick="toggleWizHabitDay(2)" style="padding:6px 2px; font-size:0.75rem;">Tue</button>
+            <button type="button" class="choice-pill selected" data-hday="3" onclick="toggleWizHabitDay(3)" style="padding:6px 2px; font-size:0.75rem;">Wed</button>
+            <button type="button" class="choice-pill selected" data-hday="4" onclick="toggleWizHabitDay(4)" style="padding:6px 2px; font-size:0.75rem;">Thu</button>
+            <button type="button" class="choice-pill selected" data-hday="5" onclick="toggleWizHabitDay(5)" style="padding:6px 2px; font-size:0.75rem;">Fri</button>
+            <button type="button" class="choice-pill selected" data-hday="6" onclick="toggleWizHabitDay(6)" style="padding:6px 2px; font-size:0.75rem;">Sat</button>
+          </div>
+        </div>
+
         <!-- Weekly Day Picker -->
         <div id="wizWeeklyPickerRow" style="display:none; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <label style="font-size:0.8rem; font-weight:800; color:#1e3a8a;">🗓️ Which day of the week?</label>
@@ -2134,8 +2154,15 @@
     }
 
     function getRecurrenceBadgeText(task) {
-      if (!task || !task.recurrence || task.recurrence === 'none' || task.recurrence === 'daily_habit') return '';
+      if (!task || !task.recurrence || task.recurrence === 'none') return '';
       const rec = task.recurrence;
+      if (rec === 'daily_habit') {
+        const days = Array.isArray(task.habitDays) && task.habitDays.length > 0 ? task.habitDays : [0,1,2,3,4,5,6];
+        if (days.length === 7) return '🔄 Every Day';
+        if (days.length === 5 && [1,2,3,4,5].every(d => days.includes(d))) return '🔄 Mon–Fri';
+        const labels = days.slice().sort((a,b) => a - b).map(dow => (DAYS.find(d => d.offset === dow) || DAYS[0]).mShort);
+        return `🔄 ${labels.join(', ')}`;
+      }
       if (rec === 'daily_slot') return '📅 Daily';
       if (rec === 'weekdays_slot') return '💼 Mon–Fri';
       if (rec === 'weekly_slot') {
@@ -3163,8 +3190,15 @@
           appState.categories.map(c => `<option value="${c.id}" ${meta.preferredCategory === c.id ? 'selected' : ''}>Prefer ${escapeHtml(c.name)}</option>`).join('');
       }
 
-      // 1. Render Daily Habits Strip (Hidden completely when 0 habits exist or when in Weekly mode)
-      const habits = appState.tasks.filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit');
+      // 1. Render Habits Strip (Filtered to habits active on the selected day of the week; hidden when 0 match or in Weekly mode)
+      const focusDow = parseDateStr(dStr).getDay();
+      const habits = appState.tasks.filter(t => {
+        if (t.status === 'completed' || t.recurrence !== 'daily_habit') return false;
+        if (Array.isArray(t.habitDays) && t.habitDays.length > 0) {
+          return t.habitDays.includes(focusDow);
+        }
+        return true;
+      });
       const habitsCardEl = document.getElementById('todayHabitsCard');
       const habitsListEl = document.getElementById('todayHabitsList');
       if (habits.length === 0 || isWeeklyMode) {
@@ -3179,6 +3213,7 @@
             <div class="habit-pill ${isDone ? 'done' : ''}" onclick="toggleDailyHabit('${dStr}', '${h.id}')">
               <span>${isDone ? '✓' : '○'}</span>
               <span>${escapeHtml(h.title)}</span>
+              <span onclick="event.stopPropagation(); openTaskWizard({ editTaskId: '${h.id}' })" title="Edit or adjust habit" style="margin-left:4px; opacity:0.65; font-size:0.78rem; padding:0 3px; cursor:pointer;">✎</span>
             </div>
           `;
         }).join('');
@@ -3327,7 +3362,7 @@
       catHtml += `
         <div style="height:1px; background:var(--border); margin:6px 0;"></div>
         <button class="cat-nav-item ${selectedListFilter === 'habits' ? 'active' : ''}" onclick="selectTaskListFilter('habits')">
-          <span>🔄 Daily Habits</span>
+          <span>🔄 Habits</span>
           <span class="cat-count-badge">${habitsCount}</span>
         </button>
         <button class="cat-nav-item ${selectedListFilter === 'snoozed' ? 'active' : ''}" onclick="selectTaskListFilter('snoozed')">
@@ -3351,7 +3386,7 @@
         filtered = activeRegular;
       } else if (selectedListFilter === 'habits') {
         filtered = appState.tasks.filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit');
-        title = '🔄 Daily Habits & Routines';
+        title = '🔄 Habits';
       } else if (selectedListFilter === 'snoozed') {
         filtered = appState.tasks.filter(t => t.status === 'snoozed');
         title = '⏳ Snoozed Tasks';
@@ -3420,8 +3455,10 @@
               <div class="todo-item-title">${escapeHtml(task.title)}</div>
               ${task.notes ? `<div style="font-size:0.8rem; color:#475569; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(task.notes)}</div>` : ''}
               <div class="todo-item-submeta">
-                <span class="${task.size === 'minor' ? 'badge-size-minor' : 'badge-size-major'}">${task.size === 'minor' ? '✓ Minor' : '★ Major'}</span>
-                <span title="Base ${task.score || 80} pts + ${ageBonus} age + ${bumpBonus} bump">${effScore} pts${totalBoost > 0 ? ` (+${totalBoost} boost)` : ''}</span>
+                ${task.recurrence === 'daily_habit' ? '' : `
+                  <span class="${task.size === 'minor' ? 'badge-size-minor' : 'badge-size-major'}">${task.size === 'minor' ? '✓ Minor' : '★ Major'}</span>
+                  <span title="Base ${task.score || 80} pts + ${ageBonus} age + ${bumpBonus} bump">${effScore} pts${totalBoost > 0 ? ` (+${totalBoost} boost)` : ''}</span>
+                `}
                 <span>${escapeHtml(catName)}</span>
                 ${recBadge ? `<span style="color:#1d4ed8; font-weight:700;">${escapeHtml(recBadge)}</span>` : ''}
                 ${subTotal > 0 ? `<span>☑️ ${subDone}/${subTotal} steps</span>` : ''}
@@ -3433,9 +3470,11 @@
           <div style="display:flex; align-items:center; gap:6px;" onclick="event.stopPropagation();">
             ${task.status === 'blocked' || task.status === 'snoozed' ? `
               <button style="font-size:0.75rem; padding:4px 9px; background:#ecfdf5; border-color:#6ee7b7; color:#047857;" onclick="unblockOrWakeTask('${task.id}')">Unblock / Wake</button>
-            ` : (!isCompleted && task.recurrence !== 'daily_habit' ? `
+            ` : (task.recurrence === 'daily_habit' ? `
+              <button style="font-size:0.75rem; padding:4px 9px;" onclick="openTaskWizard({ editTaskId: '${task.id}' })" title="Edit Habit">✎ Edit</button>
+            ` : (!isCompleted ? `
               <button style="font-size:0.75rem; padding:4px 9px;" onclick="pinTaskToToday('${task.id}')" title="Slot directly into Today">➔ Today</button>
-            ` : '')}
+            ` : ''))}
           </div>
         </div>
       `;
@@ -3961,24 +4000,56 @@
       sel.innerHTML = html;
     }
 
+    let wizSelectedHabitDays = [0, 1, 2, 3, 4, 5, 6];
+
+    function renderWizHabitDayPills() {
+      const wrap = document.getElementById('wizHabitDayPills');
+      if (!wrap) return;
+      wrap.querySelectorAll('.choice-pill').forEach(btn => {
+        const d = parseInt(btn.getAttribute('data-hday'), 10);
+        btn.classList.toggle('selected', wizSelectedHabitDays.includes(d));
+      });
+    }
+
+    window.toggleWizHabitDay = function(dayIdx) {
+      if (wizSelectedHabitDays.includes(dayIdx)) {
+        if (wizSelectedHabitDays.length > 1) {
+          wizSelectedHabitDays = wizSelectedHabitDays.filter(d => d !== dayIdx);
+        }
+      } else {
+        wizSelectedHabitDays.push(dayIdx);
+        wizSelectedHabitDays.sort((a, b) => a - b);
+      }
+      renderWizHabitDayPills();
+    };
+
+    window.setHabitDaysPreset = function(daysArr) {
+      wizSelectedHabitDays = [...daysArr];
+      renderWizHabitDayPills();
+    };
+
     window.onWizRecurrenceChange = function() {
       populateMonthlyDateOptions();
       const rec = document.getElementById('wizRecurrenceSelect').value;
       document.getElementById('wizPriorityQuestionsBox').style.display = (rec === 'daily_habit') ? 'none' : 'block';
 
       const detailBox = document.getElementById('wizRecurrenceDetailBox');
+      const habitRow = document.getElementById('wizHabitDaysRow');
       const wkRow = document.getElementById('wizWeeklyPickerRow');
       const mDateRow = document.getElementById('wizMonthlyDatePickerRow');
       const mWdayRow = document.getElementById('wizMonthlyWeekdayPickerRow');
 
+      const showHabit = (rec === 'daily_habit');
       const showWeekly = (rec === 'weekly_slot');
       const showMDate = (rec === 'monthly_date_slot');
       const showMWday = (rec === 'monthly_weekday_slot');
 
-      if (detailBox) detailBox.style.display = (showWeekly || showMDate || showMWday) ? 'flex' : 'none';
+      if (detailBox) detailBox.style.display = (showHabit || showWeekly || showMDate || showMWday) ? 'flex' : 'none';
+      if (habitRow) habitRow.style.display = showHabit ? 'flex' : 'none';
       if (wkRow) wkRow.style.display = showWeekly ? 'flex' : 'none';
       if (mDateRow) mDateRow.style.display = showMDate ? 'flex' : 'none';
       if (mWdayRow) mWdayRow.style.display = showMWday ? 'flex' : 'none';
+      if (showHabit) renderWizHabitDayPills();
     };
 
     function renderWizSubtasks() {
@@ -4025,11 +4096,12 @@
       if (wizEditingTaskId) {
         const t = appState.tasks.find(x => x.id === wizEditingTaskId);
         if (!t) return;
-        document.getElementById('wizModalTitle').textContent = 'Edit Task & Subtasks';
+        document.getElementById('wizModalTitle').textContent = (t.recurrence === 'daily_habit') ? 'Edit Habit' : 'Edit Task & Subtasks';
         document.getElementById('wizTitleInput').value = t.title || '';
         document.getElementById('wizNotesInput').value = t.notes || '';
         catSel.value = t.category || 'personal';
         document.getElementById('wizRecurrenceSelect').value = t.recurrence || 'none';
+        wizSelectedHabitDays = (Array.isArray(t.habitDays) && t.habitDays.length > 0) ? [...t.habitDays] : [0, 1, 2, 3, 4, 5, 6];
         document.getElementById('wizWeeklyDaySelect').value = String(t.recurrenceDayOfWeek ?? defaultDateObj.getDay());
         document.getElementById('wizMonthlyDateSelect').value = String(t.recurrenceMonthDay || '1');
         document.getElementById('wizMonthlyNthSelect').value = String(t.recurrenceMonthNth || '1');
@@ -4041,13 +4113,14 @@
         wizTempSubtasks = JSON.parse(JSON.stringify(t.subtasks || []));
         document.getElementById('btnDeleteTaskInModal').style.display = 'inline-flex';
       } else {
-        document.getElementById('wizModalTitle').textContent = opts.defaultHabit ? 'New Daily Habit / Routine' : 'New Task (4 Priority Questions)';
+        document.getElementById('wizModalTitle').textContent = opts.defaultHabit ? 'New Habit' : 'New Task (4 Priority Questions)';
         document.getElementById('wizTitleInput').value = '';
         document.getElementById('wizNotesInput').value = '';
         catSel.value = (selectedListFilter !== 'all' && selectedListFilter !== 'habits' && selectedListFilter !== 'snoozed' && selectedListFilter !== 'blocked')
           ? selectedListFilter
           : 'house';
         document.getElementById('wizRecurrenceSelect').value = opts.defaultHabit ? 'daily_habit' : 'none';
+        wizSelectedHabitDays = [0, 1, 2, 3, 4, 5, 6];
         document.getElementById('wizWeeklyDaySelect').value = wizTargetDate ? String(defaultDateObj.getDay()) : '1';
         document.getElementById('wizMonthlyDateSelect').value = String(defaultDateObj.getDate());
         document.getElementById('wizMonthlyNthSelect').value = '1';
@@ -4097,8 +4170,11 @@
       let recurrenceDayOfWeek = null;
       let recurrenceMonthDay = null;
       let recurrenceMonthNth = null;
+      let habitDays = null;
 
-      if (recurrence === 'weekly_slot') {
+      if (recurrence === 'daily_habit') {
+        habitDays = [...wizSelectedHabitDays];
+      } else if (recurrence === 'weekly_slot') {
         recurrenceDayOfWeek = parseInt(document.getElementById('wizWeeklyDaySelect').value, 10);
       } else if (recurrence === 'monthly_date_slot') {
         recurrenceMonthDay = document.getElementById('wizMonthlyDateSelect').value;
@@ -4114,6 +4190,7 @@
           t.notes = notes;
           t.category = category;
           t.recurrence = recurrence;
+          t.habitDays = habitDays;
           t.recurrenceDayOfWeek = recurrenceDayOfWeek;
           t.recurrenceMonthDay = recurrenceMonthDay;
           t.recurrenceMonthNth = recurrenceMonthNth;
@@ -4140,6 +4217,7 @@
           notes,
           category,
           recurrence,
+          habitDays,
           recurrenceDayOfWeek,
           recurrenceMonthDay,
           recurrenceMonthNth,
