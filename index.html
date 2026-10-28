@@ -3252,7 +3252,7 @@
       return {
         updatedAt: Date.now(),
         todayStr,
-        todayHeader: formatFullDateHeader(todayObj),
+        todayHeader: formatFullDayHeading(todayStr),
         daily: {
           habits: todayHabits,
           minor: formatSlotObj(minorTask, 'minor', todayMeta.partialWinMinor),
@@ -3263,11 +3263,15 @@
         habits: allHabits
       };
     }
+    window.buildWidgetSnapshot = buildWidgetSnapshot;
 
     function syncNativeAndroidWidget() {
       try {
-        const snapshot = buildWidgetSnapshot();
-        appState.widgetSnapshot = snapshot;
+        let snapshot = null;
+        try {
+          snapshot = buildWidgetSnapshot();
+          appState.widgetSnapshot = snapshot;
+        } catch (snapErr) {}
         if (window.AndroidWidgetBridge && typeof window.AndroidWidgetBridge.syncFromWeb === 'function') {
           const authJson = cloudAccount ? JSON.stringify({
             email: cloudAccount.email || '',
@@ -3280,11 +3284,12 @@
           window.AndroidWidgetBridge.syncFromWeb(
             JSON.stringify(appState),
             authJson,
-            JSON.stringify(snapshot)
+            snapshot ? JSON.stringify(snapshot) : ''
           );
         }
       } catch (e) {}
     }
+    window.syncNativeAndroidWidget = syncNativeAndroidWidget;
 
     window.applyPendingNativeWidgetActions = function() {
       try {

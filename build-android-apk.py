@@ -1461,10 +1461,11 @@ public class MainActivity extends Activity {{
         String js = "(function() {{"
             + "try {{"
             + "  if (window.applyPendingNativeWidgetActions) window.applyPendingNativeWidgetActions();"
-            + "  if (window.syncNativeAndroidWidget) {{ window.syncNativeAndroidWidget(); }}"
+            + "  if (window.syncNativeAndroidWidget) {{ try {{ window.syncNativeAndroidWidget(); }} catch(e1) {{}} }}"
             + "  var st = localStorage.getItem('one_minor_one_major_v4') || '';"
             + "  var au = localStorage.getItem('one_minor_one_major_cloud_account_v4') || '';"
-            + "  var sn = (window.buildWidgetSnapshot) ? JSON.stringify(window.buildWidgetSnapshot()) : '';"
+            + "  var sn = '';"
+            + "  try {{ sn = (window.buildWidgetSnapshot) ? JSON.stringify(window.buildWidgetSnapshot()) : ''; }} catch(e2) {{}}"
             + "  if (st && window.AndroidWidgetBridge) window.AndroidWidgetBridge.syncFromWeb(st, au, sn);"
             + "}} catch(e) {{}}"
             + "}})();";
