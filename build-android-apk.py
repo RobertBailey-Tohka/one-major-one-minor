@@ -4,7 +4,7 @@ Builds the standalone Android APK (with Interactive Home Screen Widget: Daily / 
 for "1 Minor + 1 Major" using the standard Android SDK build-tools (aapt2, javac, d8, zipalign, apksigner).
 """
 import os
-import sys
+import re
 import glob
 import shutil
 import struct
@@ -17,6 +17,10 @@ BUILD_DIR = os.path.abspath("build_apk_work")
 OUT_APK = os.path.abspath("one-minor-one-major.apk")
 
 
+def natural_key(s):
+    return [int(x) if x.isdigit() else x for x in re.split(r"(\d+)", s)]
+
+
 def find_sdk_tools():
     sdk_root = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
     if not sdk_root or not os.path.isdir(sdk_root):
@@ -27,12 +31,12 @@ def find_sdk_tools():
     if not sdk_root:
         raise RuntimeError("ANDROID_HOME not found")
 
-    bt_dirs = sorted(glob.glob(os.path.join(sdk_root, "build-tools", "*")))
+    bt_dirs = sorted(glob.glob(os.path.join(sdk_root, "build-tools", "*")), key=natural_key)
     if not bt_dirs:
         raise RuntimeError("No Android build-tools found in " + sdk_root)
     bt_dir = bt_dirs[-1]
 
-    plat_jars = sorted(glob.glob(os.path.join(sdk_root, "platforms", "android-*", "android.jar")))
+    plat_jars = sorted(glob.glob(os.path.join(sdk_root, "platforms", "android-*", "android.jar")), key=natural_key)
     if not plat_jars:
         raise RuntimeError("No Android platform android.jar found in " + sdk_root)
     android_jar = plat_jars[-1]
@@ -53,7 +57,6 @@ def make_png_icon(filepath, size=192):
     for y in range(height):
         row = bytearray([0])
         for x in range(width):
-            # Rounded square mask
             margin = size * 0.06
             radius = size * 0.22
             dx = max(margin + radius - x, 0, x - (size - 1 - margin - radius))
@@ -62,17 +65,13 @@ def make_png_icon(filepath, size=192):
                 row.extend((0, 0, 0, 0))
                 continue
 
-            # Two-tone diagonal gradient (Minor Emerald -> Major Blue)
             t = (x + y) / float(2 * size)
             r = int(16 * (1 - t) + 29 * t)
             g = int(185 * (1 - t) + 78 * t)
             b = int(129 * (1 - t) + 216 * t)
 
-            # White checkmark in the center
             nx = x / float(size)
             ny = y / float(size)
-            # Segment 1: (0.28, 0.52) -> (0.44, 0.68)
-            # Segment 2: (0.44, 0.68) -> (0.74, 0.34)
             in_check = False
             if 0.25 <= nx <= 0.45:
                 expected_y = 0.52 + (nx - 0.28) * 1.0
@@ -124,22 +123,19 @@ def generate_project_files():
     os.makedirs(src_dir, exist_ok=True)
     os.makedirs(assets_dir, exist_ok=True)
 
-    # Copy index.html into assets so offline fallback is always bundled
     shutil.copyfile("index.html", os.path.join(assets_dir, "index.html"))
-
-    # Create PNG launcher icon
     make_png_icon(os.path.join(res_dir, "drawable", "ic_launcher.png"), 192)
 
-    # 1. AndroidManifest.xml
+    # 1. AndroidManifest.xml (targetSdkVersion 34 so Android 14/15 never shows "older version" warning)
     write_text(
         os.path.join(BUILD_DIR, "AndroidManifest.xml"),
         f"""<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="{PACKAGE_NAME}"
-    android:versionCode="4"
-    android:versionName="4.0">
+    android:versionCode="5"
+    android:versionName="5.0">
 
-    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="33" />
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="34" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -167,18 +163,13 @@ def generate_project_files():
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="{PACKAGE_NAME}.ACTION_SWITCH_TAB" />
-                <action android:name="{PACKAGE_NAME}.ACTION_ROW_CLICK" />
+                <action android:name="{PACKAGE_NAME}.ACTION_TOGGLE_ITEM" />
                 <action android:name="{PACKAGE_NAME}.ACTION_REFRESH_WIDGET" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/planner_widget_info" />
         </receiver>
-
-        <service
-            android:name=".PlannerWidgetService"
-            android:permission="android.permission.BIND_REMOTEVIEWS"
-            android:exported="false" />
     </application>
 </manifest>
 """,
@@ -191,8 +182,6 @@ def generate_project_files():
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="250dp"
     android:minHeight="180dp"
-    android:targetCellWidth="4"
-    android:targetCellHeight="3"
     android:minResizeWidth="180dp"
     android:minResizeHeight="110dp"
     android:updatePeriodMillis="1800000"
@@ -202,7 +191,7 @@ def generate_project_files():
 """,
     )
 
-    # 3. Drawable backgrounds for the Widget
+    # 3. Drawables
     write_text(
         os.path.join(res_dir, "drawable", "bg_widget_card.xml"),
         """<?xml version="1.0" encoding="utf-8"?>
@@ -266,7 +255,7 @@ def generate_project_files():
 """,
     )
 
-    # 4. Main Widget Layout (Header + 3 View Tabs + Scrollable ListView)
+    # 4. Main Widget Layout (Direct LinearLayout container inside ScrollView / List)
     write_text(
         os.path.join(res_dir, "layout", "widget_planner.xml"),
         """<?xml version="1.0" encoding="utf-8"?>
@@ -368,22 +357,20 @@ def generate_project_files():
             android:background="@drawable/bg_tab_inactive" />
     </LinearLayout>
 
-    <!-- Scrollable List of Habits / Slots / Tasks -->
-    <ListView
-        android:id="@+id/widget_list_view"
+    <!-- Direct Rows Container (Populated synchronously via RemoteViews.addView) -->
+    <LinearLayout
+        android:id="@+id/widget_rows_container"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="5dp" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
 
     <TextView
         android:id="@+id/widget_empty_view"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
         android:gravity="center"
-        android:text="Tap to open 1 Minor + 1 Major &amp; sync your tasks"
+        android:text="Tap here to open 1 Minor + 1 Major &amp; load your tasks"
         android:textColor="#64748B"
         android:textSize="13sp"
         android:visibility="gone" />
@@ -391,7 +378,7 @@ def generate_project_files():
 """,
     )
 
-    # 5. Widget List Item Layouts (Section Header Row & Checkable Task/Habit Row)
+    # 5. Widget Row Layouts
     write_text(
         os.path.join(res_dir, "layout", "widget_row_header.xml"),
         """<?xml version="1.0" encoding="utf-8"?>
@@ -400,10 +387,10 @@ def generate_project_files():
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:paddingTop="6dp"
+    android:paddingTop="5dp"
     android:paddingBottom="2dp"
-    android:paddingStart="4dp"
-    android:paddingEnd="4dp">
+    android:paddingStart="2dp"
+    android:paddingEnd="2dp">
 
     <TextView
         android:id="@+id/row_header_text"
@@ -427,24 +414,25 @@ def generate_project_files():
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:background="@drawable/bg_row_card"
-    android:padding="9dp">
+    android:padding="8dp"
+    android:layout_marginBottom="4dp">
 
     <!-- Direct Check-off Target on Wallpaper (Does NOT open app!) -->
     <FrameLayout
         android:id="@+id/row_check_TouchArea"
-        android:layout_width="34dp"
-        android:layout_height="34dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
         android:layout_marginEnd="8dp">
 
         <TextView
             android:id="@+id/row_check_box"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:layout_gravity="center"
             android:gravity="center"
             android:text=""
             android:textColor="#FFFFFF"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:background="@drawable/bg_check_unchecked" />
     </FrameLayout>
@@ -463,7 +451,7 @@ def generate_project_files():
             android:layout_height="wrap_content"
             android:text="Task Title"
             android:textColor="#0F172A"
-            android:textSize="13.5sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:maxLines="2"
             android:ellipsize="end" />
@@ -474,16 +462,16 @@ def generate_project_files():
             android:layout_height="wrap_content"
             android:text="Subtitle"
             android:textColor="#64748B"
-            android:textSize="11sp"
+            android:textSize="10.5sp"
             android:singleLine="true"
             android:ellipsize="end"
-            android:paddingTop="2dp" />
+            android:paddingTop="1dp" />
     </LinearLayout>
 </LinearLayout>
 """,
     )
 
-    # 6. Java Source: VaultCrypto.java (Exact match to index.html's SHA-256 stream cipher + Firebase sync)
+    # 6. Java Source: VaultCrypto.java
     write_text(
         os.path.join(src_dir, "VaultCrypto.java"),
         f"""package {PACKAGE_NAME};
@@ -626,7 +614,7 @@ public class VaultCrypto {{
 """,
     )
 
-    # 7. Java Source: WidgetDataStore.java (SharedPreferences + Optimistic Toggle + Background Firebase Sync)
+    # 7. Java Source: WidgetDataStore.java (Includes fallback snapshot builder from raw appState JSON!)
     write_text(
         os.path.join(src_dir, "WidgetDataStore.java"),
         f"""package {PACKAGE_NAME};
@@ -634,6 +622,7 @@ public class VaultCrypto {{
 import android.content.Context;
 import android.content.SharedPreferences;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import org.json.JSONArray;
@@ -661,20 +650,203 @@ public class WidgetDataStore {{
 
     public static void saveFromWeb(Context ctx, String stateJson, String authJson, String snapshotJson) {{
         SharedPreferences.Editor ed = prefs(ctx).edit();
-        if (stateJson != null && !stateJson.isEmpty()) ed.putString(KEY_STATE_JSON, stateJson);
-        if (authJson != null && !authJson.isEmpty()) ed.putString(KEY_AUTH_JSON, authJson);
-        if (snapshotJson != null && !snapshotJson.isEmpty()) ed.putString(KEY_SNAPSHOT_JSON, snapshotJson);
+        if (stateJson != null && !stateJson.isEmpty() && !stateJson.equals("null")) {{
+            ed.putString(KEY_STATE_JSON, stateJson);
+        }}
+        if (authJson != null && !authJson.isEmpty() && !authJson.equals("null")) {{
+            ed.putString(KEY_AUTH_JSON, authJson);
+        }}
+        if (snapshotJson != null && !snapshotJson.isEmpty() && !snapshotJson.equals("null")) {{
+            ed.putString(KEY_SNAPSHOT_JSON, snapshotJson);
+        }} else if (stateJson != null && !stateJson.isEmpty() && !stateJson.equals("null")) {{
+            try {{
+                JSONObject st = new JSONObject(stateJson);
+                JSONObject built = buildFallbackSnapshotFromState(st);
+                if (built != null) ed.putString(KEY_SNAPSHOT_JSON, built.toString());
+            }} catch (Exception ignored) {{}}
+        }}
         ed.apply();
     }}
 
     public static JSONObject getSnapshot(Context ctx) {{
-        String raw = prefs(ctx).getString(KEY_SNAPSHOT_JSON, "");
+        SharedPreferences p = prefs(ctx);
+        String raw = p.getString(KEY_SNAPSHOT_JSON, "");
         if (raw != null && !raw.isEmpty()) {{
             try {{
                 return new JSONObject(raw);
             }} catch (Exception ignored) {{}}
         }}
+        String stateRaw = p.getString(KEY_STATE_JSON, "");
+        if (stateRaw != null && !stateRaw.isEmpty()) {{
+            try {{
+                JSONObject st = new JSONObject(stateRaw);
+                JSONObject snap = st.optJSONObject("widgetSnapshot");
+                if (snap == null) snap = buildFallbackSnapshotFromState(st);
+                if (snap != null) {{
+                    p.edit().putString(KEY_SNAPSHOT_JSON, snap.toString()).apply();
+                    return snap;
+                }}
+            }} catch (Exception ignored) {{}}
+        }}
         return null;
+    }}
+
+    public static JSONObject buildFallbackSnapshotFromState(JSONObject state) {{
+        try {{
+            JSONArray tasks = state.optJSONArray("tasks");
+            if (tasks == null) return null;
+            JSONObject hc = state.optJSONObject("habitCompletions");
+            if (hc == null) hc = new JSONObject();
+
+            String tStr = todayStr();
+            Calendar cal = Calendar.getInstance();
+            int todayDow = cal.get(Calendar.DAY_OF_WEEK) - 1; // 0=Sun..6=Sat
+
+            JSONArray todayHabits = new JSONArray();
+            JSONArray allHabits = new JSONArray();
+            JSONArray activeTasks = new JSONArray();
+            JSONObject minorSlot = null;
+            JSONObject majorSlot = null;
+
+            for (int i = 0; i < tasks.length(); i++) {{
+                JSONObject t = tasks.optJSONObject(i);
+                if (t == null) continue;
+                String status = t.optString("status", "active");
+                String rec = t.optString("recurrence", "none");
+                String id = t.optString("id", "");
+                String title = t.optString("title", "");
+                String size = t.optString("size", "minor");
+                String sched = t.optString("scheduledDate", "");
+
+                if ("daily_habit".equals(rec)) {{
+                    if (!"completed".equals(status)) {{
+                        boolean doneToday = hc.optBoolean(tStr + "_" + id, false);
+                        JSONObject hObj = new JSONObject();
+                        hObj.put("id", id);
+                        hObj.put("title", title);
+                        hObj.put("subtitle", "🔄 Habit");
+                        hObj.put("done", doneToday);
+                        hObj.put("dateStr", tStr);
+                        allHabits.put(hObj);
+
+                        boolean matchDay = true;
+                        JSONArray hDays = t.optJSONArray("habitDays");
+                        if (hDays != null && hDays.length() > 0) {{
+                            matchDay = false;
+                            for (int d = 0; d < hDays.length(); d++) {{
+                                if (hDays.optInt(d, -1) == todayDow) matchDay = true;
+                            }}
+                        }}
+                        if (matchDay) todayHabits.put(hObj);
+                    }}
+                }} else {{
+                    if (tStr.equals(sched)) {{
+                        JSONObject slotItem = new JSONObject();
+                        slotItem.put("id", id);
+                        slotItem.put("slotSize", size);
+                        slotItem.put("title", title);
+                        slotItem.put("subtitle", t.optString("notes", ""));
+                        slotItem.put("done", "completed".equals(status));
+                        slotItem.put("empty", false);
+                        slotItem.put("dateStr", tStr);
+                        if ("minor".equals(size) && minorSlot == null) minorSlot = slotItem;
+                        if ("major".equals(size) && majorSlot == null) majorSlot = slotItem;
+                    }}
+                    if ("active".equals(status)) {{
+                        JSONObject tItem = new JSONObject();
+                        tItem.put("id", id);
+                        tItem.put("title", title);
+                        tItem.put("subtitle", ("minor".equals(size) ? "✓ Minor" : "★ Major") + (sched.isEmpty() ? "" : " • 📅 " + sched));
+                        tItem.put("size", size);
+                        tItem.put("done", false);
+                        tItem.put("dateStr", sched.isEmpty() ? tStr : sched);
+                        activeTasks.put(tItem);
+                    }}
+                }}
+            }}
+
+            if (minorSlot == null) {{
+                minorSlot = new JSONObject();
+                minorSlot.put("id", "");
+                minorSlot.put("slotSize", "minor");
+                minorSlot.put("title", "No Minor Task Scheduled");
+                minorSlot.put("subtitle", "Tap to open planner");
+                minorSlot.put("done", false);
+                minorSlot.put("empty", true);
+                minorSlot.put("dateStr", tStr);
+            }}
+            if (majorSlot == null) {{
+                majorSlot = new JSONObject();
+                majorSlot.put("id", "");
+                majorSlot.put("slotSize", "major");
+                majorSlot.put("title", "No Major Task Scheduled");
+                majorSlot.put("subtitle", "Tap to open planner");
+                majorSlot.put("done", false);
+                majorSlot.put("empty", true);
+                majorSlot.put("dateStr", tStr);
+            }}
+
+            JSONArray weeklyDays = new JSONArray();
+            SimpleDateFormat dfIso = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            SimpleDateFormat dfLabel = new SimpleDateFormat("EEE, MMM d", Locale.US);
+            Calendar wCal = Calendar.getInstance();
+            for (int d = 0; d < 7; d++) {{
+                String dIso = dfIso.format(wCal.getTime());
+                String dLbl = (d == 0 ? "TODAY • " : "") + dfLabel.format(wCal.getTime());
+                int dow = wCal.get(Calendar.DAY_OF_WEEK) - 1;
+                JSONObject minW = null;
+                JSONObject majW = null;
+                for (int i = 0; i < tasks.length(); i++) {{
+                    JSONObject t = tasks.optJSONObject(i);
+                    if (t == null) continue;
+                    String rec = t.optString("recurrence", "none");
+                    if ("daily_habit".equals(rec)) continue;
+                    String status = t.optString("status", "active");
+                    String sched = t.optString("scheduledDate", "");
+                    String size = t.optString("size", "minor");
+                    boolean match = dIso.equals(sched);
+                    if (!match && "active".equals(status) && "weekly_slot".equals(rec)) {{
+                        int recDow = t.optInt("recurrenceDayOfWeek", 1);
+                        if (dow == recDow && (sched.isEmpty() || dIso.compareTo(sched) >= 0)) match = true;
+                    }}
+                    if (match) {{
+                        JSONObject wItem = new JSONObject();
+                        wItem.put("id", t.optString("id", ""));
+                        wItem.put("title", t.optString("title", ""));
+                        wItem.put("done", "completed".equals(status));
+                        wItem.put("recBadge", "weekly_slot".equals(rec) ? "🗓️ Weekly" : "");
+                        wItem.put("dateStr", dIso);
+                        if ("minor".equals(size) && minW == null) minW = wItem;
+                        if ("major".equals(size) && majW == null) majW = wItem;
+                    }}
+                }}
+                JSONObject dayObj = new JSONObject();
+                dayObj.put("dateStr", dIso);
+                dayObj.put("dayLabel", dLbl);
+                dayObj.put("isToday", d == 0);
+                if (minW != null) dayObj.put("minor", minW);
+                if (majW != null) dayObj.put("major", majW);
+                weeklyDays.put(dayObj);
+                wCal.add(Calendar.DAY_OF_YEAR, 1);
+            }}
+
+            JSONObject daily = new JSONObject();
+            daily.put("habits", todayHabits);
+            daily.put("minor", minorSlot);
+            daily.put("major", majorSlot);
+
+            JSONObject snap = new JSONObject();
+            snap.put("updatedAt", System.currentTimeMillis());
+            snap.put("todayStr", tStr);
+            snap.put("todayHeader", new SimpleDateFormat("EEEE, MMM d", Locale.US).format(new Date()));
+            snap.put("daily", daily);
+            snap.put("weekly", weeklyDays);
+            snap.put("tasks", activeTasks);
+            snap.put("habits", allHabits);
+            return snap;
+        }} catch (Exception e) {{
+            return null;
+        }}
     }}
 
     public static String consumePendingActions(Context ctx) {{
@@ -696,7 +868,6 @@ public class WidgetDataStore {{
         if (itemId == null || itemId.isEmpty()) return;
         SharedPreferences p = prefs(ctx);
 
-        // 1. Append to pending actions queue so WebView applies exact scheduler rules when opened
         try {{
             JSONArray q = new JSONArray(p.getString(KEY_PENDING_ACTIONS, "[]"));
             JSONObject act = new JSONObject();
@@ -708,7 +879,6 @@ public class WidgetDataStore {{
             p.edit().putString(KEY_PENDING_ACTIONS, q.toString()).apply();
         }} catch (Exception ignored) {{}}
 
-        // 2. Immediately flip the item's 'done' state inside snapshot_json for <20ms wallpaper feedback
         boolean newDoneState = true;
         try {{
             JSONObject snap = getSnapshot(ctx);
@@ -737,7 +907,6 @@ public class WidgetDataStore {{
                         }}
                     }}
                 }} else {{
-                    // Toggle in daily minor/major
                     JSONObject daily = snap.optJSONObject("daily");
                     if (daily != null) {{
                         JSONObject minObj = daily.optJSONObject("minor");
@@ -751,7 +920,6 @@ public class WidgetDataStore {{
                             majObj.put("done", newDoneState);
                         }}
                     }}
-                    // Toggle in weekly days
                     JSONArray weekly = snap.optJSONArray("weekly");
                     if (weekly != null) {{
                         for (int i = 0; i < weekly.length(); i++) {{
@@ -768,7 +936,6 @@ public class WidgetDataStore {{
                             }}
                         }}
                     }}
-                    // Toggle in tasks list
                     JSONArray tasks = snap.optJSONArray("tasks");
                     if (tasks != null) {{
                         for (int i = 0; i < tasks.length(); i++) {{
@@ -784,10 +951,8 @@ public class WidgetDataStore {{
             }}
         }} catch (Exception ignored) {{}}
 
-        // 3. Also notify MainActivity if it's alive in memory so WebView runs full auto-scheduler
         MainActivity.notifyWidgetActionFromBackground();
 
-        // 4. Also push updated state directly to Firebase in background thread
         final boolean finalDone = newDoneState;
         new Thread(new Runnable() {{
             @Override
@@ -809,6 +974,10 @@ public class WidgetDataStore {{
             String vaultKey = auth.optString("vaultKey", "");
             String encKeyHex = auth.optString("encKeyHex", "");
             String macKeyHex = auth.optString("macKeyHex", "");
+            if (vaultKey.isEmpty() && !auth.optString("emailHash", "").isEmpty()) {{
+                String eh = auth.optString("emailHash", "");
+                vaultKey = "vault_" + (eh.length() > 24 ? eh.substring(0, 24) : eh);
+            }}
             if (vaultKey.isEmpty() || encKeyHex.isEmpty() || macKeyHex.isEmpty()) return;
 
             JSONObject state = new JSONObject(stateRaw);
@@ -859,6 +1028,10 @@ public class WidgetDataStore {{
                         JSONObject auth = new JSONObject(authRaw);
                         String fbUrl = auth.optString("firebaseDbUrl", "https://one-minor-one-major-default-rtdb.firebaseio.com");
                         String vaultKey = auth.optString("vaultKey", "");
+                        if (vaultKey.isEmpty() && !auth.optString("emailHash", "").isEmpty()) {{
+                            String eh = auth.optString("emailHash", "");
+                            vaultKey = "vault_" + (eh.length() > 24 ? eh.substring(0, 24) : eh);
+                        }}
                         String encKeyHex = auth.optString("encKeyHex", "");
                         String macKeyHex = auth.optString("macKeyHex", "");
                         if (!vaultKey.isEmpty() && !encKeyHex.isEmpty() && !macKeyHex.isEmpty()) {{
@@ -869,6 +1042,7 @@ public class WidgetDataStore {{
                                     SharedPreferences.Editor ed = p.edit();
                                     ed.putString(KEY_STATE_JSON, remoteState.toString());
                                     JSONObject snap = remoteState.optJSONObject("widgetSnapshot");
+                                    if (snap == null) snap = buildFallbackSnapshotFromState(remoteState);
                                     if (snap != null) {{
                                         ed.putString(KEY_SNAPSHOT_JSON, snap.toString());
                                     }}
@@ -890,7 +1064,7 @@ public class WidgetDataStore {{
 """,
     )
 
-    # 8. Java Source: PlannerWidgetProvider.java (AppWidgetProvider handling Tabs, Checkboxes & Updates)
+    # 8. Java Source: PlannerWidgetProvider.java (Direct synchronous RemoteViews rendering — zero service binding bugs!)
     write_text(
         os.path.join(src_dir, "PlannerWidgetProvider.java"),
         f"""package {PACKAGE_NAME};
@@ -901,25 +1075,33 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
+import android.graphics.Paint;
+import android.view.View;
 import android.widget.RemoteViews;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class PlannerWidgetProvider extends AppWidgetProvider {{
     public static final String ACTION_SWITCH_TAB = "{PACKAGE_NAME}.ACTION_SWITCH_TAB";
-    public static final String ACTION_ROW_CLICK = "{PACKAGE_NAME}.ACTION_ROW_CLICK";
+    public static final String ACTION_TOGGLE_ITEM = "{PACKAGE_NAME}.ACTION_TOGGLE_ITEM";
     public static final String ACTION_REFRESH_WIDGET = "{PACKAGE_NAME}.ACTION_REFRESH_WIDGET";
 
     public static final String EXTRA_TAB = "extra_tab";
-    public static final String EXTRA_CLICK_MODE = "extra_click_mode";
     public static final String EXTRA_ITEM_TYPE = "extra_item_type";
     public static final String EXTRA_ITEM_ID = "extra_item_id";
     public static final String EXTRA_DATE_STR = "extra_date_str";
-    public static final String EXTRA_EDIT_ID = "extra_edit_id";
 
     @Override
-    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {{
+    public void onUpdate(final Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {{
         updateAllWidgets(context);
+        if (WidgetDataStore.getSnapshot(context) == null) {{
+            WidgetDataStore.pullLatestFromFirebaseAsync(context, new Runnable() {{
+                @Override
+                public void run() {{
+                    updateAllWidgets(context);
+                }}
+            }});
+        }}
     }}
 
     @Override
@@ -934,29 +1116,13 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
                 WidgetDataStore.setActiveTab(context, tab);
                 updateAllWidgets(context);
             }}
-        }} else if (ACTION_ROW_CLICK.equals(action)) {{
-            String clickMode = intent.getStringExtra(EXTRA_CLICK_MODE);
-            if ("toggle".equals(clickMode)) {{
-                String itemType = intent.getStringExtra(EXTRA_ITEM_TYPE);
-                String itemId = intent.getStringExtra(EXTRA_ITEM_ID);
-                String dateStr = intent.getStringExtra(EXTRA_DATE_STR);
-                if (itemId != null && !itemId.isEmpty()) {{
-                    WidgetDataStore.toggleItemOptimisticAndSync(context, itemType, itemId, dateStr);
-                    updateAllWidgets(context);
-                }} else {{
-                    Intent openIntent = new Intent(context, MainActivity.class);
-                    openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    context.startActivity(openIntent);
-                }}
-            }} else {{
-                Intent openIntent = new Intent(context, MainActivity.class);
-                openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                String editId = intent.getStringExtra(EXTRA_EDIT_ID);
-                if (editId != null && !editId.isEmpty()) {{
-                    openIntent.putExtra("widgetEditId", editId);
-                }}
-                openIntent.putExtra("widgetView", WidgetDataStore.getActiveTab(context));
-                context.startActivity(openIntent);
+        }} else if (ACTION_TOGGLE_ITEM.equals(action)) {{
+            String itemType = intent.getStringExtra(EXTRA_ITEM_TYPE);
+            String itemId = intent.getStringExtra(EXTRA_ITEM_ID);
+            String dateStr = intent.getStringExtra(EXTRA_DATE_STR);
+            if (itemId != null && !itemId.isEmpty()) {{
+                WidgetDataStore.toggleItemOptimisticAndSync(context, itemType, itemId, dateStr);
+                updateAllWidgets(context);
             }}
         }} else if (ACTION_REFRESH_WIDGET.equals(action)) {{
             WidgetDataStore.pullLatestFromFirebaseAsync(context, new Runnable() {{
@@ -986,7 +1152,6 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
             RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_planner);
             rv.setTextViewText(R.id.widget_date_title, headerTitle);
 
-            // Style the 3 View Tabs (Daily | Weekly | Tasks)
             styleTab(rv, R.id.widget_tab_daily, "daily".equals(activeTab));
             styleTab(rv, R.id.widget_tab_weekly, "weekly".equals(activeTab));
             styleTab(rv, R.id.widget_tab_tasks, "tasks".equals(activeTab));
@@ -995,7 +1160,6 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
             rv.setOnClickPendingIntent(R.id.widget_tab_weekly, makeTabIntent(context, "weekly", 102));
             rv.setOnClickPendingIntent(R.id.widget_tab_tasks, makeTabIntent(context, "tasks", 103));
 
-            // Header Title click -> Open App in current view
             Intent openMain = new Intent(context, MainActivity.class);
             openMain.putExtra("widgetView", activeTab);
             openMain.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -1005,7 +1169,6 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
             rv.setOnClickPendingIntent(R.id.widget_date_title, piMain);
             rv.setOnClickPendingIntent(R.id.widget_empty_view, piMain);
 
-            // '+' Button click -> Open App to Add Task
             Intent openAdd = new Intent(context, MainActivity.class);
             openAdd.putExtra("widgetView", "tasks");
             openAdd.putExtra("widgetNewTask", true);
@@ -1015,7 +1178,6 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
             );
             rv.setOnClickPendingIntent(R.id.widget_btn_add, piAdd);
 
-            // '↻' Refresh Button click
             Intent refIntent = new Intent(context, PlannerWidgetProvider.class);
             refIntent.setAction(ACTION_REFRESH_WIDGET);
             PendingIntent piRef = PendingIntent.getBroadcast(
@@ -1023,24 +1185,179 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
             );
             rv.setOnClickPendingIntent(R.id.widget_btn_refresh, piRef);
 
-            // Bind Scrollable ListView to PlannerWidgetService
-            Intent svcIntent = new Intent(context, PlannerWidgetService.class);
-            svcIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-            svcIntent.setData(Uri.parse(svcIntent.toUri(Intent.URI_INTENT_SCHEME)));
-            rv.setRemoteAdapter(R.id.widget_list_view, svcIntent);
-            rv.setEmptyView(R.id.widget_list_view, R.id.widget_empty_view);
-
-            // Template PendingIntent for ListView row clicks (Checkbox toggles on wallpaper; Text opens app)
-            Intent rowBroadcast = new Intent(context, PlannerWidgetProvider.class);
-            rowBroadcast.setAction(ACTION_ROW_CLICK);
-            PendingIntent piRowTemplate = PendingIntent.getBroadcast(
-                context, 300, rowBroadcast, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE
-            );
-            rv.setPendingIntentTemplate(R.id.widget_list_view, piRowTemplate);
+            // Populate rows directly into widget_rows_container
+            rv.removeAllViews(R.id.widget_rows_container);
+            int addedCount = populateRowsDirectly(context, rv, snap, activeTab);
+            if (addedCount == 0) {{
+                rv.setViewVisibility(R.id.widget_empty_view, View.VISIBLE);
+            }} else {{
+                rv.setViewVisibility(R.id.widget_empty_view, View.GONE);
+            }}
 
             mgr.updateAppWidget(appWidgetId, rv);
         }}
-        mgr.notifyAppWidgetViewDataChanged(ids, R.id.widget_list_view);
+    }}
+
+    private static int populateRowsDirectly(Context context, RemoteViews parentRv, JSONObject snap, String tab) {{
+        if (snap == null) return 0;
+        String todayStr = snap.optString("todayStr", WidgetDataStore.todayStr());
+        int reqSeq = 1000;
+        int count = 0;
+
+        if ("daily".equals(tab)) {{
+            JSONObject daily = snap.optJSONObject("daily");
+            if (daily == null) return 0;
+
+            JSONArray habits = daily.optJSONArray("habits");
+            if (habits != null && habits.length() > 0) {{
+                addHeaderRow(context, parentRv, "🔄 HABITS", 0xFF475569);
+                for (int i = 0; i < habits.length() && i < 8; i++) {{
+                    JSONObject h = habits.optJSONObject(i);
+                    if (h != null) {{
+                        addItemRow(context, parentRv, "habit", h.optString("id"), h.optString("dateStr", todayStr),
+                            h.optString("title"), "", h.optBoolean("done", false), false, tab, reqSeq++);
+                        count++;
+                    }}
+                }}
+            }}
+
+            addHeaderRow(context, parentRv, "✓ 1 MINOR THING", 0xFF047857);
+            JSONObject minObj = daily.optJSONObject("minor");
+            if (minObj != null) {{
+                addItemRow(context, parentRv, "task", minObj.optString("id"), minObj.optString("dateStr", todayStr),
+                    minObj.optString("title"), minObj.optString("subtitle"),
+                    minObj.optBoolean("done", false), minObj.optBoolean("empty", false), tab, reqSeq++);
+                count++;
+            }}
+
+            addHeaderRow(context, parentRv, "★ 1 MAJOR THING", 0xFF1D4ED8);
+            JSONObject majObj = daily.optJSONObject("major");
+            if (majObj != null) {{
+                addItemRow(context, parentRv, "task", majObj.optString("id"), majObj.optString("dateStr", todayStr),
+                    majObj.optString("title"), majObj.optString("subtitle"),
+                    majObj.optBoolean("done", false), majObj.optBoolean("empty", false), tab, reqSeq++);
+                count++;
+            }}
+        }} else if ("weekly".equals(tab)) {{
+            JSONArray weekly = snap.optJSONArray("weekly");
+            if (weekly == null) return 0;
+            for (int i = 0; i < weekly.length() && i < 7; i++) {{
+                JSONObject day = weekly.optJSONObject(i);
+                if (day == null) continue;
+                boolean isToday = day.optBoolean("isToday", false);
+                String dStr = day.optString("dateStr", todayStr);
+                addHeaderRow(context, parentRv, day.optString("dayLabel", dStr), isToday ? 0xFF1D4ED8 : 0xFF334155);
+
+                JSONObject minObj = day.optJSONObject("minor");
+                if (minObj != null) {{
+                    String badge = minObj.optString("recBadge", "");
+                    addItemRow(context, parentRv, "task", minObj.optString("id"), dStr,
+                        "✓ " + minObj.optString("title"), badge.isEmpty() ? "Minor Slot" : "Minor • " + badge,
+                        minObj.optBoolean("done", false), false, tab, reqSeq++);
+                    count++;
+                }}
+                JSONObject majObj = day.optJSONObject("major");
+                if (majObj != null) {{
+                    String badge = majObj.optString("recBadge", "");
+                    addItemRow(context, parentRv, "task", majObj.optString("id"), dStr,
+                        "★ " + majObj.optString("title"), badge.isEmpty() ? "Major Slot" : "Major • " + badge,
+                        majObj.optBoolean("done", false), false, tab, reqSeq++);
+                    count++;
+                }}
+                if (minObj == null && majObj == null) {{
+                    addItemRow(context, parentRv, "task", "", dStr, "— Open Day —", "", false, true, tab, reqSeq++);
+                    count++;
+                }}
+            }}
+        }} else {{
+            JSONArray tasks = snap.optJSONArray("tasks");
+            if (tasks != null && tasks.length() > 0) {{
+                addHeaderRow(context, parentRv, "📋 ACTIVE TASKS (" + tasks.length() + ")", 0xFF1D4ED8);
+                for (int i = 0; i < tasks.length() && i < 12; i++) {{
+                    JSONObject t = tasks.optJSONObject(i);
+                    if (t != null) {{
+                        addItemRow(context, parentRv, "task", t.optString("id"), t.optString("dateStr", todayStr),
+                            t.optString("title"), t.optString("subtitle"), t.optBoolean("done", false), false, tab, reqSeq++);
+                        count++;
+                    }}
+                }}
+            }}
+            JSONArray habits = snap.optJSONArray("habits");
+            if (habits != null && habits.length() > 0) {{
+                addHeaderRow(context, parentRv, "🔄 HABITS (" + habits.length() + ")", 0xFF047857);
+                for (int i = 0; i < habits.length() && i < 8; i++) {{
+                    JSONObject h = habits.optJSONObject(i);
+                    if (h != null) {{
+                        addItemRow(context, parentRv, "habit", h.optString("id"), h.optString("dateStr", todayStr),
+                            h.optString("title"), h.optString("subtitle"), h.optBoolean("done", false), false, tab, reqSeq++);
+                        count++;
+                    }}
+                }}
+            }}
+        }}
+        return count;
+    }}
+
+    private static void addHeaderRow(Context context, RemoteViews parentRv, String text, int color) {{
+        RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_row_header);
+        rv.setTextViewText(R.id.row_header_text, text);
+        rv.setTextColor(R.id.row_header_text, color);
+        parentRv.addView(R.id.widget_rows_container, rv);
+    }}
+
+    private static void addItemRow(Context context, RemoteViews parentRv, String itemType, String itemId,
+                                   String dateStr, String title, String subtitle, boolean done, boolean empty,
+                                   String activeTab, int reqCodeBase) {{
+        RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_row_item);
+        rv.setTextViewText(R.id.row_item_title, title != null ? title : "");
+        rv.setTextColor(R.id.row_item_title, empty ? 0xFF94A3B8 : (done ? 0xFF64748B : 0xFF0F172A));
+        rv.setInt(
+            R.id.row_item_title,
+            "setPaintFlags",
+            done ? (Paint.STRIKE_THRU_TEXT_FLAG | Paint.ANTI_ALIAS_FLAG) : Paint.ANTI_ALIAS_FLAG
+        );
+
+        if (subtitle != null && !subtitle.isEmpty()) {{
+            rv.setViewVisibility(R.id.row_item_subtitle, View.VISIBLE);
+            rv.setTextViewText(R.id.row_item_subtitle, subtitle);
+        }} else {{
+            rv.setViewVisibility(R.id.row_item_subtitle, View.GONE);
+        }}
+
+        if (empty || itemId == null || itemId.isEmpty()) {{
+            rv.setViewVisibility(R.id.row_check_TouchArea, View.GONE);
+        }} else {{
+            rv.setViewVisibility(R.id.row_check_TouchArea, View.VISIBLE);
+            rv.setTextViewText(R.id.row_check_box, done ? "✓" : "");
+            rv.setInt(
+                R.id.row_check_box,
+                "setBackgroundResource",
+                done ? R.drawable.bg_check_checked : R.drawable.bg_check_unchecked
+            );
+
+            Intent toggleIntent = new Intent(context, PlannerWidgetProvider.class);
+            toggleIntent.setAction(ACTION_TOGGLE_ITEM);
+            toggleIntent.putExtra(EXTRA_ITEM_TYPE, itemType);
+            toggleIntent.putExtra(EXTRA_ITEM_ID, itemId);
+            toggleIntent.putExtra(EXTRA_DATE_STR, dateStr);
+            PendingIntent piToggle = PendingIntent.getBroadcast(
+                context, reqCodeBase * 2, toggleIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+            rv.setOnClickPendingIntent(R.id.row_check_TouchArea, piToggle);
+        }}
+
+        Intent openIntent = new Intent(context, MainActivity.class);
+        openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        openIntent.putExtra("widgetView", activeTab);
+        if (itemId != null && !itemId.isEmpty()) {{
+            openIntent.putExtra("widgetEditId", itemId);
+        }}
+        PendingIntent piOpen = PendingIntent.getActivity(
+            context, reqCodeBase * 2 + 1, openIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        rv.setOnClickPendingIntent(R.id.row_text_area, piOpen);
+
+        parentRv.addView(R.id.widget_rows_container, rv);
     }}
 
     private static void styleTab(RemoteViews rv, int viewId, boolean active) {{
@@ -1060,320 +1377,7 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
 """,
     )
 
-    # 9. Java Source: PlannerWidgetService.java (RemoteViewsService + Factory for Daily / Weekly / Tasks)
-    write_text(
-        os.path.join(src_dir, "PlannerWidgetService.java"),
-        f"""package {PACKAGE_NAME};
-
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Paint;
-import android.view.View;
-import android.widget.RemoteViews;
-import android.widget.RemoteViewsService;
-import java.util.ArrayList;
-import java.util.List;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-public class PlannerWidgetService extends RemoteViewsService {{
-    @Override
-    public RemoteViewsFactory onGetViewFactory(Intent intent) {{
-        return new PlannerRemoteViewsFactory(this.getApplicationContext());
-    }}
-
-    private static class RowEntry {{
-        boolean isHeader;
-        String headerText;
-        int headerColor;
-
-        String itemType; // "task" or "habit"
-        String itemId;
-        String dateStr;
-        String title;
-        String subtitle;
-        boolean done;
-        boolean empty;
-
-        static RowEntry header(String text, int color) {{
-            RowEntry r = new RowEntry();
-            r.isHeader = true;
-            r.headerText = text;
-            r.headerColor = color;
-            return r;
-        }}
-
-        static RowEntry item(String type, String id, String dateStr, String title, String subtitle, boolean done, boolean empty) {{
-            RowEntry r = new RowEntry();
-            r.isHeader = false;
-            r.itemType = type;
-            r.itemId = id != null ? id : "";
-            r.dateStr = dateStr != null ? dateStr : "";
-            r.title = title != null ? title : "";
-            r.subtitle = subtitle != null ? subtitle : "";
-            r.done = done;
-            r.empty = empty;
-            return r;
-        }}
-    }}
-
-    private static class PlannerRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {{
-        private final Context context;
-        private final List<RowEntry> rows = new ArrayList<>();
-
-        PlannerRemoteViewsFactory(Context context) {{
-            this.context = context;
-        }}
-
-        @Override
-        public void onCreate() {{
-            rebuildRows();
-        }}
-
-        @Override
-        public void onDataSetChanged() {{
-            rebuildRows();
-        }}
-
-        private void rebuildRows() {{
-            rows.clear();
-            JSONObject snap = WidgetDataStore.getSnapshot(context);
-            if (snap == null) return;
-
-            String tab = WidgetDataStore.getActiveTab(context);
-            String todayStr = snap.optString("todayStr", WidgetDataStore.todayStr());
-
-            if ("daily".equals(tab)) {{
-                JSONObject daily = snap.optJSONObject("daily");
-                if (daily == null) return;
-
-                JSONArray habits = daily.optJSONArray("habits");
-                if (habits != null && habits.length() > 0) {{
-                    rows.add(RowEntry.header("🔄 HABITS", 0xFF475569));
-                    for (int i = 0; i < habits.length(); i++) {{
-                        JSONObject h = habits.optJSONObject(i);
-                        if (h != null) {{
-                            rows.add(RowEntry.item(
-                                "habit",
-                                h.optString("id"),
-                                h.optString("dateStr", todayStr),
-                                h.optString("title"),
-                                "",
-                                h.optBoolean("done", false),
-                                false
-                            ));
-                        }}
-                    }}
-                }}
-
-                rows.add(RowEntry.header("✓ 1 MINOR THING", 0xFF047857));
-                JSONObject minObj = daily.optJSONObject("minor");
-                if (minObj != null) {{
-                    rows.add(RowEntry.item(
-                        "task",
-                        minObj.optString("id"),
-                        minObj.optString("dateStr", todayStr),
-                        minObj.optString("title"),
-                        minObj.optString("subtitle"),
-                        minObj.optBoolean("done", false),
-                        minObj.optBoolean("empty", false)
-                    ));
-                }}
-
-                rows.add(RowEntry.header("★ 1 MAJOR THING", 0xFF1D4ED8));
-                JSONObject majObj = daily.optJSONObject("major");
-                if (majObj != null) {{
-                    rows.add(RowEntry.item(
-                        "task",
-                        majObj.optString("id"),
-                        majObj.optString("dateStr", todayStr),
-                        majObj.optString("title"),
-                        majObj.optString("subtitle"),
-                        majObj.optBoolean("done", false),
-                        majObj.optBoolean("empty", false)
-                    ));
-                }}
-
-            }} else if ("weekly".equals(tab)) {{
-                JSONArray weekly = snap.optJSONArray("weekly");
-                if (weekly == null) return;
-                for (int i = 0; i < weekly.length(); i++) {{
-                    JSONObject day = weekly.optJSONObject(i);
-                    if (day == null) continue;
-                    boolean isToday = day.optBoolean("isToday", false);
-                    String dStr = day.optString("dateStr", todayStr);
-                    rows.add(RowEntry.header(
-                        day.optString("dayLabel", dStr),
-                        isToday ? 0xFF1D4ED8 : 0xFF334155
-                    ));
-
-                    JSONObject minObj = day.optJSONObject("minor");
-                    if (minObj != null) {{
-                        String badge = minObj.optString("recBadge", "");
-                        rows.add(RowEntry.item(
-                            "task",
-                            minObj.optString("id"),
-                            dStr,
-                            "✓ " + minObj.optString("title"),
-                            badge.isEmpty() ? "Minor Slot" : "Minor • " + badge,
-                            minObj.optBoolean("done", false),
-                            false
-                        ));
-                    }} else {{
-                        rows.add(RowEntry.item("task", "", dStr, "✓ — Empty Minor Slot —", "", false, true));
-                    }}
-
-                    JSONObject majObj = day.optJSONObject("major");
-                    if (majObj != null) {{
-                        String badge = majObj.optString("recBadge", "");
-                        rows.add(RowEntry.item(
-                            "task",
-                            majObj.optString("id"),
-                            dStr,
-                            "★ " + majObj.optString("title"),
-                            badge.isEmpty() ? "Major Slot" : "Major • " + badge,
-                            majObj.optBoolean("done", false),
-                            false
-                        ));
-                    }} else {{
-                        rows.add(RowEntry.item("task", "", dStr, "★ — Empty Major Slot —", "", false, true));
-                    }}
-                }}
-
-            }} else {{
-                // "tasks" mode (Microsoft To Do / Google Tasks style list)
-                JSONArray tasks = snap.optJSONArray("tasks");
-                if (tasks != null && tasks.length() > 0) {{
-                    rows.add(RowEntry.header("📋 ACTIVE TASKS (" + tasks.length() + ")", 0xFF1D4ED8));
-                    for (int i = 0; i < tasks.length(); i++) {{
-                        JSONObject t = tasks.optJSONObject(i);
-                        if (t != null) {{
-                            rows.add(RowEntry.item(
-                                "task",
-                                t.optString("id"),
-                                t.optString("dateStr", todayStr),
-                                t.optString("title"),
-                                t.optString("subtitle"),
-                                t.optBoolean("done", false),
-                                false
-                            ));
-                        }}
-                    }}
-                }}
-
-                JSONArray habits = snap.optJSONArray("habits");
-                if (habits != null && habits.length() > 0) {{
-                    rows.add(RowEntry.header("🔄 HABITS (" + habits.length() + ")", 0xFF047857));
-                    for (int i = 0; i < habits.length(); i++) {{
-                        JSONObject h = habits.optJSONObject(i);
-                        if (h != null) {{
-                            rows.add(RowEntry.item(
-                                "habit",
-                                h.optString("id"),
-                                h.optString("dateStr", todayStr),
-                                h.optString("title"),
-                                h.optString("subtitle"),
-                                h.optBoolean("done", false),
-                                false
-                            ));
-                        }}
-                    }}
-                }}
-            }}
-        }}
-
-        @Override
-        public void onDestroy() {{
-            rows.clear();
-        }}
-
-        @Override
-        public int getCount() {{
-            return rows.size();
-        }}
-
-        @Override
-        public int getViewTypeCount() {{
-            return 2;
-        }}
-
-        @Override
-        public RemoteViews getViewAt(int position) {{
-            if (position < 0 || position >= rows.size()) return null;
-            RowEntry r = rows.get(position);
-
-            if (r.isHeader) {{
-                RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_row_header);
-                rv.setTextViewText(R.id.row_header_text, r.headerText);
-                rv.setTextColor(R.id.row_header_text, r.headerColor);
-                return rv;
-            }}
-
-            RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_row_item);
-            rv.setTextViewText(R.id.row_item_title, r.title);
-            rv.setTextColor(R.id.row_item_title, r.empty ? 0xFF94A3B8 : (r.done ? 0xFF64748B : 0xFF0F172A));
-            rv.setInt(
-                R.id.row_item_title,
-                "setPaintFlags",
-                r.done ? (Paint.STRIKE_THRU_TEXT_FLAG | Paint.ANTI_ALIAS_FLAG) : Paint.ANTI_ALIAS_FLAG
-            );
-
-            if (r.subtitle != null && !r.subtitle.isEmpty()) {{
-                rv.setViewVisibility(R.id.row_item_subtitle, View.VISIBLE);
-                rv.setTextViewText(R.id.row_item_subtitle, r.subtitle);
-            }} else {{
-                rv.setViewVisibility(R.id.row_item_subtitle, View.GONE);
-            }}
-
-            if (r.empty) {{
-                rv.setViewVisibility(R.id.row_check_TouchArea, View.GONE);
-            }} else {{
-                rv.setViewVisibility(R.id.row_check_TouchArea, View.VISIBLE);
-                rv.setTextViewText(R.id.row_check_box, r.done ? "✓" : "");
-                rv.setInt(
-                    R.id.row_check_box,
-                    "setBackgroundResource",
-                    r.done ? R.drawable.bg_check_checked : R.drawable.bg_check_unchecked
-                );
-            }}
-
-            // 1. Checkbox Fill-In Intent -> Checks off task directly on wallpaper without opening app!
-            Intent toggleFill = new Intent();
-            toggleFill.putExtra(PlannerWidgetProvider.EXTRA_CLICK_MODE, "toggle");
-            toggleFill.putExtra(PlannerWidgetProvider.EXTRA_ITEM_TYPE, r.itemType);
-            toggleFill.putExtra(PlannerWidgetProvider.EXTRA_ITEM_ID, r.itemId);
-            toggleFill.putExtra(PlannerWidgetProvider.EXTRA_DATE_STR, r.dateStr);
-            rv.setOnClickFillInIntent(R.id.row_check_TouchArea, toggleFill);
-
-            // 2. Text Area Fill-In Intent -> Opens the app to view/edit task
-            Intent openFill = new Intent();
-            openFill.putExtra(PlannerWidgetProvider.EXTRA_CLICK_MODE, "open");
-            openFill.putExtra(PlannerWidgetProvider.EXTRA_EDIT_ID, r.itemId);
-            rv.setOnClickFillInIntent(R.id.row_text_area, openFill);
-
-            return rv;
-        }}
-
-        @Override
-        public RemoteViews getLoadingView() {{
-            return null;
-        }}
-
-        @Override
-        public long getItemId(int position) {{
-            return position;
-        }}
-
-        @Override
-        public boolean hasStableIds() {{
-            return false;
-        }}
-    }}
-}}
-""",
-    )
-
-    # 10. Java Source: MainActivity.java (Full-Screen WebView + JavascriptInterface Bridge to Widget)
+    # 9. Java Source: MainActivity.java (Active localStorage + Snapshot Bridge so Widget ALWAYS syncs!)
     write_text(
         os.path.join(src_dir, "MainActivity.java"),
         f"""package {PACKAGE_NAME};
@@ -1396,9 +1400,20 @@ public class MainActivity extends Activity {{
     private static MainActivity activeInstance;
     private WebView webView;
     private boolean pageLoaded = false;
+    private final Handler syncHandler = new Handler(Looper.getMainLooper());
 
     private static final String LIVE_APP_URL = "https://robertbailey-tohka.github.io/one-major-one-minor/";
     private static final String LOCAL_ASSET_URL = "file:///android_asset/index.html";
+
+    private final Runnable periodicBridgeSync = new Runnable() {{
+        @Override
+        public void run() {{
+            if (activeInstance != null && webView != null && pageLoaded) {{
+                pullWebLocalStorageIntoWidget();
+                syncHandler.postDelayed(this, 1800);
+            }}
+        }}
+    }};
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -1415,7 +1430,7 @@ public class MainActivity extends Activity {{
         ws.setDatabaseEnabled(true);
         ws.setAllowFileAccess(true);
         ws.setAllowContentAccess(true);
-        ws.setCacheMode(WebSettings.LOAD_DEFAULT);
+        ws.setCacheMode(WebSettings.LOAD_NO_CACHE);
 
         webView.addJavascriptInterface(new AndroidWidgetBridge(), "AndroidWidgetBridge");
         webView.setWebChromeClient(new WebChromeClient());
@@ -1425,6 +1440,9 @@ public class MainActivity extends Activity {{
                 super.onPageFinished(view, url);
                 pageLoaded = true;
                 forwardIntentToWeb(getIntent());
+                pullWebLocalStorageIntoWidget();
+                syncHandler.removeCallbacks(periodicBridgeSync);
+                syncHandler.postDelayed(periodicBridgeSync, 1500);
             }}
 
             @Override
@@ -1435,7 +1453,22 @@ public class MainActivity extends Activity {{
             }}
         }});
 
-        webView.loadUrl(LIVE_APP_URL);
+        webView.loadUrl(LIVE_APP_URL + "?t=" + System.currentTimeMillis());
+    }}
+
+    private void pullWebLocalStorageIntoWidget() {{
+        if (webView == null || !pageLoaded) return;
+        String js = "(function() {{"
+            + "try {{"
+            + "  if (window.applyPendingNativeWidgetActions) window.applyPendingNativeWidgetActions();"
+            + "  if (window.syncNativeAndroidWidget) {{ window.syncNativeAndroidWidget(); }}"
+            + "  var st = localStorage.getItem('one_minor_one_major_v4') || '';"
+            + "  var au = localStorage.getItem('one_minor_one_major_cloud_account_v4') || '';"
+            + "  var sn = (window.buildWidgetSnapshot) ? JSON.stringify(window.buildWidgetSnapshot()) : '';"
+            + "  if (st && window.AndroidWidgetBridge) window.AndroidWidgetBridge.syncFromWeb(st, au, sn);"
+            + "}} catch(e) {{}}"
+            + "}})();";
+        webView.evaluateJavascript(js, null);
     }}
 
     @Override
@@ -1452,12 +1485,22 @@ public class MainActivity extends Activity {{
         super.onResume();
         activeInstance = this;
         if (pageLoaded && webView != null) {{
-            webView.evaluateJavascript("if(window.applyPendingNativeWidgetActions) window.applyPendingNativeWidgetActions();", null);
+            pullWebLocalStorageIntoWidget();
+            syncHandler.removeCallbacks(periodicBridgeSync);
+            syncHandler.postDelayed(periodicBridgeSync, 1500);
         }}
     }}
 
     @Override
+    protected void onPause() {{
+        pullWebLocalStorageIntoWidget();
+        syncHandler.removeCallbacks(periodicBridgeSync);
+        super.onPause();
+    }}
+
+    @Override
     protected void onDestroy() {{
+        syncHandler.removeCallbacks(periodicBridgeSync);
         if (activeInstance == this) activeInstance = null;
         super.onDestroy();
     }}
@@ -1468,7 +1511,6 @@ public class MainActivity extends Activity {{
         final String editId = intent.getStringExtra("widgetEditId");
         final boolean newTask = intent.getBooleanExtra("widgetNewTask", false);
 
-        webView.evaluateJavascript("if(window.applyPendingNativeWidgetActions) window.applyPendingNativeWidgetActions();", null);
         if (viewMode != null || editId != null || newTask) {{
             String js = String.format(
                 "if(window.handleWidgetLaunchParams) window.handleWidgetLaunchParams(%s, %s, %s);",
@@ -1489,7 +1531,7 @@ public class MainActivity extends Activity {{
             new Handler(Looper.getMainLooper()).post(new Runnable() {{
                 @Override
                 public void run() {{
-                    inst.webView.evaluateJavascript("if(window.applyPendingNativeWidgetActions) window.applyPendingNativeWidgetActions();", null);
+                    inst.pullWebLocalStorageIntoWidget();
                 }}
             }});
         }}
@@ -1559,12 +1601,14 @@ def compile_apk():
         "-o", compiled_res_zip
     ])
 
-    # 2. Link resources & generate R.java + base APK with assets
+    # 2. Link resources & generate R.java + base APK with explicit min/target SDK 34
     run_cmd([
         tools["aapt2"], "link",
         "-o", unaligned_apk,
         "-I", tools["android_jar"],
         "--manifest", os.path.join(BUILD_DIR, "AndroidManifest.xml"),
+        "--min-sdk-version", "26",
+        "--target-sdk-version", "34",
         "-A", os.path.join(BUILD_DIR, "assets"),
         "--java", gen_java_dir,
         compiled_res_zip
@@ -1616,7 +1660,7 @@ def compile_apk():
         unaligned_apk, aligned_apk
     ])
 
-    # 7. Generate signing keystore & sign APK (v1 + v2 + v3 signatures for all Android versions)
+    # 7. Generate signing keystore & sign APK (v1 + v2 + v3 signatures)
     run_cmd([
         "keytool", "-genkeypair",
         "-v",

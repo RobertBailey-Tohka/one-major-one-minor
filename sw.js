@@ -1,4 +1,4 @@
-const CACHE_NAME = 'one-minor-one-major-v3';
+const CACHE_NAME = 'one-minor-one-major-v5';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', (event) => {
