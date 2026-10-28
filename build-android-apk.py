@@ -1298,12 +1298,6 @@ public class PlannerWidgetService extends RemoteViewsService {{
         }}
 
         @Override
-        public int getItemViewType(int position) {{
-            if (position < 0 || position >= rows.size()) return 1;
-            return rows.get(position).isHeader ? 0 : 1;
-        }}
-
-        @Override
         public RemoteViews getViewAt(int position) {{
             if (position < 0 || position >= rows.size()) return null;
             RowEntry r = rows.get(position);
