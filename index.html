@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -1350,9 +1350,9 @@
 
       <!-- Main Navigation (Always starts on Calm Daily View!) -->
       <nav class="main-nav-tabs">
-        <button class="nav-tab-btn active" id="navBtnToday" onclick="switchMainView('today')">â˜€ï¸ Today Focus</button>
-        <button class="nav-tab-btn" id="navBtnTasks" onclick="switchMainView('tasks')">â˜‘ï¸ Task List (<span id="navActiveTaskCount">0</span>)</button>
-        <button class="nav-tab-btn" id="navBtnWeek" onclick="switchMainView('week')">ðŸ—“ï¸ Weekly &amp; Print</button>
+        <button class="nav-tab-btn active" id="navBtnToday" onclick="switchMainView('today')">☀️ Today Focus</button>
+        <button class="nav-tab-btn" id="navBtnTasks" onclick="switchMainView('tasks')">☑️ Task List (<span id="navActiveTaskCount">0</span>)</button>
+        <button class="nav-tab-btn" id="navBtnWeek" onclick="switchMainView('week')">🗓️ Weekly &amp; Print</button>
       </nav>
 
       <div class="nav-right-actions">
@@ -1372,15 +1372,15 @@
         <!-- Prominent Daily / Weekly View Switcher + Reorganize & Print Actions on the Main Screen -->
         <div style="width:100%; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding-bottom:10px; border-bottom:1px solid var(--surface-subtle);">
           <div class="main-view-mode-switch" role="tablist" aria-label="Main Screen View Mode">
-            <button type="button" class="mode-switch-btn active" id="btnMainModeDaily" onclick="setMainScreenScheduleMode('daily')">â˜€ï¸ Daily View</button>
-            <button type="button" class="mode-switch-btn" id="btnMainModeWeekly" onclick="setMainScreenScheduleMode('weekly')">ðŸ—“ï¸ Weekly View</button>
+            <button type="button" class="mode-switch-btn active" id="btnMainModeDaily" onclick="setMainScreenScheduleMode('daily')">☀️ Daily View</button>
+            <button type="button" class="mode-switch-btn" id="btnMainModeWeekly" onclick="setMainScreenScheduleMode('weekly')">🗓️ Weekly View</button>
           </div>
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button type="button" id="btnReorganizeMain" onclick="reorganizeSchedule()" style="background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-size:0.78rem; padding:6px 12px; font-weight:800;" title="Clear schedule & reprioritize everything starting Today">
-              ðŸ”„ Reorganize
+              🔄 Reorganize
             </button>
             <button type="button" onclick="switchMainView('week')" style="font-size:0.78rem; padding:6px 11px; font-weight:700;" title="Open Weekly & Print Screen">
-              ðŸ–¨ï¸ Weekly &amp; Print
+              🖨️ Weekly &amp; Print
             </button>
           </div>
         </div>
@@ -1388,12 +1388,12 @@
         <!-- Daily Date Navigation & Controls (Visible when Daily View is active) -->
         <div id="mainDailyHeaderControls" style="width:100%; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <div class="today-date-nav">
-            <button onclick="shiftFocusDate(-1)" title="Previous Day">â®</button>
+            <button onclick="shiftFocusDate(-1)" title="Previous Day">❮</button>
             <div>
               <div class="today-date-title" id="todayDateHeading">Today</div>
               <div class="today-subtitle" id="todayDateSubheading">Focus on 1 quick win &amp; 1 main priority</div>
             </div>
-            <button onclick="shiftFocusDate(1)" title="Next Day">â¯</button>
+            <button onclick="shiftFocusDate(1)" title="Next Day">❯</button>
             <button id="btnJumpToday" onclick="jumpFocusToToday()" style="font-size:0.76rem; padding:5px 10px; display:none;">Jump to Today</button>
           </div>
 
@@ -1401,7 +1401,7 @@
             <select id="todayCatPrefSelect" onchange="onChangeDayCategoryPref(this.value)" style="padding:6px 10px; border-radius:999px; border:1px solid var(--border-strong); font-size:0.78rem; font-weight:700; background:var(--surface);">
             </select>
             <button class="low-energy-btn" id="btnTodayLowEnergy" onclick="toggleDayLowEnergy(appState.focusDate)">
-              ðŸ”‹ Low Energy Mode
+              🔋 Low Energy Mode
             </button>
           </div>
         </div>
@@ -1409,14 +1409,14 @@
         <!-- Weekly Date Navigation & Controls (Visible on Main Screen when Weekly View is active) -->
         <div id="mainWeeklyHeaderControls" style="width:100%; display:none; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <button onclick="shiftSelectedWeek(-7)" title="Previous Week">â®</button>
-            <strong style="font-size:1.15rem; font-weight:800;" id="mainWeekRangeHeading">Sun â€“ Sat</strong>
+            <button onclick="shiftSelectedWeek(-7)" title="Previous Week">❮</button>
+            <strong style="font-size:1.15rem; font-weight:800;" id="mainWeekRangeHeading">Sun – Sat</strong>
             <input type="date" id="mainWeekDatePickerInput" onchange="onPickWeekDate(this.value)" style="padding:4px 8px; border-radius:7px; border:1px solid var(--border-strong); font-size:0.8rem;" />
-            <button onclick="shiftSelectedWeek(7)" title="Next Week">â¯</button>
+            <button onclick="shiftSelectedWeek(7)" title="Next Week">❯</button>
             <button onclick="jumpWeekToCurrent()" style="font-size:0.76rem; padding:5px 10px;">This Week</button>
           </div>
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            <button onclick="switchMainView('week')" style="font-size:0.76rem; padding:5px 10px;" title="Open Print Options & Wallet Preview">ðŸ–¨ï¸ Print Options</button>
+            <button onclick="switchMainView('week')" style="font-size:0.76rem; padding:5px 10px;" title="Open Print Options & Wallet Preview">🖨️ Print Options</button>
           </div>
         </div>
       </div>
@@ -1424,7 +1424,7 @@
       <!-- Compact Daily Habits / Routines Strip (Doesn't steal the 1 Minor / 1 Major slot!) -->
       <div class="habits-strip-card" id="todayHabitsCard">
         <div class="habits-strip-header">
-          <span>ðŸ”„ Daily Habits &amp; Routines</span>
+          <span>🔄 Daily Habits &amp; Routines</span>
           <button style="font-size:0.73rem; padding:3px 9px; border-radius:999px;" onclick="openTaskWizard({ defaultHabit: true })">+ Add Daily Habit</button>
         </div>
         <div class="habits-pills-wrap" id="todayHabitsList"></div>
@@ -1452,10 +1452,10 @@
           <div class="tasks-panel-header">
             <div>
               <h2 style="font-size:1.2rem; font-weight:800;" id="currentListTitle">All Active Tasks</h2>
-              <p style="font-size:0.8rem; color:var(--muted);" id="currentListSubtitle">Sorted by effective priority (includes +2/day aging &amp; +5 bump boosts â€¢ Saturdays reserve oldest task)</p>
+              <p style="font-size:0.8rem; color:var(--muted);" id="currentListSubtitle">Sorted by effective priority (includes +2/day aging &amp; +5 bump boosts • Saturdays reserve oldest task)</p>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button type="button" id="btnReorganizeTasks" onclick="reorganizeSchedule()" style="background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-weight:800;">ðŸ”„ Reorganize</button>
+              <button type="button" id="btnReorganizeTasks" onclick="reorganizeSchedule()" style="background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-weight:800;">🔄 Reorganize</button>
               <button class="btn-primary-add" onclick="openTaskWizard()">+ Add Task (4 Questions)</button>
             </div>
           </div>
@@ -1466,8 +1466,8 @@
           <!-- Collapsible Completed Section (Just like MS To Do / Google Tasks) -->
           <div id="todoCompletedSection" style="margin-top:8px;">
             <button class="completed-accordion-btn" onclick="toggleCompletedAccordion()">
-              <span>âœ“ Completed (<span id="completedCountLabel">0</span>)</span>
-              <span id="completedAccordionArrow">â–¾</span>
+              <span>✓ Completed (<span id="completedCountLabel">0</span>)</span>
+              <span id="completedAccordionArrow">▾</span>
             </button>
             <div id="todoCompletedList" style="display:none; flex-direction:column; gap:8px; margin-top:10px;"></div>
           </div>
@@ -1482,23 +1482,23 @@
       <div class="weekly-panel">
         <div class="week-toolbar">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <button onclick="switchMainView('today')" style="font-size:0.78rem; font-weight:800; background:var(--surface-subtle);">â† Back to Today</button>
-            <button onclick="shiftSelectedWeek(-7)">â®</button>
-            <strong style="font-size:1.1rem; font-weight:800;" id="weekRangeHeading">Sun â€“ Sat</strong>
+            <button onclick="switchMainView('today')" style="font-size:0.78rem; font-weight:800; background:var(--surface-subtle);">← Back to Today</button>
+            <button onclick="shiftSelectedWeek(-7)">❮</button>
+            <strong style="font-size:1.1rem; font-weight:800;" id="weekRangeHeading">Sun – Sat</strong>
             <input type="date" id="weekDatePickerInput" onchange="onPickWeekDate(this.value)" style="padding:4px 8px; border-radius:7px; border:1px solid var(--border-strong); font-size:0.8rem;" />
-            <button onclick=" shiftSelectedWeek(7)">â¯</button>
+            <button onclick=" shiftSelectedWeek(7)">❯</button>
             <button onclick="jumpWeekToCurrent()" style="font-size:0.76rem;">This Week</button>
           </div>
 
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <button type="button" onclick="reorganizeSchedule()" style="background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-size:0.78rem; font-weight:800;">ðŸ”„ Reorganize</button>
+            <button type="button" onclick="reorganizeSchedule()" style="background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-size:0.78rem; font-weight:800;">🔄 Reorganize</button>
             <select id="printWeeksSelect" onchange="onChangePrintWeeksCount(this.value)" style="padding:6px 10px; border-radius:8px; border:1px solid var(--border-strong); font-size:0.8rem; font-weight:600;">
               <option value="2">Print: 2 Weeks (1 Page)</option>
               <option value="4">Print: 4 Weeks (2 Pages)</option>
               <option value="6">Print: 6 Weeks (3 Pages)</option>
             </select>
-            <button onclick="triggerPrintMode('full')" style="background:#1d4ed8; color:#fff; border-color:#1d4ed8;">ðŸ–¨ï¸ Print Full Sheet</button>
-            <button onclick="triggerPrintMode('pocket')" style="background:#0f766e; color:#fff; border-color:#0f766e;">âœ‚ï¸ Print Wallet Size</button>
+            <button onclick="triggerPrintMode('full')" style="background:#1d4ed8; color:#fff; border-color:#1d4ed8;">🖨️ Print Full Sheet</button>
+            <button onclick="triggerPrintMode('pocket')" style="background:#0f766e; color:#fff; border-color:#0f766e;">✂️ Print Wallet Size</button>
           </div>
         </div>
 
@@ -1506,8 +1506,8 @@
 
         <!-- Wallet Card Live Preview -->
         <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
-          <h3 style="font-size:0.95rem; font-weight:800; margin-bottom:4px;">Wallet Size Preview (5.5" Ã— 2.4" Single-Fold â€¢ 2 Weeks per Page)</h3>
-          <p style="font-size:0.8rem; color:var(--muted);">Left column = âœ“ Minor Thing, Right column = â˜… Major Thing.</p>
+          <h3 style="font-size:0.95rem; font-weight:800; margin-bottom:4px;">Wallet Size Preview (5.5" × 2.4" Single-Fold • 2 Weeks per Page)</h3>
+          <p style="font-size:0.8rem; color:var(--muted);">Left column = ✓ Minor Thing, Right column = ★ Major Thing.</p>
           <div class="pocket-cards-container" id="walletPreviewContainer"></div>
         </div>
       </div>
@@ -1518,15 +1518,15 @@
   <button class="m-fab-add" onclick="openTaskWizard()" title="Add Task">+</button>
   <nav class="mobile-bottom-nav">
     <button class="m-nav-btn active" id="mNavToday" onclick="switchMainView('today')">
-      <span style="font-size:1.15rem;">â˜€ï¸</span>
+      <span style="font-size:1.15rem;">☀️</span>
       <span>Today</span>
     </button>
     <button class="m-nav-btn" id="mNavTasks" onclick="switchMainView('tasks')">
-      <span style="font-size:1.15rem;">â˜‘ï¸</span>
+      <span style="font-size:1.15rem;">☑️</span>
       <span>Task List</span>
     </button>
     <button class="m-nav-btn" id="mNavSync" onclick="openDriveModal()">
-      <span style="font-size:1.15rem;">â˜ï¸</span>
+      <span style="font-size:1.15rem;">☁️</span>
       <span>Drive Sync</span>
     </button>
   </nav>
@@ -1538,7 +1538,7 @@
     <div class="modal-sheet">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <h3 style="font-size:1.1rem; font-weight:800;" id="wizModalTitle">New Task (4 Priority Questions)</h3>
-        <button style="border:none; background:transparent; font-size:1.1rem;" onclick="closeTaskWizard()">âœ•</button>
+        <button style="border:none; background:transparent; font-size:1.1rem;" onclick="closeTaskWizard()">✕</button>
       </div>
 
       <div>
@@ -1556,12 +1556,12 @@
           <label style="font-size:0.75rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Repeat / Routine</label>
           <select id="wizRecurrenceSelect" onchange="onWizRecurrenceChange()" style="width:100%; padding:8px 10px; border-radius:9px; border:1px solid var(--border-strong); font-size:0.84rem; font-weight:600;">
             <option value="none">One-Time Task</option>
-            <option value="daily_habit">ðŸ”„ Daily Habit Strip (Above Cards)</option>
-            <option value="daily_slot">ðŸ“… Repeat Daily in Minor/Major Slot</option>
-            <option value="weekdays_slot">ðŸ’¼ Weekdays (Monâ€“Fri) in Slot</option>
-            <option value="weekly_slot">ðŸ—“ï¸ Repeat Weekly (Pick Day)...</option>
-            <option value="monthly_date_slot">ðŸ“† Repeat Monthly on Date (e.g. 1st, 15th)...</option>
-            <option value="monthly_weekday_slot">ðŸ“† Repeat Monthly on Pattern (e.g. 1st Mon)...</option>
+            <option value="daily_habit">🔄 Daily Habit Strip (Above Cards)</option>
+            <option value="daily_slot">📅 Repeat Daily in Minor/Major Slot</option>
+            <option value="weekdays_slot">💼 Weekdays (Mon–Fri) in Slot</option>
+            <option value="weekly_slot">🗓️ Repeat Weekly (Pick Day)...</option>
+            <option value="monthly_date_slot">📆 Repeat Monthly on Date (e.g. 1st, 15th)...</option>
+            <option value="monthly_weekday_slot">📆 Repeat Monthly on Pattern (e.g. 1st Mon)...</option>
           </select>
         </div>
       </div>
@@ -1570,7 +1570,7 @@
       <div id="wizRecurrenceDetailBox" style="display:none; background:#eff6ff; border:1px solid #93c5fd; border-radius:12px; padding:10px 14px; flex-direction:column; gap:8px;">
         <!-- Weekly Day Picker -->
         <div id="wizWeeklyPickerRow" style="display:none; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-          <label style="font-size:0.8rem; font-weight:800; color:#1e3a8a;">ðŸ—“ï¸ Which day of the week?</label>
+          <label style="font-size:0.8rem; font-weight:800; color:#1e3a8a;">🗓️ Which day of the week?</label>
           <select id="wizWeeklyDaySelect" style="padding:6px 10px; border-radius:8px; border:1px solid #93c5fd; font-size:0.84rem; font-weight:700; background:#fff;">
             <option value="0">Every Sunday</option>
             <option value="1" selected>Every Monday</option>
@@ -1584,13 +1584,13 @@
 
         <!-- Monthly Date Picker (e.g. 1st of the month, 15th, Last day) -->
         <div id="wizMonthlyDatePickerRow" style="display:none; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-          <label style="font-size:0.8rem; font-weight:800; color:#1e3a8a;">ðŸ“† Which day of the month?</label>
+          <label style="font-size:0.8rem; font-weight:800; color:#1e3a8a;">📆 Which day of the month?</label>
           <select id="wizMonthlyDateSelect" style="padding:6px 10px; border-radius:8px; border:1px solid #93c5fd; font-size:0.84rem; font-weight:700; background:#fff;"></select>
         </div>
 
         <!-- Monthly Nth Weekday Picker (e.g. First Monday, Last Friday) -->
         <div id="wizMonthlyWeekdayPickerRow" style="display:none; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-          <label style="font-size:0.8rem; font-weight:800; color:#1e3a8a;">ðŸ“† Which weekday each month?</label>
+          <label style="font-size:0.8rem; font-weight:800; color:#1e3a8a;">📆 Which weekday each month?</label>
           <div style="display:flex; gap:6px; flex-wrap:wrap;">
             <select id="wizMonthlyNthSelect" style="padding:6px 10px; border-radius:8px; border:1px solid #93c5fd; font-size:0.84rem; font-weight:700; background:#fff;">
               <option value="1">1st (First)</option>
@@ -1622,8 +1622,8 @@
         <div class="q-row">
           <span class="q-label">1. Size</span>
           <div class="pill-group" id="qGroupSize">
-            <div class="choice-pill selected" data-val="minor" onclick="setWizAnswer('size', 'minor')">âœ“ Minor (&lt;30m)</div>
-            <div class="choice-pill" data-val="major" onclick="setWizAnswer('size', 'major')">â˜… Major (1â€“3h)</div>
+            <div class="choice-pill selected" data-val="minor" onclick="setWizAnswer('size', 'minor')">✓ Minor (&lt;30m)</div>
+            <div class="choice-pill" data-val="major" onclick="setWizAnswer('size', 'major')">★ Major (1–3h)</div>
           </div>
         </div>
 
@@ -1647,9 +1647,9 @@
         <div class="q-row" style="border-bottom:none;">
           <span class="q-label">4. Energy Needed</span>
           <div class="pill-group" id="qGroupEnergy">
-            <div class="choice-pill selected" data-val="low" onclick="setWizAnswer('energy', 'low')">ðŸ”‹ Low</div>
-            <div class="choice-pill" data-val="med" onclick="setWizAnswer('energy', 'med')">âš¡ Med</div>
-            <div class="choice-pill" data-val="high" onclick="setWizAnswer('energy', 'high')">ðŸ”¥ High</div>
+            <div class="choice-pill selected" data-val="low" onclick="setWizAnswer('energy', 'low')">🔋 Low</div>
+            <div class="choice-pill" data-val="med" onclick="setWizAnswer('energy', 'med')">⚡ Med</div>
+            <div class="choice-pill" data-val="high" onclick="setWizAnswer('energy', 'high')">🔥 High</div>
           </div>
         </div>
       </div>
@@ -1665,7 +1665,7 @@
       </div>
 
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:4px;">
-        <button id="btnDeleteTaskInModal" style="color:#be123c; border-color:#fda4af; background:#fff1f2; display:none;" onclick="deleteTaskFromModal()">ðŸ—‘ï¸ Delete</button>
+        <button id="btnDeleteTaskInModal" style="color:#be123c; border-color:#fda4af; background:#fff1f2; display:none;" onclick="deleteTaskFromModal()">🗑️ Delete</button>
         <div style="display:flex; gap:8px; flex:1; justify-content:flex-end;">
           <button onclick="closeTaskWizard()">Cancel</button>
           <button class="btn-primary-add" onclick="saveTaskFromWizard()">Save &amp; Auto-Sync</button>
@@ -1681,7 +1681,7 @@
     <div class="modal-sheet">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <h3 style="font-size:1.08rem; font-weight:800;" id="rbModalTitle">Delay, Snooze, or Pick Task</h3>
-        <button style="border:none; background:transparent; font-size:1.1rem;" onclick="closeRoadblockModal()">âœ•</button>
+        <button style="border:none; background:transparent; font-size:1.1rem;" onclick="closeRoadblockModal()">✕</button>
       </div>
       <p id="rbModalSubtitle" style="font-size:0.84rem; color:var(--muted);"></p>
 
@@ -1690,12 +1690,12 @@
         <div style="font-size:0.76rem; font-weight:800; text-transform:uppercase; color:var(--muted);">1. What should happen to this task?</div>
 
         <button style="width:100%; justify-content:space-between; padding:11px 14px;" onclick="executeRoadblockAction('tomorrow')">
-          <span><strong>â­ï¸ Push to Tomorrow (+1 Day)</strong> &amp; auto-fill today</span>
-          <span>âž”</span>
+          <span><strong>⏭️ Push to Tomorrow (+1 Day)</strong> &amp; auto-fill today</span>
+          <span>➔</span>
         </button>
 
         <div style="border:1px solid var(--border-strong); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
-          <div style="font-size:0.84rem; font-weight:700;">â³ Snooze for a Few Days (Hide until date)</div>
+          <div style="font-size:0.84rem; font-weight:700;">⏳ Snooze for a Few Days (Hide until date)</div>
           <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
             <button style="font-size:0.76rem; padding:5px 10px;" onclick="executeRoadblockAction('snooze_2')">+2 Days</button>
             <button style="font-size:0.76rem; padding:5px 10px;" onclick="executeRoadblockAction('snooze_3')">+3 Days</button>
@@ -1705,8 +1705,8 @@
         </div>
 
         <div style="border:1px solid var(--blocked-border); background:var(--blocked-bg); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
-          <div style="font-size:0.84rem; font-weight:800; color:var(--blocked-accent);">ðŸš§ Mark as Blocked / Waiting on Something</div>
-          <p style="font-size:0.76rem; color:#881337;">Moves task to your "ðŸš§ Blocked / Waiting" list so the auto-scheduler skips it until you unblock it.</p>
+          <div style="font-size:0.84rem; font-weight:800; color:var(--blocked-accent);">🚧 Mark as Blocked / Waiting on Something</div>
+          <p style="font-size:0.76rem; color:#881337;">Moves task to your "🚧 Blocked / Waiting" list so the auto-scheduler skips it until you unblock it.</p>
           <div style="display:flex; gap:6px;">
             <input type="text" id="rbBlockerNoteInput" placeholder="Optional: Waiting on parts / reply..." style="flex:1; border:1px solid var(--blocked-border); border-radius:7px; padding:6px 10px; font-size:0.8rem; background:#fff;" />
             <button style="background:var(--blocked-accent); color:#fff; border:none; font-size:0.78rem;" onclick="executeRoadblockAction('block')">Mark Blocked</button>
@@ -1734,19 +1734,19 @@
   <div class="modal-backdrop" id="driveSyncModal">
     <div class="modal-sheet" style="max-width:460px;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="font-size:1.08rem; font-weight:800;">â˜ï¸ Cloud Sync (Google Firebase)</h3>
-        <button style="border:none; background:transparent; font-size:1.1rem;" onclick="closeDriveModal()">âœ•</button>
+        <h3 style="font-size:1.08rem; font-weight:800;">☁️ Cloud Sync (Google Firebase)</h3>
+        <button style="border:none; background:transparent; font-size:1.1rem;" onclick="closeDriveModal()">✕</button>
       </div>
 
       <div style="background:#ecfdf5; border:1px solid #6ee7b7; border-radius:12px; padding:11px 14px; font-size:0.81rem; color:#065f46;">
-        <strong>âœ“ End-to-End Encrypted â€¢ Event-Driven Push (Zero Polling):</strong><br/>
+        <strong>✓ End-to-End Encrypted • Event-Driven Push (Zero Polling):</strong><br/>
         Your tasks are encrypted in your browser with your password and pushed in real time via your Google Firebase Realtime Database.
       </div>
 
       <!-- Firebase Database URL Configuration Box (Visible both signed-in and signed-out) -->
       <div style="background:#f8fafc; border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:6px;">
         <label style="font-size:0.75rem; font-weight:800; color:#1e293b; display:flex; justify-content:space-between; align-items:center;">
-          <span>ðŸ”¥ Firebase Realtime Database URL</span>
+          <span>🔥 Firebase Realtime Database URL</span>
           <span style="font-size:0.7rem; color:var(--primary); font-weight:700;">console.firebase.google.com</span>
         </label>
         <input type="url" id="cloudFirebaseUrlInput" placeholder="https://your-project-default-rtdb.firebaseio.com" onchange="saveFirebaseUrlFromInput()" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:8px 10px; font-size:0.82rem; font-family:monospace;" />
@@ -1765,7 +1765,7 @@
         </div>
         <div id="cloudAuthErrorMsg" style="display:none; color:#be123c; font-size:0.78rem; font-weight:700;"></div>
         <button class="btn-primary-add" style="width:100%; justify-content:center; padding:10px; margin-top:4px;" id="btnCloudSignInSubmit" onclick="signInOrCreateCloudAccount()">
-          â˜ï¸ Sign In &amp; Sync
+          ☁️ Sign In &amp; Sync
         </button>
       </div>
 
@@ -1774,13 +1774,13 @@
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
             <div style="font-size:0.75rem; color:var(--muted); font-weight:700;">SIGNED IN AS</div>
-            <div style="font-size:0.95rem; font-weight:800; color:var(--text);" id="cloudSignedInEmailLabel">â€”</div>
+            <div style="font-size:0.95rem; font-weight:800; color:var(--text);" id="cloudSignedInEmailLabel">—</div>
           </div>
-          <span style="background:#d1fae5; color:#047857; padding:3px 9px; border-radius:999px; font-size:0.74rem; font-weight:800;" id="driveModalStatusBadge">âœ“ Auto-Sync ON</span>
+          <span style="background:#d1fae5; color:#047857; padding:3px 9px; border-radius:999px; font-size:0.74rem; font-weight:800;" id="driveModalStatusBadge">✓ Auto-Sync ON</span>
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-          <span style="font-size:0.75rem; color:#047857; font-weight:700;">âš¡ Real-time push sync active (zero polling)</span>
+          <span style="font-size:0.75rem; color:#047857; font-weight:700;">⚡ Real-time push sync active (zero polling)</span>
           <button style="color:#be123c; border-color:#fda4af; background:#fff1f2; font-size:0.78rem; padding:5px 12px;" onclick="disconnectCloudAccount()">Sign Out</button>
         </div>
       </div>
@@ -1847,15 +1847,15 @@
       const tomStr = toDateStr(addDays(new Date(), 1));
       const yestStr = toDateStr(addDays(new Date(), -1));
       const formatted = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-      if (dateStr === todayStr) return `Today â€¢ ${formatted}`;
-      if (dateStr === tomStr) return `Tomorrow â€¢ ${formatted}`;
-      if (dateStr === yestStr) return `Yesterday â€¢ ${formatted}`;
+      if (dateStr === todayStr) return `Today • ${formatted}`;
+      if (dateStr === tomStr) return `Tomorrow • ${formatted}`;
+      if (dateStr === yestStr) return `Yesterday • ${formatted}`;
       return formatted;
     }
 
     function formatWeekRangeLabel(sundayObj) {
       const satObj = addDays(sundayObj, 6);
-      return `Sun, ${formatShortDate(sundayObj)} â€“ Sat, ${formatShortDate(satObj)}`;
+      return `Sun, ${formatShortDate(sundayObj)} – Sat, ${formatShortDate(satObj)}`;
     }
 
     function escapeHtml(str) {
@@ -1870,11 +1870,11 @@
     // 2. UNIFIED V4 STATE & AUTOMATIC LEGACY MIGRATION
     // =====================================================
     const DEFAULT_CATEGORIES = [
-      { id: 'house', name: 'ðŸ  House' },
-      { id: 'work', name: 'ðŸ’¼ Work' },
-      { id: 'school', name: 'ðŸŽ“ School' },
-      { id: 'errands', name: 'ðŸš— Errands' },
-      { id: 'personal', name: 'âœ¨ Personal' }
+      { id: 'house', name: '🏠 House' },
+      { id: 'work', name: '💼 Work' },
+      { id: 'school', name: '🎓 School' },
+      { id: 'errands', name: '🚗 Errands' },
+      { id: 'personal', name: '✨ Personal' }
     ];
 
     function createInitialState() {
@@ -2144,23 +2144,23 @@
     function getRecurrenceBadgeText(task) {
       if (!task || !task.recurrence || task.recurrence === 'none' || task.recurrence === 'daily_habit') return '';
       const rec = task.recurrence;
-      if (rec === 'daily_slot') return 'ðŸ“… Daily';
-      if (rec === 'weekdays_slot') return 'ðŸ’¼ Monâ€“Fri';
+      if (rec === 'daily_slot') return '📅 Daily';
+      if (rec === 'weekdays_slot') return '💼 Mon–Fri';
       if (rec === 'weekly_slot') {
         const dow = (task.recurrenceDayOfWeek !== undefined && task.recurrenceDayOfWeek !== null) ? Number(task.recurrenceDayOfWeek) : 1;
         const dayObj = DAYS.find(d => d.offset === dow) || DAYS[1];
-        return `ðŸ—“ï¸ Every ${dayObj.mShort}`;
+        return `🗓️ Every ${dayObj.mShort}`;
       }
       if (rec === 'monthly_date_slot') {
         const mDay = task.recurrenceMonthDay || '1';
-        return `ðŸ“† Monthly (${mDay === 'last' ? 'Last day' : getOrdinalSuffix(mDay)})`;
+        return `📆 Monthly (${mDay === 'last' ? 'Last day' : getOrdinalSuffix(mDay)})`;
       }
       if (rec === 'monthly_weekday_slot') {
         const nth = task.recurrenceMonthNth || '1';
         const dow = (task.recurrenceDayOfWeek !== undefined && task.recurrenceDayOfWeek !== null) ? Number(task.recurrenceDayOfWeek) : 1;
         const dayObj = DAYS.find(d => d.offset === dow) || DAYS[1];
         const nthLabel = (nth === 'last') ? 'Last' : getOrdinalSuffix(nth);
-        return `ðŸ“† Monthly (${nthLabel} ${dayObj.mShort})`;
+        return `📆 Monthly (${nthLabel} ${dayObj.mShort})`;
       }
       return '';
     }
@@ -2357,7 +2357,7 @@
       const activeTasks = appState.tasks.filter(t => t.status === 'active' && t.recurrence !== 'daily_habit');
       if (activeTasks.length === 0) {
         if (!cloudAccount) {
-          alert('Your Task List currently has 0 tasks in this browser tab (see "Task List (0)" at the top).\n\nâ€¢ If your tasks are in your Cloud Sync account, click "â˜ï¸ Sign In to Sync" in the top-right corner to pull them in.\nâ€¢ If your tasks were saved on your local index.html file, open that tab and sign into Cloud Sync there first.\nâ€¢ Or click "+ New Task" to add tasks!');
+          alert('Your Task List currently has 0 tasks in this browser tab (see "Task List (0)" at the top).\n\n• If your tasks are in your Cloud Sync account, click "☁️ Sign In to Sync" in the top-right corner to pull them in.\n• If your tasks were saved on your local index.html file, open that tab and sign into Cloud Sync there first.\n• Or click "+ New Task" to add tasks!');
         } else {
           alert('You currently have 0 active tasks in your Task List to schedule. Click "+ New Task" to add some!');
         }
@@ -2436,7 +2436,7 @@
         const btn = document.getElementById(btnId);
         if (btn) {
           const orig = btn.innerHTML;
-          btn.innerHTML = 'âœ“ Reorganized!';
+          btn.innerHTML = '✓ Reorganized!';
           setTimeout(() => { btn.innerHTML = orig; }, 1600);
         }
       });
@@ -2742,7 +2742,7 @@
 
     function scheduleCloudPush() {
       if (!cloudAccount || !cloudAccount.emailHash) {
-        setSyncBadge('local', 'â˜ï¸ Sign In to Sync');
+        setSyncBadge('local', '☁️ Sign In to Sync');
         return;
       }
       setSyncBadge('syncing', 'Syncing...');
@@ -2812,9 +2812,9 @@
         if (fbUrl) cloudAccount.firebaseDbUrl = fbUrl;
         localStorage.setItem(CLOUD_AUTH_STORAGE_KEY, JSON.stringify(cloudAccount));
         localStorage.setItem(STORAGE_KEY_V4, JSON.stringify(appState));
-        setSyncBadge('ok', `âœ“ Synced â€¢ ${cloudAccount.email}`);
+        setSyncBadge('ok', `✓ Synced • ${cloudAccount.email}`);
       } catch (e) {
-        setSyncBadge('local', 'Offline â€¢ Saved Locally');
+        setSyncBadge('local', 'Offline • Saved Locally');
       } finally {
         isSyncingNow = false;
       }
@@ -2826,7 +2826,7 @@
       const localChangeId = appState.changeId || String(appState.updatedAt || '');
 
       if (remoteChangeId && remoteChangeId === localChangeId && cloudAccount.lastSyncedChangeId === remoteChangeId) {
-        setSyncBadge('ok', `âœ“ Synced â€¢ ${cloudAccount.email}`);
+        setSyncBadge('ok', `✓ Synced • ${cloudAccount.email}`);
         return;
       }
 
@@ -2846,7 +2846,7 @@
         cloudAccount.lastSyncedChangeId = remoteChangeId;
         localStorage.setItem(CLOUD_AUTH_STORAGE_KEY, JSON.stringify(cloudAccount));
         renderAll();
-        setSyncBadge('ok', `âœ“ Synced â€¢ ${cloudAccount.email}`);
+        setSyncBadge('ok', `✓ Synced • ${cloudAccount.email}`);
       }
     }
 
@@ -2868,14 +2868,14 @@
           if (Array.isArray(appState.tasks) && appState.tasks.length > 0) {
             await pushStateToCloud();
           } else {
-            setSyncBadge('ok', `âœ“ Synced â€¢ ${cloudAccount.email}`);
+            setSyncBadge('ok', `✓ Synced • ${cloudAccount.email}`);
           }
           return;
         }
         applyIncomingCloudEnvelope(envObj);
       } catch (e) {
         if (!isSilentPush) {
-          setSyncBadge('local', 'Offline â€¢ Saved Locally');
+          setSyncBadge('local', 'Offline • Saved Locally');
         }
       } finally {
         isSyncingNow = false;
@@ -2968,7 +2968,7 @@
             errEl.textContent = 'Incorrect password for this email account.';
             errEl.style.display = 'block';
             btn.disabled = false;
-            btn.textContent = 'â˜ï¸ Sign In & Sync';
+            btn.textContent = '☁️ Sign In & Sync';
             return;
           }
           try {
@@ -2984,7 +2984,7 @@
             errEl.textContent = 'Incorrect password for this email account.';
             errEl.style.display = 'block';
             btn.disabled = false;
-            btn.textContent = 'â˜ï¸ Sign In & Sync';
+            btn.textContent = '☁️ Sign In & Sync';
             return;
           }
         }
@@ -3008,7 +3008,7 @@
           appState.changeId = appState.changeId || generateChangeId();
           await pushStateToCloud();
         } else {
-          setSyncBadge('ok', `âœ“ Synced â€¢ ${cloudAccount.email}`);
+          setSyncBadge('ok', `✓ Synced • ${cloudAccount.email}`);
         }
         startLiveCrossDeviceListener();
         closeDriveModal();
@@ -3017,7 +3017,7 @@
         errEl.style.display = 'block';
       } finally {
         btn.disabled = false;
-        btn.textContent = 'â˜ï¸ Sign In & Sync';
+        btn.textContent = '☁️ Sign In & Sync';
       }
     };
 
@@ -3032,7 +3032,7 @@
         try { liveSseSource.close(); } catch (e) {}
         liveSseSource = null;
       }
-      setSyncBadge('local', 'â˜ï¸ Sign In to Sync');
+      setSyncBadge('local', '☁️ Sign In to Sync');
       openDriveModal();
     };
 
@@ -3097,7 +3097,7 @@
 
       const lowBtn = document.getElementById('btnTodayLowEnergy');
       lowBtn.classList.toggle('active', !!meta.lowEnergy);
-      lowBtn.textContent = meta.lowEnergy ? 'ðŸ”‹ Low Energy Mode (ON)' : 'ðŸ”‹ Low Energy Mode';
+      lowBtn.textContent = meta.lowEnergy ? '🔋 Low Energy Mode (ON)' : '🔋 Low Energy Mode';
 
       // Populate Day Category Preference dropdown
       const catSel = document.getElementById('todayCatPrefSelect');
@@ -3115,7 +3115,7 @@
           const isDone = !!appState.habitCompletions[hKey];
           return `
             <div class="habit-pill ${isDone ? 'done' : ''}" onclick="toggleDailyHabit('${dStr}', '${h.id}')">
-              <span>${isDone ? 'âœ“' : 'â—‹'}</span>
+              <span>${isDone ? '✓' : '○'}</span>
               <span>${escapeHtml(h.title)}</span>
             </div>
           `;
@@ -3134,7 +3134,7 @@
 
     function buildFocusCardHtml(dateStr, slotSize, task, partialWinRecord) {
       const isMinor = slotSize === 'minor';
-      const badgeText = isMinor ? 'âœ“ MINOR THING (<30m Quick Win)' : 'â˜… MAJOR THING (Main Focus)';
+      const badgeText = isMinor ? '✓ MINOR THING (<30m Quick Win)' : '★ MAJOR THING (Main Focus)';
 
       // Check if user already claimed a Model C Partial Subtask Win for this slot today
       if (!task && partialWinRecord) {
@@ -3143,10 +3143,10 @@
             <div>
               <div class="focus-card-top">
                 <span class="slot-badge">${badgeText}</span>
-                <span class="tag-pill" style="background:#d1fae5; color:#047857;">âœ“ Today's Progress Win!</span>
+                <span class="tag-pill" style="background:#d1fae5; color:#047857;">✓ Today's Progress Win!</span>
               </div>
               <div class="focus-main-row" style="margin-top:14px;">
-                <div class="big-check-circle checked">âœ“</div>
+                <div class="big-check-circle checked">✓</div>
                 <div class="focus-title-wrap">
                   <div class="focus-task-title">${escapeHtml(partialWinRecord.title)}</div>
                   <div class="focus-task-notes" style="text-decoration:none; color:#047857; font-weight:700;">
@@ -3174,7 +3174,7 @@
                 <div style="font-size:1rem; font-weight:700; margin-bottom:6px;">No ${isMinor ? 'Minor' : 'Major'} Thing Scheduled</div>
                 <div style="font-size:0.82rem; margin-bottom:14px;">Pick an existing task from your list or create a new one:</div>
                 <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
-                  <button onclick="openRoadblockModal(null, '${dateStr}', '${slotSize}')" style="background:#fff; border:1.5px solid var(--border-strong); font-weight:700;">ðŸ“‹ Pick from Task List</button>
+                  <button onclick="openRoadblockModal(null, '${dateStr}', '${slotSize}')" style="background:#fff; border:1.5px solid var(--border-strong); font-weight:700;">📋 Pick from Task List</button>
                   <button class="btn-primary-add" onclick="openTaskWizard({ defaultSize: '${slotSize}', targetDate: '${dateStr}' })">+ Create New Task</button>
                 </div>
               </div>
@@ -3185,8 +3185,8 @@
 
       const isCompleted = task.status === 'completed';
       const catObj = appState.categories.find(c => c.id === task.category);
-      const catLabel = catObj ? catObj.name : 'âœ¨ Personal';
-      const energyLabel = task.energy === 'low' ? 'ðŸ”‹ Low' : (task.energy === 'med' ? 'âš¡ Med' : 'ðŸ”¥ High');
+      const catLabel = catObj ? catObj.name : '✨ Personal';
+      const energyLabel = task.energy === 'low' ? '🔋 Low' : (task.energy === 'med' ? '⚡ Med' : '🔥 High');
 
       const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
       const doneSteps = subtasks.filter(s => s.done).length;
@@ -3210,7 +3210,7 @@
           </div>
           ${hasPartialProgress ? `
             <button class="btn-partial-win" onclick="claimPartialSubtaskWin('${dateStr}', '${task.id}')">
-              âœ“ Count Progress (${doneSteps}/${subtasks.length} steps) as Today's Win &amp; Continue Tomorrow
+              ✓ Count Progress (${doneSteps}/${subtasks.length} steps) as Today's Win &amp; Continue Tomorrow
             </button>
           ` : ''}
         </div>
@@ -3226,7 +3226,7 @@
             <div class="focus-card-top">
               <span class="slot-badge">${badgeText}</span>
               <div class="slot-meta-tags">
-                ${task.backlogCatchUp ? `<span class="tag-pill" style="background:#fef3c7; color:#b45309;">ðŸ•°ï¸ Oldest Backlog Pick</span>` : ''}
+                ${task.backlogCatchUp ? `<span class="tag-pill" style="background:#fef3c7; color:#b45309;">🕰️ Oldest Backlog Pick</span>` : ''}
                 ${recBadge ? `<span class="tag-pill" style="background:#eff6ff; color:#1d4ed8;">${escapeHtml(recBadge)}</span>` : ''}
                 <span class="tag-pill">${escapeHtml(catLabel)}</span>
                 <span class="tag-pill">${energyLabel}</span>
@@ -3236,7 +3236,7 @@
 
             <div class="focus-main-row">
               <div class="big-check-circle ${isCompleted ? 'checked' : ''}" onclick="toggleTaskComplete('${task.id}')">
-                ${isCompleted ? 'âœ“' : ''}
+                ${isCompleted ? '✓' : ''}
               </div>
               <div class="focus-title-wrap" onclick="openTaskWizard({ editTaskId: '${task.id}' })" title="Tap to edit details & notes">
                 <div class="focus-task-title">${escapeHtml(task.title)}</div>
@@ -3248,8 +3248,8 @@
           </div>
 
           <div class="focus-card-footer">
-            <button class="btn-card-action" onclick="openTaskWizard({ editTaskId: '${task.id}' })">ðŸ“ Details / Notes</button>
-            <button class="btn-card-action" onclick="openRoadblockModal('${task.id}', '${dateStr}')">â­ï¸ Delay / Roadblock / Swap</button>
+            <button class="btn-card-action" onclick="openTaskWizard({ editTaskId: '${task.id}' })">📝 Details / Notes</button>
+            <button class="btn-card-action" onclick="openRoadblockModal('${task.id}', '${dateStr}')">⏭️ Delay / Roadblock / Swap</button>
           </div>
         </div>
       `;
@@ -3267,7 +3267,7 @@
 
       let catHtml = `
         <button class="cat-nav-item ${selectedListFilter === 'all' ? 'active' : ''}" onclick="selectTaskListFilter('all')">
-          <span>ðŸ“‹ All Active Tasks</span>
+          <span>📋 All Active Tasks</span>
           <span class="cat-count-badge">${activeRegular.length}</span>
         </button>
       `;
@@ -3285,15 +3285,15 @@
       catHtml += `
         <div style="height:1px; background:var(--border); margin:6px 0;"></div>
         <button class="cat-nav-item ${selectedListFilter === 'habits' ? 'active' : ''}" onclick="selectTaskListFilter('habits')">
-          <span>ðŸ”„ Daily Habits</span>
+          <span>🔄 Daily Habits</span>
           <span class="cat-count-badge">${habitsCount}</span>
         </button>
         <button class="cat-nav-item ${selectedListFilter === 'snoozed' ? 'active' : ''}" onclick="selectTaskListFilter('snoozed')">
-          <span>â³ Snoozed</span>
+          <span>⏳ Snoozed</span>
           <span class="cat-count-badge">${snoozedCount}</span>
         </button>
         <button class="cat-nav-item ${selectedListFilter === 'blocked' ? 'active' : ''}" onclick="selectTaskListFilter('blocked')">
-          <span>ðŸš§ Blocked / Waiting</span>
+          <span>🚧 Blocked / Waiting</span>
           <span class="cat-count-badge">${blockedCount}</span>
         </button>
         <button class="cat-nav-item" style="color:var(--primary); margin-top:4px;" onclick="promptNewCategory()">
@@ -3309,13 +3309,13 @@
         filtered = activeRegular;
       } else if (selectedListFilter === 'habits') {
         filtered = appState.tasks.filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit');
-        title = 'ðŸ”„ Daily Habits & Routines';
+        title = '🔄 Daily Habits & Routines';
       } else if (selectedListFilter === 'snoozed') {
         filtered = appState.tasks.filter(t => t.status === 'snoozed');
-        title = 'â³ Snoozed Tasks';
+        title = '⏳ Snoozed Tasks';
       } else if (selectedListFilter === 'blocked') {
         filtered = appState.tasks.filter(t => t.status === 'blocked');
-        title = 'ðŸš§ Blocked / Waiting Tasks';
+        title = '🚧 Blocked / Waiting Tasks';
       } else {
         const cObj = appState.categories.find(c => c.id === selectedListFilter);
         title = cObj ? cObj.name : 'Category Tasks';
@@ -3344,13 +3344,13 @@
       document.getElementById('completedCountLabel').textContent = String(completedTasks.length);
       const compListEl = document.getElementById('todoCompletedList');
       compListEl.style.display = showCompletedAccordion ? 'flex' : 'none';
-      document.getElementById('completedAccordionArrow').textContent = showCompletedAccordion ? 'â–´' : 'â–¾';
+      document.getElementById('completedAccordionArrow').textContent = showCompletedAccordion ? '▴' : '▾';
       compListEl.innerHTML = completedTasks.map(t => buildTodoRowHtml(t, true)).join('');
     }
 
     function buildTodoRowHtml(task, isCompleted) {
       const catObj = appState.categories.find(c => c.id === task.category);
-      const catName = catObj ? catObj.name : 'âœ¨ Personal';
+      const catName = catObj ? catObj.name : '✨ Personal';
       const subTotal = Array.isArray(task.subtasks) ? task.subtasks.length : 0;
       const subDone = subTotal > 0 ? task.subtasks.filter(s => s.done).length : 0;
       const effScore = getEffectiveScore(task);
@@ -3361,28 +3361,28 @@
 
       let statusBadge = '';
       if (task.status === 'blocked') {
-        statusBadge = `<span class="badge-blocked">ðŸš§ Blocked${task.blockerNote ? ': ' + escapeHtml(task.blockerNote) : ''}</span>`;
+        statusBadge = `<span class="badge-blocked">🚧 Blocked${task.blockerNote ? ': ' + escapeHtml(task.blockerNote) : ''}</span>`;
       } else if (task.status === 'snoozed') {
-        statusBadge = `<span class="badge-snoozed">â³ Snoozed until ${escapeHtml(task.snoozedUntil || '')}</span>`;
+        statusBadge = `<span class="badge-snoozed">⏳ Snoozed until ${escapeHtml(task.snoozedUntil || '')}</span>`;
       } else if (task.scheduledDate && !isCompleted) {
-        statusBadge = `<span style="color:var(--primary); font-weight:700;">ðŸ“… Scheduled: ${formatShortDate(parseDateStr(task.scheduledDate))}${task.backlogCatchUp ? ' (ðŸ•°ï¸ Oldest Backlog Slot)' : ''}</span>`;
+        statusBadge = `<span style="color:var(--primary); font-weight:700;">📅 Scheduled: ${formatShortDate(parseDateStr(task.scheduledDate))}${task.backlogCatchUp ? ' (🕰️ Oldest Backlog Slot)' : ''}</span>`;
       }
 
       return `
         <div class="todo-item-row ${isCompleted ? 'completed' : ''}" onclick="openTaskWizard({ editTaskId: '${task.id}' })">
           <div class="todo-item-left">
             <div class="todo-check ${task.size} ${isCompleted ? 'checked' : ''}" onclick="event.stopPropagation(); toggleTaskComplete('${task.id}')">
-              ${isCompleted ? 'âœ“' : ''}
+              ${isCompleted ? '✓' : ''}
             </div>
             <div style="flex:1; min-width:0;">
               <div class="todo-item-title">${escapeHtml(task.title)}</div>
               ${task.notes ? `<div style="font-size:0.8rem; color:#475569; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(task.notes)}</div>` : ''}
               <div class="todo-item-submeta">
-                <span class="${task.size === 'minor' ? 'badge-size-minor' : 'badge-size-major'}">${task.size === 'minor' ? 'âœ“ Minor' : 'â˜… Major'}</span>
+                <span class="${task.size === 'minor' ? 'badge-size-minor' : 'badge-size-major'}">${task.size === 'minor' ? '✓ Minor' : '★ Major'}</span>
                 <span title="Base ${task.score || 80} pts + ${ageBonus} age + ${bumpBonus} bump">${effScore} pts${totalBoost > 0 ? ` (+${totalBoost} boost)` : ''}</span>
                 <span>${escapeHtml(catName)}</span>
                 ${recBadge ? `<span style="color:#1d4ed8; font-weight:700;">${escapeHtml(recBadge)}</span>` : ''}
-                ${subTotal > 0 ? `<span>â˜‘ï¸ ${subDone}/${subTotal} steps</span>` : ''}
+                ${subTotal > 0 ? `<span>☑️ ${subDone}/${subTotal} steps</span>` : ''}
                 ${statusBadge}
               </div>
             </div>
@@ -3392,7 +3392,7 @@
             ${task.status === 'blocked' || task.status === 'snoozed' ? `
               <button style="font-size:0.75rem; padding:4px 9px; background:#ecfdf5; border-color:#6ee7b7; color:#047857;" onclick="unblockOrWakeTask('${task.id}')">Unblock / Wake</button>
             ` : (!isCompleted && task.recurrence !== 'daily_habit' ? `
-              <button style="font-size:0.75rem; padding:4px 9px;" onclick="pinTaskToToday('${task.id}')" title="Slot directly into Today">âž” Today</button>
+              <button style="font-size:0.75rem; padding:4px 9px;" onclick="pinTaskToToday('${task.id}')" title="Slot directly into Today">➔ Today</button>
             ` : '')}
           </div>
         </div>
@@ -3434,13 +3434,13 @@
             <div class="week-day-col">
               <div>
                 <div style="font-size:0.86rem; font-weight:800; color:${isToday ? 'var(--primary)' : 'var(--text)'};">
-                  ${day.short} ${isToday ? 'â€¢ TODAY' : ''}
+                  ${day.short} ${isToday ? '• TODAY' : ''}
                 </div>
                 <div style="font-size:0.8rem; color:var(--muted);">${formatShortDate(cellDate)}</div>
               </div>
               <div style="display:flex; gap:6px; margin-top:6px;">
-                <button style="font-size:0.72rem; padding:3px 8px;" onclick="openDayInTodayView('${dStr}')">â˜€ï¸ Daily View</button>
-                <button style="font-size:0.72rem; padding:3px 7px; ${meta.lowEnergy ? 'background:var(--low-bg); border-color:#eab308;' : ''}" onclick="toggleDayLowEnergy('${dStr}')" title="Toggle Low Energy">ðŸ”‹</button>
+                <button style="font-size:0.72rem; padding:3px 8px;" onclick="openDayInTodayView('${dStr}')">☀️ Daily View</button>
+                <button style="font-size:0.72rem; padding:3px 7px; ${meta.lowEnergy ? 'background:var(--low-bg); border-color:#eab308;' : ''}" onclick="toggleDayLowEnergy('${dStr}')" title="Toggle Low Energy">🔋</button>
               </div>
             </div>
 
@@ -3457,14 +3457,14 @@
     }
 
     function buildWeekSlotCellHtml(dateStr, slotSize, task) {
-      const label = slotSize === 'minor' ? 'âœ“ Minor Thing' : 'â˜… Major Thing';
+      const label = slotSize === 'minor' ? '✓ Minor Thing' : '★ Major Thing';
       if (!task) {
         return `
           <div class="week-slot-card ${slotSize}" style="opacity:0.75;">
             <div style="display:flex; justify-content:space-between; font-size:0.72rem; font-weight:800; opacity:0.85;">
               <span>${label}</span>
               <div style="display:flex; gap:4px;">
-                <button style="font-size:0.7rem; padding:2px 7px;" onclick="openRoadblockModal(null, '${dateStr}', '${slotSize}')">ðŸ“‹ Pick</button>
+                <button style="font-size:0.7rem; padding:2px 7px;" onclick="openRoadblockModal(null, '${dateStr}', '${slotSize}')">📋 Pick</button>
                 <button style="font-size:0.7rem; padding:2px 7px;" onclick="openTaskWizard({ defaultSize: '${slotSize}', targetDate: '${dateStr}' })">+ New</button>
               </div>
             </div>
@@ -3496,8 +3496,8 @@
       const colHeaderHtml = `
         <div class="pocket-col-headers">
           <span>Day</span>
-          <span>âœ“ Minor Thing</span>
-          <span>â˜… Major Thing</span>
+          <span>✓ Minor Thing</span>
+          <span>★ Major Thing</span>
         </div>
       `;
 
@@ -3522,7 +3522,7 @@
         const topUnscheduled = appState.tasks
           .filter(t => t.status === 'active' && t.recurrence !== 'daily_habit')
           .slice(0, 4)
-          .map(t => `â€¢ ${t.title}`)
+          .map(t => `• ${t.title}`)
           .join('\n');
 
         rightDaysHtml += `
@@ -3538,8 +3538,8 @@
         pocketHtml += `
           <div class="pocket-card ${shouldBreakPageAfter ? 'print-page-break' : ''}">
             <div class="pocket-cut-guide">
-              <span>âœ‚ Cut Border â€¢ 1 Minor + 1 Major</span>
-              <span>â”† Fold</span>
+              <span>✂ Cut Border • 1 Minor + 1 Major</span>
+              <span>┆ Fold</span>
               <span>${formatWeekRangeLabel(weekSundayDate)}</span>
             </div>
             <div class="pocket-grid">
@@ -3562,13 +3562,13 @@
                 <div style="font-size:7pt;">${formatShortDate(cellDate)}</div>
               </div>
               <div style="border:1px solid #555; border-radius:3px; padding:2px 5px;">
-                <div style="font-size:6.5pt; font-weight:800;">âœ“ MINOR THING</div>
-                <div style="font-size:8pt; font-weight:700;">${minT && minT.status === 'completed' ? 'â˜‘' : 'â˜'} ${escapeHtml(minT ? minT.title : '')}</div>
+                <div style="font-size:6.5pt; font-weight:800;">✓ MINOR THING</div>
+                <div style="font-size:8pt; font-weight:700;">${minT && minT.status === 'completed' ? '☑' : '☐'} ${escapeHtml(minT ? minT.title : '')}</div>
                 <div style="font-size:7pt; height:14px; overflow:hidden;">${escapeHtml(minT ? minT.notes : '')}</div>
               </div>
               <div style="border:1px solid #555; border-radius:3px; padding:2px 5px;">
-                <div style="font-size:6.5pt; font-weight:800;">â˜… MAJOR THING</div>
-                <div style="font-size:8pt; font-weight:700;">${majT && majT.status === 'completed' ? 'â˜‘' : 'â˜'} ${escapeHtml(majT ? majT.title : '')}</div>
+                <div style="font-size:6.5pt; font-weight:800;">★ MAJOR THING</div>
+                <div style="font-size:8pt; font-weight:700;">${majT && majT.status === 'completed' ? '☑' : '☐'} ${escapeHtml(majT ? majT.title : '')}</div>
                 <div style="font-size:7pt; height:14px; overflow:hidden;">${escapeHtml(majT ? majT.notes : '')}</div>
               </div>
             </div>
@@ -3610,14 +3610,14 @@
           </div>
           <div class="pocket-task-col p-minor">
             <div class="pocket-title-line">
-              <span class="pocket-checkbox">${minT && minT.status === 'completed' ? 'âœ“' : ''}</span>
+              <span class="pocket-checkbox">${minT && minT.status === 'completed' ? '✓' : ''}</span>
               <span class="pocket-task-title">${escapeHtml(minT ? minT.title : '')}</span>
             </div>
             <div class="pocket-task-notes">${escapeHtml(minT ? minT.notes : '')}</div>
           </div>
           <div class="pocket-task-col p-major">
             <div class="pocket-title-line">
-              <span class="pocket-checkbox">${majT && majT.status === 'completed' ? 'âœ“' : ''}</span>
+              <span class="pocket-checkbox">${majT && majT.status === 'completed' ? '✓' : ''}</span>
               <span class="pocket-task-title">${escapeHtml(majT ? majT.title : '')}</span>
             </div>
             <div class="pocket-task-notes">${escapeHtml(majT ? majT.notes : '')}</div>
@@ -3927,7 +3927,7 @@
             <input type="checkbox" ${s.done ? 'checked' : ''} onchange="wizTempSubtasks[${idx}].done = this.checked" />
             <span>${escapeHtml(s.title)}</span>
           </label>
-          <button type="button" style="border:none; background:transparent; color:var(--muted); padding:2px 6px;" onclick="wizTempSubtasks.splice(${idx}, 1); renderWizSubtasks();">âœ•</button>
+          <button type="button" style="border:none; background:transparent; color:var(--muted); padding:2px 6px;" onclick="wizTempSubtasks.splice(${idx}, 1); renderWizSubtasks();">✕</button>
         </div>
       `).join('');
     }
@@ -4154,17 +4154,17 @@
       }
 
       swapEl.innerHTML = candidates.map(c => {
-        const eTag = c.energy === 'low' ? 'ðŸ”‹ Low' : (c.energy === 'med' ? 'âš¡ Med' : 'ðŸ”¥ High');
-        const sTag = c.size === 'major' ? 'â˜… Major' : 'âœ“ Minor';
+        const eTag = c.energy === 'low' ? '🔋 Low' : (c.energy === 'med' ? '⚡ Med' : '🔥 High');
+        const sTag = c.size === 'major' ? '★ Major' : '✓ Minor';
         return `
           <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 12px; border:1px solid var(--border); border-radius:9px; background:var(--bg); cursor:pointer;" onclick="swapWithSpecificTask('${c.id}')">
             <div>
               <div style="font-size:0.86rem; font-weight:700;">${escapeHtml(c.title)}</div>
               <div style="font-size:0.73rem; color:var(--muted); margin-top:2px;">
-                <strong>${sTag}</strong> â€¢ ${eTag} â€¢ ${getEffectiveScore(c)} pts â€¢ ${c.scheduledDate ? 'Scheduled ' + formatShortDate(parseDateStr(c.scheduledDate)) : 'Unscheduled'}
+                <strong>${sTag}</strong> • ${eTag} • ${getEffectiveScore(c)} pts • ${c.scheduledDate ? 'Scheduled ' + formatShortDate(parseDateStr(c.scheduledDate)) : 'Unscheduled'}
               </div>
             </div>
-            <span style="font-size:0.78rem; font-weight:800; color:var(--primary); white-space:nowrap; margin-left:8px;">Select âž”</span>
+            <span style="font-size:0.78rem; font-weight:800; color:var(--primary); white-space:nowrap; margin-left:8px;">Select ➔</span>
           </div>
         `;
       }).join('');
@@ -4289,7 +4289,7 @@
       const name = prompt('Enter new Category / List name (e.g. Yard, Kids, Finance):');
       if (!name || !name.trim()) return;
       const id = 'cat_' + Date.now();
-      appState.categories.push({ id, name: 'ðŸ“ ' + name.trim() });
+      appState.categories.push({ id, name: '📁 ' + name.trim() });
       selectedListFilter = id;
       persistAndSync();
     };
@@ -4374,11 +4374,11 @@
     renderAll();
     checkAndAutoUpdateHostedBuild();
     if (cloudAccount && cloudAccount.emailHash) {
-      setSyncBadge('ok', `âœ“ Synced â€¢ ${cloudAccount.email}`);
+      setSyncBadge('ok', `✓ Synced • ${cloudAccount.email}`);
       pullStateFromCloud(false);
       startLiveCrossDeviceListener();
     } else {
-      setSyncBadge('local', 'â˜ï¸ Sign In to Sync');
+      setSyncBadge('local', '☁️ Sign In to Sync');
     }
   </script>
 </body>
