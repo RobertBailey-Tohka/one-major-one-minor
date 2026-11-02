@@ -51,6 +51,114 @@
       --primary-grad: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
     }
 
+    body.dark-mode {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-subtle: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+      --border-strong: #475569;
+
+      --minor-bg: #064e3b;
+      --minor-border: #059669;
+      --minor-badge-bg: #065f46;
+      --minor-accent: #6ee7b7;
+
+      --major-bg: #1e1b4b;
+      --major-border: #3b82f6;
+      --major-badge-bg: #1e3a8a;
+      --major-accent: #93c5fd;
+
+      --habit-bg: #1e293b;
+      --habit-border: #475569;
+      --habit-accent: #cbd5e1;
+
+      --low-bg: #422006;
+      --low-border: #ca8a04;
+      --low-accent: #fde047;
+
+      --blocked-bg: #4c0519;
+      --blocked-border: #e11d48;
+      --blocked-accent: #fda4af;
+    }
+
+    body.dark-mode .hero-date-title {
+      color: var(--text);
+    }
+    body.dark-mode .hero-date-pill,
+    body.dark-mode .hero-icon-btn {
+      background: var(--surface);
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+    body.dark-mode .hero-date-pill button {
+      color: var(--text);
+    }
+    body.dark-mode .hero-date-pill button:hover {
+      background: var(--surface-subtle);
+    }
+    body.dark-mode .hero-segmented-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+    body.dark-mode .hero-seg-btn {
+      color: var(--muted);
+    }
+    body.dark-mode .hero-seg-btn.active {
+      background: var(--surface-subtle);
+      color: var(--text);
+    }
+    body.dark-mode .focus-card,
+    body.dark-mode .todo-item-row {
+      background: var(--surface);
+      border-color: var(--border);
+    }
+    body.dark-mode .todo-item-row.note-row {
+      background: #292112;
+      border-left-color: #f59e0b;
+    }
+    body.dark-mode input,
+    body.dark-mode textarea,
+    body.dark-mode select {
+      background: var(--bg) !important;
+      color: var(--text) !important;
+      border-color: var(--border-strong) !important;
+    }
+
+    .settings-section-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .settings-card-label {
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+
+    .profile-avatar-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--primary-grad);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 1.05rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -1698,103 +1806,206 @@
   </div>
 
   <!-- =====================================================
-       MODAL 3: SETTINGS, CLOUD SYNC & PRINT MENU
+       MODAL 3: CLEAN 3-TAB SETTINGS, ACCOUNT & PRINT MENU
        ===================================================== -->
   <div class="modal-backdrop" id="driveSyncModal">
-    <div class="modal-sheet" style="max-width:480px;">
+    <div class="modal-sheet" style="max-width:500px; gap:14px;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="font-size:1.1rem; font-weight:800;">⚙️ Settings &amp; Menu</h3>
-        <button style="border:none; background:transparent; font-size:1.1rem;" onclick="closeDriveModal()">✕</button>
+        <h3 style="font-size:1.15rem; font-weight:800;">⚙️ Settings</h3>
+        <button style="border:none; background:transparent; font-size:1.15rem; padding:4px 8px;" onclick="closeDriveModal()">✕</button>
       </div>
 
-      <!-- SECTION 1: ACCOUNT & CLOUD SYNC -->
-      <div style="display:flex; flex-direction:column; gap:10px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; color:var(--muted);">☁️ Account &amp; Cloud Sync</span>
-          <span style="font-size:0.76rem; font-weight:700; color:#047857;" id="syncStatusLabel">Auto-Sync Ready</span>
-        </div>
+      <!-- 3-Tab Segmented Switcher -->
+      <div class="hero-segmented-pill" style="display:grid; grid-template-columns:repeat(3, 1fr); width:100%;">
+        <button type="button" class="hero-seg-btn active" id="settingsTabBtn_account" onclick="switchSettingsTab('account')" style="justify-content:center; padding:8px 6px; font-size:0.8rem;">
+          👤 Account
+        </button>
+        <button type="button" class="hero-seg-btn" id="settingsTabBtn_general" onclick="switchSettingsTab('general')" style="justify-content:center; padding:8px 6px; font-size:0.8rem;">
+          ⚙️ General
+        </button>
+        <button type="button" class="hero-seg-btn" id="settingsTabBtn_print" onclick="switchSettingsTab('print')" style="justify-content:center; padding:8px 6px; font-size:0.8rem;">
+          🖨️ Print &amp; App
+        </button>
+      </div>
 
-        <!-- Signed-Out View: Clean Email & Password Form -->
-        <div id="cloudAuthFormBox" style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px;">
+      <!-- =================================================
+           TAB 1: ACCOUNT & PROFILE MANAGEMENT
+           ================================================= -->
+      <div id="settingsPane_account" style="display:flex; flex-direction:column; gap:12px;">
+        <span id="syncStatusLabel" style="display:none;"></span>
+
+        <!-- Signed-Out View: Clean Email & Password Sign-In / Sign-Up Form -->
+        <div id="cloudAuthFormBox" class="settings-section-card" style="display:flex;">
+          <div class="settings-card-label">☁️ Sign In or Create Encrypted Vault</div>
           <div>
-            <label style="font-size:0.76rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Email Address</label>
+            <label style="font-size:0.76rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Profile Name (Optional)</label>
+            <input type="text" id="cloudSignInNameInput" placeholder="e.g. Robert" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:8px 11px; font-size:0.88rem;" />
+          </div>
+          <div>
+            <label style="font-size:0.76rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Email Address</label>
             <input type="email" id="cloudEmailInput" placeholder="you@example.com" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:8px 11px; font-size:0.88rem;" />
           </div>
           <div>
-            <label style="font-size:0.76rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Password</label>
+            <label style="font-size:0.76rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Password</label>
             <input type="password" id="cloudPasswordInput" placeholder="Enter password..." onkeydown="if(event.key==='Enter'){event.preventDefault();signInOrCreateCloudAccount();}" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:8px 11px; font-size:0.88rem;" />
           </div>
           <div id="cloudAuthErrorMsg" style="display:none; color:#be123c; font-size:0.78rem; font-weight:700;"></div>
-          <button class="btn-primary-add" style="width:100%; justify-content:center; padding:9px;" id="btnCloudSignInSubmit" onclick="signInOrCreateCloudAccount()">
+          <button class="btn-primary-add" style="width:100%; justify-content:center; padding:10px;" id="btnCloudSignInSubmit" onclick="signInOrCreateCloudAccount()">
             ☁️ Sign In &amp; Sync
           </button>
         </div>
 
-        <!-- Signed-In View: Account Status -->
-        <div id="cloudSignedInBox" style="display:none; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px; flex-direction:column; gap:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <div style="font-size:0.72rem; color:var(--muted); font-weight:700;">SIGNED IN AS</div>
-              <div style="font-size:0.92rem; font-weight:800; color:var(--text);" id="cloudSignedInEmailLabel">—</div>
+        <!-- Signed-In View: Clean Profile Card + Account Management -->
+        <div id="cloudSignedInBox" style="display:none; flex-direction:column; gap:12px;">
+          <!-- Profile Summary Card -->
+          <div class="settings-section-card">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+              <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+                <div class="profile-avatar-circle" id="accountAvatarInitials">R</div>
+                <div style="min-width:0;">
+                  <div style="font-size:1rem; font-weight:800; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" id="accountProfileNameHeading">Robert</div>
+                  <div style="font-size:0.8rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" id="cloudSignedInEmailLabel">—</div>
+                </div>
+              </div>
+              <span style="background:#d1fae5; color:#047857; padding:4px 10px; border-radius:999px; font-size:0.74rem; font-weight:800; white-space:nowrap;" id="driveModalStatusBadge">✓ Synced</span>
             </div>
-            <span style="background:#d1fae5; color:#047857; padding:3px 9px; border-radius:999px; font-size:0.74rem; font-weight:800;" id="driveModalStatusBadge">✓ Synced</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.74rem; color:#047857; font-weight:700;">⚡ End-to-End Encrypted Push Sync</span>
-            <button style="color:#be123c; border-color:#fda4af; background:#fff1f2; font-size:0.76rem; padding:4px 10px;" onclick="disconnectCloudAccount()">Sign Out</button>
+
+            <!-- Edit Profile Name Row -->
+            <div style="border-top:1px solid var(--border); padding-top:10px; display:flex; flex-direction:column; gap:6px;">
+              <label style="font-size:0.74rem; font-weight:700; color:var(--muted);">Profile Display Name</label>
+              <div style="display:flex; gap:6px;">
+                <input type="text" id="accountProfileNameInput" placeholder="Your name..." style="flex:1; border:1px solid var(--border-strong); border-radius:8px; padding:7px 10px; font-size:0.85rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();saveProfileName();}" />
+                <button type="button" onclick="saveProfileName()" id="btnSaveProfileName" style="padding:7px 12px; font-size:0.8rem; font-weight:700;">Save</button>
+              </div>
+            </div>
+
+            <!-- Action Buttons Row -->
+            <div style="border-top:1px solid var(--border); padding-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <button type="button" onclick="toggleAccountSubPanel('password')" style="justify-content:center; font-size:0.78rem; padding:8px;">🔑 Change Password</button>
+              <button type="button" onclick="toggleAccountSubPanel('email')" style="justify-content:center; font-size:0.78rem; padding:8px;">✉️ Change Email</button>
+              <button type="button" onclick="manualSyncNow()" id="btnManualSyncNow" style="justify-content:center; font-size:0.78rem; padding:8px;">🔄 Sync Now</button>
+              <button type="button" onclick="disconnectCloudAccount()" style="justify-content:center; font-size:0.78rem; padding:8px; color:#be123c; border-color:#fda4af; background:#fff1f2;">Sign Out</button>
+            </div>
+
+            <!-- Expandable Sub-Panel 1: Change Password -->
+            <div id="accountSubPanel_password" style="display:none; border-top:1px solid var(--border); padding-top:10px; flex-direction:column; gap:8px;">
+              <div style="font-size:0.8rem; font-weight:800;">🔑 Change Account Password</div>
+              <input type="password" id="chgPassCurrentInput" placeholder="Current password" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:7px 10px; font-size:0.84rem;" />
+              <input type="password" id="chgPassNewInput" placeholder="New password (min 4 chars)" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:7px 10px; font-size:0.84rem;" />
+              <input type="password" id="chgPassConfirmInput" placeholder="Confirm new password" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:7px 10px; font-size:0.84rem;" />
+              <div id="chgPassMsg" style="display:none; font-size:0.76rem; font-weight:700;"></div>
+              <div style="display:flex; justify-content:flex-end; gap:6px;">
+                <button type="button" onclick="toggleAccountSubPanel(null)" style="font-size:0.76rem; padding:6px 10px;">Cancel</button>
+                <button type="button" class="btn-primary-add" id="btnSubmitChgPass" onclick="submitChangePassword()" style="font-size:0.76rem; padding:6px 12px;">Update Password</button>
+              </div>
+            </div>
+
+            <!-- Expandable Sub-Panel 2: Change Login Email -->
+            <div id="accountSubPanel_email" style="display:none; border-top:1px solid var(--border); padding-top:10px; flex-direction:column; gap:8px;">
+              <div style="font-size:0.8rem; font-weight:800;">✉️ Change Login Email</div>
+              <input type="email" id="chgEmailNewInput" placeholder="New email address" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:7px 10px; font-size:0.84rem;" />
+              <input type="password" id="chgEmailPassInput" placeholder="Confirm your current password" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:7px 10px; font-size:0.84rem;" />
+              <div id="chgEmailMsg" style="display:none; font-size:0.76rem; font-weight:700;"></div>
+              <div style="display:flex; justify-content:flex-end; gap:6px;">
+                <button type="button" onclick="toggleAccountSubPanel(null)" style="font-size:0.76rem; padding:6px 10px;">Cancel</button>
+                <button type="button" class="btn-primary-add" id="btnSubmitChgEmail" onclick="submitChangeEmail()" style="font-size:0.76rem; padding:6px 12px;">Update Email</button>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Collapsible Advanced Firebase URL Setting -->
-        <details style="font-size:0.76rem; color:var(--muted);">
-          <summary style="cursor:pointer; font-weight:700; user-select:none;">Advanced: Firebase Database URL</summary>
-          <div style="margin-top:6px; background:#f8fafc; border:1px solid var(--border-strong); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;">
-            <input type="url" id="cloudFirebaseUrlInput" placeholder="https://your-project-default-rtdb.firebaseio.com" onchange="saveFirebaseUrlFromInput()" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:7px 9px; font-size:0.8rem; font-family:monospace;" />
+        <details style="font-size:0.75rem; color:var(--muted); padding:0 4px;">
+          <summary style="cursor:pointer; font-weight:700; user-select:none;">Advanced: Custom Firebase Database URL</summary>
+          <div style="margin-top:6px; background:var(--bg); border:1px solid var(--border-strong); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;">
+            <input type="url" id="cloudFirebaseUrlInput" placeholder="https://your-project-default-rtdb.firebaseio.com" onchange="saveFirebaseUrlFromInput()" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:7px 9px; font-size:0.78rem; font-family:monospace;" />
           </div>
         </details>
       </div>
 
-      <!-- SECTION 2: PRINT SCHEDULE & WALLET CARDS -->
-      <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; flex-direction:column; gap:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; color:var(--muted);">🖨️ Print Schedule &amp; Wallet Cards</span>
-          <select id="settingsPrintWeeksSelect" onchange="onChangePrintWeeksCount(this.value)" style="padding:4px 8px; border-radius:7px; border:1px solid var(--border-strong); font-size:0.78rem; font-weight:700; background:var(--surface);">
-            <option value="2">2 Weeks (1 Page)</option>
-            <option value="4">4 Weeks (2 Pages)</option>
-            <option value="6">6 Weeks (3 Pages)</option>
-          </select>
+      <!-- =================================================
+           TAB 2: GENERAL, CATEGORIES & DATA
+           ================================================= -->
+      <div id="settingsPane_general" style="display:none; flex-direction:column; gap:12px;">
+        <!-- Appearance / Theme -->
+        <div class="settings-section-card">
+          <div class="settings-card-label">🎨 Appearance</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <button type="button" id="btnThemeLight" onclick="setAppTheme('light')" style="justify-content:center; padding:8px; font-size:0.82rem;">☀️ Light Mode</button>
+            <button type="button" id="btnThemeDark" onclick="setAppTheme('dark')" style="justify-content:center; padding:8px; font-size:0.82rem;">🌙 Dark Mode</button>
+          </div>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-          <button onclick="closeDriveModal(); triggerPrintMode('full');" style="background:#1d4ed8; color:#fff; border-color:#1d4ed8; justify-content:center; padding:9px;">🖨️ Print Full Sheet</button>
-          <button onclick="closeDriveModal(); triggerPrintMode('pocket');" style="background:#0f766e; color:#fff; border-color:#0f766e; justify-content:center; padding:9px;">✂️ Print Wallet Size</button>
+
+        <!-- Schedule Preferences -->
+        <div class="settings-section-card">
+          <div class="settings-card-label">📅 Schedule Controls</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <label for="todayCatPrefSelect" style="font-size:0.82rem; font-weight:700; color:var(--text);">Selected Day Category Filter:</label>
+            <select id="todayCatPrefSelect" onchange="onChangeDayCategoryPref(this.value)" style="padding:6px 10px; border-radius:8px; border:1px solid var(--border-strong); font-size:0.8rem; font-weight:700; background:var(--surface);">
+            </select>
+          </div>
+          <button type="button" onclick="closeDriveModal(); reorganizeSchedule();" style="width:100%; justify-content:center; font-weight:700; padding:9px;">
+            🔄 Reorganize Entire Schedule Starting Today
+          </button>
         </div>
-        <button onclick="closeDriveModal(); switchMainView('week');" style="width:100%; justify-content:center; font-size:0.8rem; padding:7px;">
-          🔍 Open Print &amp; Wallet Preview
-        </button>
+
+        <!-- Manage Categories -->
+        <div class="settings-section-card">
+          <div class="settings-card-label">🗂️ Manage Categories</div>
+          <div id="settingsCategoriesList" style="display:flex; flex-direction:column; gap:6px; max-height:170px; overflow-y:auto;"></div>
+          <div style="display:flex; gap:6px; margin-top:2px;">
+            <input type="text" id="settingsNewCategoryInput" placeholder="New category (e.g. Yard, Finance)..." style="flex:1; border:1px solid var(--border-strong); border-radius:8px; padding:7px 10px; font-size:0.82rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCategoryFromSettings();}" />
+            <button type="button" onclick="addCategoryFromSettings()" style="font-size:0.8rem; font-weight:700; padding:7px 12px;">+ Add</button>
+          </div>
+        </div>
+
+        <!-- Data & Backup -->
+        <div class="settings-section-card">
+          <div class="settings-card-label">💾 Data &amp; Backup</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <button type="button" onclick="exportBackupJson()" style="justify-content:center; font-size:0.78rem; padding:8px;">⬇️ Export Backup (.json)</button>
+            <button type="button" onclick="document.getElementById('importBackupFileInput').click()" style="justify-content:center; font-size:0.78rem; padding:8px;">⬆️ Import Backup (.json)</button>
+            <input type="file" id="importBackupFileInput" accept=".json,application/json" style="display:none;" onchange="importBackupJson(event)" />
+          </div>
+          <button type="button" onclick="clearCompletedTasksFromSettings()" id="btnSettingsClearCompleted" style="width:100%; justify-content:center; font-size:0.78rem; padding:8px; color:var(--muted);">
+            🧹 Clear Completed Tasks &amp; Notes
+          </button>
+        </div>
       </div>
 
-      <!-- SECTION 3: SCHEDULE TOOLS & PREFERENCES -->
-      <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; flex-direction:column; gap:10px;">
-        <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; color:var(--muted);">📅 Schedule Options</span>
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-          <label for="todayCatPrefSelect" style="font-size:0.82rem; font-weight:700; color:var(--text);">Selected Day Category Filter:</label>
-          <select id="todayCatPrefSelect" onchange="onChangeDayCategoryPref(this.value)" style="padding:6px 10px; border-radius:8px; border:1px solid var(--border-strong); font-size:0.8rem; font-weight:700; background:var(--surface);">
-          </select>
+      <!-- =================================================
+           TAB 3: PRINT SCHEDULE & MOBILE APP
+           ================================================= -->
+      <div id="settingsPane_print" style="display:none; flex-direction:column; gap:12px;">
+        <!-- Print Schedule & Wallet Cards -->
+        <div class="settings-section-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="settings-card-label">🖨️ Print Schedule &amp; Wallet Cards</span>
+            <select id="settingsPrintWeeksSelect" onchange="onChangePrintWeeksCount(this.value)" style="padding:5px 8px; border-radius:7px; border:1px solid var(--border-strong); font-size:0.78rem; font-weight:700; background:var(--surface);">
+              <option value="2">2 Weeks (1 Page)</option>
+              <option value="4">4 Weeks (2 Pages)</option>
+              <option value="6">6 Weeks (3 Pages)</option>
+            </select>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <button onclick="closeDriveModal(); triggerPrintMode('full');" class="btn-primary-add" style="justify-content:center; padding:9px;">🖨️ Print Full Sheet</button>
+            <button onclick="closeDriveModal(); triggerPrintMode('pocket');" style="justify-content:center; padding:9px; font-weight:700;">✂️ Print Wallet Size</button>
+          </div>
+          <button onclick="closeDriveModal(); switchMainView('week');" style="width:100%; justify-content:center; font-size:0.8rem; padding:8px;">
+            🔍 Open Print &amp; Wallet Preview
+          </button>
         </div>
-        <button type="button" onclick="closeDriveModal(); reorganizeSchedule();" style="width:100%; justify-content:center; background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; font-weight:800; padding:9px;">
-          🔄 Reorganize Entire Schedule Starting Today
-        </button>
-      </div>
 
-      <!-- SECTION 4: ANDROID HOME SCREEN WIDGET APP -->
-      <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; flex-direction:column; gap:8px;">
-        <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; color:var(--muted);">📱 Android Home Screen Widget</span>
-        <p style="font-size:0.78rem; color:var(--muted); line-height:1.35;">
-          Install the Android app to place an interactive <strong>Daily / Weekly / Tasks</strong> widget directly on your home screen wallpaper and check off tasks without opening the app.
-        </p>
-        <a href="./one-minor-one-major.apk?v=8" download="one-minor-one-major.apk" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; background:#059669; color:#fff; font-weight:800; font-size:0.84rem; padding:10px 14px; border-radius:10px;">
-          📲 Download Android Widget App (.apk)
-        </a>
+        <!-- Android Home Screen Widget (Automatically hidden inside the Android app) -->
+        <div class="settings-section-card" id="androidApkDownloadSection">
+          <span class="settings-card-label">📱 Android Home Screen Widget</span>
+          <p style="font-size:0.8rem; color:var(--muted); line-height:1.4;">
+            Install the Android app to place an interactive <strong>Daily / Weekly / Tasks</strong> widget directly on your home screen wallpaper.
+          </p>
+          <a href="./one-minor-one-major.apk?v=9" download="one-minor-one-major.apk" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; background:var(--text); color:var(--surface); font-weight:800; font-size:0.84rem; padding:10px 14px; border-radius:10px;">
+            📲 Download Android Widget App (.apk)
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -2870,7 +3081,21 @@
         dot.className = 'sync-dot ' + (state === 'syncing' ? 'syncing' : (state === 'ok' ? '' : 'local'));
       }
       if (lbl) lbl.textContent = text;
-      if (modalBadge) modalBadge.textContent = text;
+      if (modalBadge) {
+        if (state === 'syncing') {
+          modalBadge.textContent = 'Syncing...';
+          modalBadge.style.background = '#fef3c7';
+          modalBadge.style.color = '#b45309';
+        } else if (state === 'ok') {
+          modalBadge.textContent = '✓ Synced';
+          modalBadge.style.background = '#d1fae5';
+          modalBadge.style.color = '#047857';
+        } else {
+          modalBadge.textContent = 'Saved Locally';
+          modalBadge.style.background = '#e2e8f0';
+          modalBadge.style.color = '#475569';
+        }
+      }
     }
 
     // Called whenever the user makes ANY change on this device
@@ -3135,8 +3360,14 @@
         }
 
         const fbUrl = getActiveFirebaseDbUrl();
+        const signInNameEl = document.getElementById('cloudSignInNameInput');
+        const enteredName = signInNameEl ? signInNameEl.value.trim() : '';
+        if (enteredName) {
+          appState.profileName = enteredName;
+        }
         cloudAccount = {
           email: keys.email,
+          profileName: appState.profileName || enteredName || '',
           emailHash: keys.emailHash,
           encKeyHex: keys.encKeyHex,
           macKeyHex: keys.macKeyHex,
@@ -3178,7 +3409,7 @@
         liveSseSource = null;
       }
       setSyncBadge('local', '☁️ Sign In to Sync');
-      openDriveModal();
+      if (typeof renderAccountProfileUI === 'function') renderAccountProfileUI();
     };
 
     function hydrateFromNativeBridgeIfNewer() {
@@ -3466,6 +3697,16 @@
 
     function renderAll() {
       runAutoScheduler();
+
+      if (typeof applyAppTheme === 'function') {
+        applyAppTheme(appState.theme || localStorage.getItem('one_minor_one_major_theme_v4') || 'light');
+      }
+      if (typeof renderAccountProfileUI === 'function') {
+        renderAccountProfileUI();
+      }
+      if (typeof updateSettingsClearCompletedBtn === 'function') {
+        updateSettingsClearCompletedBtn();
+      }
 
       // Update active task counter in navbar
       const activeCount = appState.tasks.filter(t => t.status === 'active' && t.recurrence !== 'daily_habit').length;
@@ -4945,18 +5186,354 @@
       window.print();
     };
 
-    window.openDriveModal = function() {
+    const THEME_STORAGE_KEY = 'one_minor_one_major_theme_v4';
+    let currentSettingsTab = 'account';
+
+    function applyAppTheme(theme) {
+      const isDark = (theme === 'dark');
+      document.body.classList.toggle('dark-mode', isDark);
+      const btnLight = document.getElementById('btnThemeLight');
+      const btnDark = document.getElementById('btnThemeDark');
+      if (btnLight) {
+        btnLight.style.background = !isDark ? 'var(--primary)' : 'var(--surface)';
+        btnLight.style.color = !isDark ? '#ffffff' : 'var(--text)';
+        btnLight.style.borderColor = !isDark ? 'var(--primary)' : 'var(--border-strong)';
+      }
+      if (btnDark) {
+        btnDark.style.background = isDark ? 'var(--primary)' : 'var(--surface)';
+        btnDark.style.color = isDark ? '#ffffff' : 'var(--text)';
+        btnDark.style.borderColor = isDark ? 'var(--primary)' : 'var(--border-strong)';
+      }
+    }
+
+    window.setAppTheme = function(theme) {
+      const clean = (theme === 'dark') ? 'dark' : 'light';
+      appState.theme = clean;
+      localStorage.setItem(THEME_STORAGE_KEY, clean);
+      applyAppTheme(clean);
+      persistAndSync();
+    };
+
+    window.switchSettingsTab = function(tab) {
+      currentSettingsTab = ['account', 'general', 'print'].includes(tab) ? tab : 'account';
+      ['account', 'general', 'print'].forEach(t => {
+        const btn = document.getElementById('settingsTabBtn_' + t);
+        const pane = document.getElementById('settingsPane_' + t);
+        if (btn) btn.classList.toggle('active', t === currentSettingsTab);
+        if (pane) pane.style.display = (t === currentSettingsTab) ? 'flex' : 'none';
+      });
+      if (currentSettingsTab === 'general') {
+        renderSettingsCategoriesList();
+        updateSettingsClearCompletedBtn();
+      }
+    };
+
+    function getDisplayProfileName() {
+      if (appState && appState.profileName && appState.profileName.trim()) {
+        return appState.profileName.trim();
+      }
+      if (cloudAccount && cloudAccount.profileName && cloudAccount.profileName.trim()) {
+        return cloudAccount.profileName.trim();
+      }
+      if (cloudAccount && cloudAccount.email) {
+        const localPart = cloudAccount.email.split('@')[0] || 'User';
+        return localPart.replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      }
+      return 'Account';
+    }
+
+    function getInitialsFromName(nameStr) {
+      const parts = String(nameStr || '').trim().split(/\s+/).filter(Boolean);
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      }
+      return (parts[0] ? parts[0].slice(0, 2) : 'U').toUpperCase();
+    }
+
+    function renderAccountProfileUI() {
       const isSignedIn = !!(cloudAccount && (cloudAccount.emailHash || cloudAccount.vaultId));
-      const fbInp = document.getElementById('cloudFirebaseUrlInput');
-      if (fbInp) fbInp.value = getActiveFirebaseDbUrl() || '';
-      const setPrtSel = document.getElementById('settingsPrintWeeksSelect');
-      if (setPrtSel) setPrtSel.value = String(appState.weeksCount || 2);
       document.getElementById('cloudAuthFormBox').style.display = isSignedIn ? 'none' : 'flex';
       document.getElementById('cloudSignedInBox').style.display = isSignedIn ? 'flex' : 'none';
       document.getElementById('cloudAuthErrorMsg').style.display = 'none';
       if (isSignedIn) {
-        document.getElementById('cloudSignedInEmailLabel').textContent = cloudAccount.email;
+        const dispName = getDisplayProfileName();
+        document.getElementById('accountProfileNameHeading').textContent = dispName;
+        document.getElementById('accountAvatarInitials').textContent = getInitialsFromName(dispName);
+        document.getElementById('cloudSignedInEmailLabel').textContent = cloudAccount.email || '';
+        const nameInp = document.getElementById('accountProfileNameInput');
+        if (nameInp) nameInp.value = appState.profileName || cloudAccount.profileName || dispName;
       }
+    }
+
+    window.saveProfileName = function() {
+      const inp = document.getElementById('accountProfileNameInput');
+      if (!inp) return;
+      const val = inp.value.trim();
+      appState.profileName = val;
+      if (cloudAccount) {
+        cloudAccount.profileName = val;
+        localStorage.setItem(CLOUD_AUTH_STORAGE_KEY, JSON.stringify(cloudAccount));
+      }
+      renderAccountProfileUI();
+      persistAndSync();
+      const btn = document.getElementById('btnSaveProfileName');
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = '✓ Saved';
+        setTimeout(() => { btn.textContent = orig; }, 1400);
+      }
+    };
+
+    window.toggleAccountSubPanel = function(panel) {
+      const passEl = document.getElementById('accountSubPanel_password');
+      const emailEl = document.getElementById('accountSubPanel_email');
+      const showPass = (panel === 'password') && (passEl && passEl.style.display === 'none');
+      const showEmail = (panel === 'email') && (emailEl && emailEl.style.display === 'none');
+      if (passEl) passEl.style.display = showPass ? 'flex' : 'none';
+      if (emailEl) emailEl.style.display = showEmail ? 'flex' : 'none';
+      const passMsg = document.getElementById('chgPassMsg');
+      const emailMsg = document.getElementById('chgEmailMsg');
+      if (passMsg) passMsg.style.display = 'none';
+      if (emailMsg) emailMsg.style.display = 'none';
+    };
+
+    window.manualSyncNow = async function() {
+      const btn = document.getElementById('btnManualSyncNow');
+      if (btn) btn.textContent = 'Syncing...';
+      try {
+        await pushStateToCloud();
+        await pullStateFromCloud(false);
+        if (btn) btn.textContent = '✓ Synced!';
+      } catch (e) {
+        if (btn) btn.textContent = 'Sync Failed';
+      }
+      setTimeout(() => {
+        if (btn) btn.textContent = '🔄 Sync Now';
+      }, 1500);
+    };
+
+    window.submitChangePassword = async function() {
+      if (!cloudAccount || !cloudAccount.email) return;
+      const curPass = document.getElementById('chgPassCurrentInput').value || '';
+      const newPass = document.getElementById('chgPassNewInput').value || '';
+      const confPass = document.getElementById('chgPassConfirmInput').value || '';
+      const msgEl = document.getElementById('chgPassMsg');
+      const btn = document.getElementById('btnSubmitChgPass');
+
+      const showMsg = (text, isErr) => {
+        msgEl.textContent = text;
+        msgEl.style.color = isErr ? '#be123c' : '#047857';
+        msgEl.style.display = 'block';
+      };
+
+      if (!curPass) return showMsg('Please enter your current password.', true);
+      if (newPass.length < 4) return showMsg('New password must be at least 4 characters.', true);
+      if (newPass !== confPass) return showMsg('New passwords do not match.', true);
+
+      const curCheck = deriveAccountKeys(cloudAccount.email, curPass);
+      if (curCheck.encKeyHex !== cloudAccount.encKeyHex || curCheck.macKeyHex !== cloudAccount.macKeyHex) {
+        return showMsg('Current password is incorrect.', true);
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Re-Encrypting...';
+      try {
+        const newKeys = deriveAccountKeys(cloudAccount.email, newPass);
+        cloudAccount.encKeyHex = newKeys.encKeyHex;
+        cloudAccount.macKeyHex = newKeys.macKeyHex;
+        localStorage.setItem(CLOUD_AUTH_STORAGE_KEY, JSON.stringify(cloudAccount));
+        appState.updatedAt = Date.now();
+        appState.changeId = generateChangeId();
+        hasPendingLocalEdit = true;
+        await pushStateToCloud();
+        document.getElementById('chgPassCurrentInput').value = '';
+        document.getElementById('chgPassNewInput').value = '';
+        document.getElementById('chgPassConfirmInput').value = '';
+        showMsg('✓ Password updated & cloud vault re-encrypted!', false);
+        setTimeout(() => toggleAccountSubPanel(null), 1400);
+      } catch (e) {
+        showMsg('Could not update password. Please check your connection.', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Update Password';
+      }
+    };
+
+    window.submitChangeEmail = async function() {
+      if (!cloudAccount || !cloudAccount.email) return;
+      const newEmail = (document.getElementById('chgEmailNewInput').value || '').trim().toLowerCase();
+      const curPass = document.getElementById('chgEmailPassInput').value || '';
+      const msgEl = document.getElementById('chgEmailMsg');
+      const btn = document.getElementById('btnSubmitChgEmail');
+
+      const showMsg = (text, isErr) => {
+        msgEl.textContent = text;
+        msgEl.style.color = isErr ? '#be123c' : '#047857';
+        msgEl.style.display = 'block';
+      };
+
+      if (!newEmail || !newEmail.includes('@')) return showMsg('Please enter a valid new email address.', true);
+      if (!curPass) return showMsg('Please confirm your current password.', true);
+
+      const curCheck = deriveAccountKeys(cloudAccount.email, curPass);
+      if (curCheck.encKeyHex !== cloudAccount.encKeyHex || curCheck.macKeyHex !== cloudAccount.macKeyHex) {
+        return showMsg('Current password is incorrect.', true);
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Migrating Vault...';
+      try {
+        const newKeys = deriveAccountKeys(newEmail, curPass);
+        cloudAccount.email = newKeys.email;
+        cloudAccount.emailHash = newKeys.emailHash;
+        cloudAccount.encKeyHex = newKeys.encKeyHex;
+        cloudAccount.macKeyHex = newKeys.macKeyHex;
+        cloudAccount.liveTopic = newKeys.liveTopic;
+        cloudAccount.vaultId = getVaultKeyForEmailHash(newKeys.emailHash);
+        localStorage.setItem(CLOUD_AUTH_STORAGE_KEY, JSON.stringify(cloudAccount));
+        appState.updatedAt = Date.now();
+        appState.changeId = generateChangeId();
+        hasPendingLocalEdit = true;
+        await pushStateToCloud();
+        startLiveCrossDeviceListener();
+        renderAccountProfileUI();
+        document.getElementById('chgEmailNewInput').value = '';
+        document.getElementById('chgEmailPassInput').value = '';
+        showMsg('✓ Login email updated & vault migrated!', false);
+        setTimeout(() => toggleAccountSubPanel(null), 1400);
+      } catch (e) {
+        showMsg('Could not update email. Please check your connection.', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Update Email';
+      }
+    };
+
+    function renderSettingsCategoriesList() {
+      const listEl = document.getElementById('settingsCategoriesList');
+      if (!listEl) return;
+      listEl.innerHTML = appState.categories.map(c => {
+        const itemCount = appState.tasks.filter(t => t.status !== 'completed' && t.category === c.id).length;
+        const canDelete = appState.categories.length > 1;
+        return `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:6px 10px;">
+            <span style="font-size:0.84rem; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(c.name)} <span style="font-size:0.74rem; color:var(--muted); font-weight:600;">(${itemCount})</span></span>
+            <div style="display:flex; gap:4px; flex-shrink:0;">
+              <button type="button" onclick="renameCategoryById('${c.id}')" style="font-size:0.74rem; padding:4px 8px;">✎ Rename</button>
+              ${canDelete ? `<button type="button" onclick="deleteCategoryById('${c.id}')" style="font-size:0.74rem; padding:4px 8px; color:#be123c; border-color:#fda4af;">🗑️</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.addCategoryFromSettings = function() {
+      const inp = document.getElementById('settingsNewCategoryInput');
+      if (!inp || !inp.value.trim()) return;
+      const raw = inp.value.trim();
+      const hasEmoji = /^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(raw);
+      const id = 'cat_' + Date.now();
+      appState.categories.push({ id, name: hasEmoji ? raw : ('📁 ' + raw) });
+      inp.value = '';
+      persistAndSync();
+      renderSettingsCategoriesList();
+    };
+
+    window.renameCategoryById = function(catId) {
+      const cat = appState.categories.find(c => c.id === catId);
+      if (!cat) return;
+      const next = prompt('Rename category:', cat.name);
+      if (!next || !next.trim()) return;
+      cat.name = next.trim();
+      persistAndSync();
+      renderSettingsCategoriesList();
+    };
+
+    window.deleteCategoryById = function(catId) {
+      if (appState.categories.length <= 1) return;
+      const cat = appState.categories.find(c => c.id === catId);
+      if (!cat) return;
+      const fallbackCat = appState.categories.find(c => c.id !== catId) || appState.categories[0];
+      if (!confirm(`Delete "${cat.name}"? Any tasks or notes in it will move to "${fallbackCat.name}".`)) return;
+      appState.tasks.forEach(t => {
+        if (t.category === catId) t.category = fallbackCat.id;
+      });
+      appState.categories = appState.categories.filter(c => c.id !== catId);
+      if (selectedListFilter === catId) selectedListFilter = 'all';
+      persistAndSync();
+      renderSettingsCategoriesList();
+    };
+
+    function updateSettingsClearCompletedBtn() {
+      const btn = document.getElementById('btnSettingsClearCompleted');
+      if (!btn) return;
+      const count = appState.tasks.filter(t => t.status === 'completed').length;
+      btn.textContent = `🧹 Clear Completed Tasks & Notes (${count})`;
+      btn.disabled = (count === 0);
+      btn.style.opacity = (count === 0) ? '0.55' : '1';
+    }
+
+    window.clearCompletedTasksFromSettings = function() {
+      const count = appState.tasks.filter(t => t.status === 'completed').length;
+      if (count === 0) return;
+      if (!confirm(`Permanently clear ${count} completed item(s)?`)) return;
+      appState.tasks = appState.tasks.filter(t => t.status !== 'completed');
+      persistAndSync();
+      updateSettingsClearCompletedBtn();
+    };
+
+    window.exportBackupJson = function() {
+      const dataStr = JSON.stringify(appState, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `one-minor-one-major-backup-${toDateStr(new Date())}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    window.importBackupJson = function(event) {
+      const file = event && event.target && event.target.files ? event.target.files[0] : null;
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        try {
+          const parsed = JSON.parse(String(ev.target.result || ''));
+          if (!parsed || !Array.isArray(parsed.tasks)) {
+            alert('Invalid backup file.');
+            return;
+          }
+          appState = parsed;
+          persistAndSync();
+          renderSettingsCategoriesList();
+          updateSettingsClearCompletedBtn();
+          alert(`✓ Restored ${appState.tasks.length} items from backup!`);
+        } catch (err) {
+          alert('Could not read backup JSON file.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    };
+
+    window.openDriveModal = function() {
+      const fbInp = document.getElementById('cloudFirebaseUrlInput');
+      if (fbInp) fbInp.value = getActiveFirebaseDbUrl() || '';
+      const setPrtSel = document.getElementById('settingsPrintWeeksSelect');
+      if (setPrtSel) setPrtSel.value = String(appState.weeksCount || 2);
+      const apkSec = document.getElementById('androidApkDownloadSection');
+      if (apkSec) {
+        apkSec.style.display = window.AndroidWidgetBridge ? 'none' : 'flex';
+      }
+      renderAccountProfileUI();
+      toggleAccountSubPanel(null);
+      renderSettingsCategoriesList();
+      updateSettingsClearCompletedBtn();
+      applyAppTheme(appState.theme || localStorage.getItem(THEME_STORAGE_KEY) || 'light');
+      switchSettingsTab(currentSettingsTab || 'account');
       document.getElementById('driveSyncModal').classList.add('open');
     };
 
