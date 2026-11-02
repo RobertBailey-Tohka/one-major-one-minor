@@ -980,27 +980,61 @@
 
     @media (max-width: 780px) {
       .app-shell {
-        padding: 14px 12px 92px;
+        padding: 12px 12px 28px;
         width: 100%;
         max-width: 100vw;
         overflow-x: hidden;
       }
       .hero-header-bar {
+        flex-direction: column;
+        align-items: stretch;
         gap: 10px;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
+      }
+      .hero-right-group {
+        order: -1;
+        width: 100%;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        gap: 6px;
+      }
+      .hero-right-group .hero-segmented-pill {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+      }
+      .hero-right-group .hero-seg-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 7px 6px;
+        font-size: 0.76rem;
+        gap: 4px;
+        white-space: nowrap;
+      }
+      .hero-icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        flex-shrink: 0;
+      }
+      .hero-left-group {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 8px;
       }
       .hero-date-title {
-        font-size: 1.45rem;
+        font-size: 1.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .hero-seg-btn {
         padding: 6px 10px;
         font-size: 0.8rem;
       }
-      .mobile-bottom-nav {
-        display: flex;
-      }
-      .m-fab-add {
-        display: inline-flex;
+      .mobile-bottom-nav, .m-fab-add {
+        display: none !important;
       }
       .habits-strip-card {
         padding: 10px 12px;
@@ -1304,7 +1338,7 @@
   <div class="app-shell">
     <!-- OPTION C: MINIMALIST HERO HEADER (NO BOXED NAVBAR) -->
     <header class="hero-header-bar">
-      <div class="hero-left-group">
+      <div class="hero-left-group" id="heroLeftDateGroup">
         <h1 class="hero-date-title" id="todayDateHeading">Today</h1>
 
         <!-- Daily Date Stepper Pill (< Today >) -->
@@ -1381,21 +1415,17 @@
 
         <!-- Main Tasks List Panel -->
         <div class="tasks-main-panel">
-          <div class="tasks-panel-header">
-            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-              <div class="hero-segmented-pill" role="tablist" aria-label="Switch between Tasks and Notes">
-                <button type="button" class="hero-seg-btn active" id="btnTasksSubmodeTasks" onclick="setTasksViewSubmode('tasks')">
-                  ☑️ Tasks (<span id="tasksSubmodeCount">0</span>)
-                </button>
-                <button type="button" class="hero-seg-btn" id="btnTasksSubmodeNotes" onclick="setTasksViewSubmode('notes')">
-                  📝 Notes (<span id="notesSubmodeCount">0</span>)
-                </button>
-              </div>
-              <h2 style="font-size:1.05rem; font-weight:800; color:var(--muted);" id="currentListTitle">📋 All Categories</h2>
+          <div class="tasks-panel-header" style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:nowrap;">
+            <div class="hero-segmented-pill" role="tablist" aria-label="Switch between Tasks and Notes">
+              <button type="button" class="hero-seg-btn active" id="btnTasksSubmodeTasks" onclick="setTasksViewSubmode('tasks')">
+                ☑️ Tasks (<span id="tasksSubmodeCount">0</span>)
+              </button>
+              <button type="button" class="hero-seg-btn" id="btnTasksSubmodeNotes" onclick="setTasksViewSubmode('notes')">
+                📝 Notes (<span id="notesSubmodeCount">0</span>)
+              </button>
             </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn-primary-add" id="btnMainPanelAdd" onclick="openTaskWizardFromFab()">+ Add Task</button>
-            </div>
+            <span id="currentListTitle" style="display:none;"></span>
+            <button class="btn-primary-add" id="btnMainPanelAdd" onclick="openTaskWizardFromFab()" style="white-space:nowrap; flex-shrink:0;">+ Add Task</button>
           </div>
 
           <!-- Active Tasks List -->
@@ -1450,23 +1480,6 @@
       </div>
     </section>
   </div>
-
-  <!-- Floating '+' Button (Only shown on Task List tab on mobile) & Bottom Navigation -->
-  <button class="m-fab-add" id="mobileFabAddBtn" onclick="openTaskWizardFromFab()" title="Add Task or Note" style="display:none;">+</button>
-  <nav class="mobile-bottom-nav">
-    <button class="m-nav-btn active" id="mNavToday" onclick="switchMainView('today')">
-      <span style="font-size:1.15rem;">☀️</span>
-      <span>Schedule</span>
-    </button>
-    <button class="m-nav-btn" id="mNavTasks" onclick="switchMainView('tasks')">
-      <span style="font-size:1.15rem;">☑️</span>
-      <span>Task List</span>
-    </button>
-    <button class="m-nav-btn" id="mNavSync" onclick="openDriveModal()">
-      <span style="font-size:1.15rem;">⚙️</span>
-      <span>Settings</span>
-    </button>
-  </nav>
 
   <!-- =====================================================
        MODAL 1: 4-QUESTION PRIORITY WIZARD & TASK EDITOR
@@ -3495,10 +3508,13 @@
       if (dailyGrid) dailyGrid.style.display = isWeeklyMode ? 'none' : 'grid';
       if (weeklyPanel) weeklyPanel.style.display = isWeeklyMode ? 'flex' : 'none';
 
+      const heroLeftGroup = document.getElementById('heroLeftDateGroup');
+      if (heroLeftGroup) {
+        heroLeftGroup.style.display = (currentMainView === 'tasks') ? 'none' : 'flex';
+      }
+
       if (headingEl) {
-        if (currentMainView === 'tasks') {
-          headingEl.textContent = 'Tasks';
-        } else if (currentMainView === 'week') {
+        if (currentMainView === 'week') {
           headingEl.textContent = 'Print Preview';
         } else if (isWeeklyMode) {
           const wkStart = parseDateStr(appState.selectedSunday || todayStr);
