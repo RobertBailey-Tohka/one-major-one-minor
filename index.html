@@ -1386,9 +1386,7 @@
               <h2 style="font-size:1.2rem; font-weight:800;" id="currentListTitle">All Active Tasks</h2>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button type="button" onclick="openTaskWizard({ defaultNote: true })" style="font-weight:700; background:#fffbeb; border-color:#fcd34d; color:#92400e;">+ Note</button>
-              <button type="button" onclick="openTaskWizard({ defaultHabit: true })" style="font-weight:700;">+ Habits</button>
-              <button class="btn-primary-add" onclick="openTaskWizard()">+ Add Task</button>
+              <button class="btn-primary-add" onclick="openTaskWizardFromFab()">+ Add Task</button>
             </div>
           </div>
 
@@ -1468,8 +1466,18 @@
   <div class="modal-backdrop" id="taskWizardModal">
     <div class="modal-sheet">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="font-size:1.1rem; font-weight:800;" id="wizModalTitle">New Task (4 Priority Questions)</h3>
+        <h3 style="font-size:1.1rem; font-weight:800;" id="wizModalTitle">New Task</h3>
         <button style="border:none; background:transparent; font-size:1.1rem;" onclick="closeTaskWizard()">✕</button>
+      </div>
+
+      <!-- 2-Button Selector: Scheduled Task vs Note (No Schedule) -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; background:var(--surface-subtle); padding:4px; border-radius:11px; border:1px solid var(--border);">
+        <button type="button" id="wizModeBtnTask" onclick="setWizEntryMode('task')" style="justify-content:center; padding:8px 10px; border-radius:8px; font-size:0.84rem; font-weight:800; border:none;">
+          ☑️ Scheduled Task
+        </button>
+        <button type="button" id="wizModeBtnNote" onclick="setWizEntryMode('note')" style="justify-content:center; padding:8px 10px; border-radius:8px; font-size:0.84rem; font-weight:800; border:none;">
+          📝 Note (No Schedule)
+        </button>
       </div>
 
       <div>
@@ -1477,31 +1485,23 @@
         <textarea id="wizNotesInput" rows="3" placeholder="Notes, phone numbers, part numbers, or details..." style="width:100%; border:1px solid var(--border-strong); border-radius:10px; padding:8px 12px; font-size:0.85rem; resize:vertical;"></textarea>
       </div>
 
-      <!-- Category & Recurrence Row -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <!-- Category & Repeat Row -->
+      <div id="wizCatRepeatGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
         <div>
           <label style="font-size:0.75rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Category / List</label>
           <select id="wizCategorySelect" style="width:100%; padding:8px 10px; border-radius:9px; border:1px solid var(--border-strong); font-size:0.84rem; font-weight:600;"></select>
         </div>
-        <div>
-          <label style="font-size:0.75rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Type / Repeat</label>
+        <div id="wizRepeatCol">
+          <label style="font-size:0.75rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Repeat</label>
           <select id="wizRecurrenceSelect" onchange="onWizRecurrenceChange()" style="width:100%; padding:8px 10px; border-radius:9px; border:1px solid var(--border-strong); font-size:0.84rem; font-weight:600;">
             <option value="none">One-Time Task</option>
-            <option value="note">📝 Note (No Schedule)</option>
-            <option value="daily_habit">🔄 Habit Strip (Above Cards)</option>
-            <option value="daily_slot">📅 Repeat Daily in Minor/Major Slot</option>
-            <option value="weekdays_slot">💼 Weekdays (Mon–Fri) in Slot</option>
+            <option value="daily_slot">📅 Repeat Daily</option>
+            <option value="weekdays_slot">💼 Weekdays (Mon–Fri)</option>
             <option value="weekly_slot">🗓️ Repeat Weekly (Pick Day)...</option>
             <option value="monthly_date_slot">📆 Repeat Monthly on Date (e.g. 1st, 15th)...</option>
             <option value="monthly_weekday_slot">📆 Repeat Monthly on Pattern (e.g. 1st Mon)...</option>
           </select>
         </div>
-      </div>
-
-      <!-- Note Info Banner (Shown when Type = Note) -->
-      <div id="wizNoteInfoBanner" style="display:none; background:#fffbeb; border:1px solid #fcd34d; border-radius:12px; padding:10px 14px; font-size:0.8rem; font-weight:700; color:#92400e; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-        <span>📝 Saved as a non-scheduled Note in your Category &amp; Notes list (never auto-scheduled).</span>
-        <button type="button" id="btnModalConvertNoteToTask" onclick="switchWizFromNoteToTask()" style="display:none; font-size:0.75rem; padding:4px 9px; background:#fff; border-color:#f59e0b; color:#92400e;">📅 Convert to Scheduled Task</button>
       </div>
 
       <!-- Dynamic Habit / Weekly / Monthly Recurrence Schedule Picker -->
@@ -3684,10 +3684,6 @@
           <span>📝 Notes</span>
           <span class="cat-count-badge">${activeNotes.length}</span>
         </button>
-        <button class="cat-nav-item ${selectedListFilter === 'habits' ? 'active' : ''}" onclick="selectTaskListFilter('habits')">
-          <span>🔄 Habits</span>
-          <span class="cat-count-badge">${habitsCount}</span>
-        </button>
         <button class="cat-nav-item ${selectedListFilter === 'snoozed' ? 'active' : ''}" onclick="selectTaskListFilter('snoozed')">
           <span>⏳ Snoozed</span>
           <span class="cat-count-badge">${snoozedCount}</span>
@@ -3710,9 +3706,6 @@
       } else if (selectedListFilter === 'notes') {
         filtered = activeNotes;
         title = '📝 Notes';
-      } else if (selectedListFilter === 'habits') {
-        filtered = appState.tasks.filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit');
-        title = '🔄 Habits';
       } else if (selectedListFilter === 'snoozed') {
         filtered = appState.tasks.filter(t => t.status === 'snoozed');
         title = '⏳ Snoozed Tasks';
@@ -3741,8 +3734,8 @@
       const listEl = document.getElementById('todoActiveList');
       if (filtered.length === 0) {
         const emptyHint = selectedListFilter === 'notes'
-          ? 'No notes yet. Click <strong>+ Note</strong> to jot something down!'
-          : 'No tasks or notes in this list right now. Click <strong>+ Add Task</strong> or <strong>+ Note</strong> to add one!';
+          ? 'No notes yet. Click <strong>+ Add Task</strong> and select <strong>📝 Note</strong> to jot something down!'
+          : 'No tasks or notes in this list right now. Click <strong>+ Add Task</strong> to add one!';
         listEl.innerHTML = `
           <div style="text-align:center; padding:32px 16px; color:var(--muted); border:1.5px dashed var(--border-strong); border-radius:12px;">
             ${emptyHint}
@@ -4381,17 +4374,36 @@
       renderWizHabitDayPills();
     };
 
+    let wizEntryMode = 'task'; // 'task' | 'note'
+
+    window.setWizEntryMode = function(mode) {
+      wizEntryMode = (mode === 'note') ? 'note' : 'task';
+      const btnTask = document.getElementById('wizModeBtnTask');
+      const btnNote = document.getElementById('wizModeBtnNote');
+      if (btnTask) {
+        btnTask.style.background = wizEntryMode === 'task' ? '#0f172a' : 'transparent';
+        btnTask.style.color = wizEntryMode === 'task' ? '#ffffff' : 'var(--muted)';
+        btnTask.style.boxShadow = wizEntryMode === 'task' ? '0 1px 3px rgba(15, 23, 42, 0.16)' : 'none';
+      }
+      if (btnNote) {
+        btnNote.style.background = wizEntryMode === 'note' ? '#f59e0b' : 'transparent';
+        btnNote.style.color = wizEntryMode === 'note' ? '#ffffff' : 'var(--muted)';
+        btnNote.style.boxShadow = wizEntryMode === 'note' ? '0 1px 3px rgba(245, 158, 11, 0.25)' : 'none';
+      }
+      onWizRecurrenceChange();
+    };
+
     window.onWizRecurrenceChange = function() {
       populateMonthlyDateOptions();
       const rec = document.getElementById('wizRecurrenceSelect').value;
-      const isNote = (rec === 'note');
-      const isHabit = (rec === 'daily_habit');
-      document.getElementById('wizPriorityQuestionsBox').style.display = (isHabit || isNote) ? 'none' : 'block';
+      const isNote = (wizEntryMode === 'note');
 
-      const noteBanner = document.getElementById('wizNoteInfoBanner');
-      const btnConv = document.getElementById('btnModalConvertNoteToTask');
-      if (noteBanner) noteBanner.style.display = isNote ? 'flex' : 'none';
-      if (btnConv) btnConv.style.display = (isNote && wizEditingTaskId) ? 'inline-flex' : 'none';
+      const repeatCol = document.getElementById('wizRepeatCol');
+      const catRepeatGrid = document.getElementById('wizCatRepeatGrid');
+      if (repeatCol) repeatCol.style.display = isNote ? 'none' : 'block';
+      if (catRepeatGrid) catRepeatGrid.style.gridTemplateColumns = isNote ? '1fr' : '1fr 1fr';
+
+      document.getElementById('wizPriorityQuestionsBox').style.display = isNote ? 'none' : 'block';
 
       const titleInp = document.getElementById('wizTitleInput');
       const notesInp = document.getElementById('wizNotesInput');
@@ -4405,11 +4417,9 @@
           : 'Notes, phone numbers, part numbers, or details...';
       }
 
-      if (!wizEditingTaskId) {
-        document.getElementById('wizModalTitle').textContent = isNote
-          ? 'New Note (No Schedule)'
-          : (isHabit ? 'New Habit' : 'New Task (4 Priority Questions)');
-      }
+      document.getElementById('wizModalTitle').textContent = wizEditingTaskId
+        ? (isNote ? 'Edit Note' : 'Edit Task')
+        : (isNote ? 'New Note' : 'New Task');
 
       const detailBox = document.getElementById('wizRecurrenceDetailBox');
       const habitRow = document.getElementById('wizHabitDaysRow');
@@ -4417,23 +4427,19 @@
       const mDateRow = document.getElementById('wizMonthlyDatePickerRow');
       const mWdayRow = document.getElementById('wizMonthlyWeekdayPickerRow');
 
-      const showHabit = (rec === 'daily_habit');
-      const showWeekly = (rec === 'weekly_slot');
-      const showMDate = (rec === 'monthly_date_slot');
-      const showMWday = (rec === 'monthly_weekday_slot');
+      const showWeekly = (!isNote && rec === 'weekly_slot');
+      const showMDate = (!isNote && rec === 'monthly_date_slot');
+      const showMWday = (!isNote && rec === 'monthly_weekday_slot');
 
-      if (detailBox) detailBox.style.display = (showHabit || showWeekly || showMDate || showMWday) ? 'flex' : 'none';
-      if (habitRow) habitRow.style.display = showHabit ? 'flex' : 'none';
+      if (detailBox) detailBox.style.display = (showWeekly || showMDate || showMWday) ? 'flex' : 'none';
+      if (habitRow) habitRow.style.display = 'none';
       if (wkRow) wkRow.style.display = showWeekly ? 'flex' : 'none';
       if (mDateRow) mDateRow.style.display = showMDate ? 'flex' : 'none';
       if (mWdayRow) mWdayRow.style.display = showMWday ? 'flex' : 'none';
-      if (showHabit) renderWizHabitDayPills();
     };
 
     window.switchWizFromNoteToTask = function() {
-      document.getElementById('wizRecurrenceSelect').value = 'none';
-      document.getElementById('wizModalTitle').textContent = 'Convert Note to Scheduled Task';
-      onWizRecurrenceChange();
+      setWizEntryMode('task');
     };
 
     window.convertNoteToTask = function(taskId) {
@@ -4443,8 +4449,6 @@
     window.openTaskWizardFromFab = function() {
       if (selectedListFilter === 'notes') {
         openTaskWizard({ defaultNote: true });
-      } else if (selectedListFilter === 'habits') {
-        openTaskWizard({ defaultHabit: true });
       } else {
         openTaskWizard();
       }
@@ -4494,15 +4498,14 @@
       if (wizEditingTaskId) {
         const t = appState.tasks.find(x => x.id === wizEditingTaskId);
         if (!t) return;
-        const targetRec = opts.convertToTask ? 'none' : (t.recurrence || 'none');
-        document.getElementById('wizModalTitle').textContent = opts.convertToTask
-          ? 'Convert Note to Scheduled Task'
-          : (targetRec === 'daily_habit' ? 'Edit Habit' : (targetRec === 'note' ? 'Edit Note' : 'Edit Task & Subtasks'));
+        const isEditingNote = !opts.convertToTask && (t.recurrence === 'note');
+        const targetRec = (t.recurrence === 'note' || t.recurrence === 'daily_habit' || opts.convertToTask)
+          ? 'none'
+          : (t.recurrence || 'none');
         document.getElementById('wizTitleInput').value = t.title || '';
         document.getElementById('wizNotesInput').value = t.notes || '';
         catSel.value = t.category || 'personal';
         document.getElementById('wizRecurrenceSelect').value = targetRec;
-        wizSelectedHabitDays = (Array.isArray(t.habitDays) && t.habitDays.length > 0) ? [...t.habitDays] : [0, 1, 2, 3, 4, 5, 6];
         document.getElementById('wizWeeklyDaySelect').value = String(t.recurrenceDayOfWeek ?? defaultDateObj.getDay());
         document.getElementById('wizMonthlyDateSelect').value = String(t.recurrenceMonthDay || '1');
         document.getElementById('wizMonthlyNthSelect').value = String(t.recurrenceMonthNth || '1');
@@ -4513,18 +4516,15 @@
         setWizAnswer('energy', t.energy || 'low');
         wizTempSubtasks = JSON.parse(JSON.stringify(t.subtasks || []));
         document.getElementById('btnDeleteTaskInModal').style.display = 'inline-flex';
+        setWizEntryMode(isEditingNote ? 'note' : 'task');
       } else {
-        const defaultRec = opts.defaultNote ? 'note' : (opts.defaultHabit ? 'daily_habit' : 'none');
-        document.getElementById('wizModalTitle').textContent = defaultRec === 'note'
-          ? 'New Note (No Schedule)'
-          : (defaultRec === 'daily_habit' ? 'New Habit' : 'New Task (4 Priority Questions)');
+        const startAsNote = !!opts.defaultNote;
         document.getElementById('wizTitleInput').value = '';
         document.getElementById('wizNotesInput').value = '';
         catSel.value = (selectedListFilter !== 'all' && selectedListFilter !== 'notes' && selectedListFilter !== 'habits' && selectedListFilter !== 'snoozed' && selectedListFilter !== 'blocked')
           ? selectedListFilter
-          : (defaultRec === 'note' ? 'personal' : 'house');
-        document.getElementById('wizRecurrenceSelect').value = defaultRec;
-        wizSelectedHabitDays = [0, 1, 2, 3, 4, 5, 6];
+          : (startAsNote ? 'personal' : 'house');
+        document.getElementById('wizRecurrenceSelect').value = 'none';
         document.getElementById('wizWeeklyDaySelect').value = wizTargetDate ? String(defaultDateObj.getDay()) : '1';
         document.getElementById('wizMonthlyDateSelect').value = String(defaultDateObj.getDate());
         document.getElementById('wizMonthlyNthSelect').value = '1';
@@ -4535,9 +4535,9 @@
         setWizAnswer('energy', 'low');
         wizTempSubtasks = [];
         document.getElementById('btnDeleteTaskInModal').style.display = 'none';
+        setWizEntryMode(startAsNote ? 'note' : 'task');
       }
 
-      onWizRecurrenceChange();
       renderWizSubtasks();
       document.getElementById('taskWizardModal').classList.add('open');
       setTimeout(() => document.getElementById('wizTitleInput').focus(), 50);
@@ -4552,7 +4552,9 @@
     window.saveTaskFromWizard = function() {
       let title = document.getElementById('wizTitleInput').value.trim();
       const notes = document.getElementById('wizNotesInput').value.trim();
-      const recurrence = document.getElementById('wizRecurrenceSelect').value;
+      const recurrence = (wizEntryMode === 'note')
+        ? 'note'
+        : (document.getElementById('wizRecurrenceSelect').value || 'none');
 
       // For a Note, if the user only typed in the Notes body box and left Title empty, use the first line of Notes as Title
       if (!title && recurrence === 'note' && notes) {
