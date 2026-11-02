@@ -1846,13 +1846,50 @@
             <input type="email" id="cloudEmailInput" placeholder="you@example.com" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:8px 11px; font-size:0.88rem;" />
           </div>
           <div>
-            <label style="font-size:0.76rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Password</label>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label style="font-size:0.76rem; font-weight:700; color:var(--muted);">Password</label>
+              <a href="javascript:void(0)" onclick="openForgotPasswordPanel()" style="font-size:0.75rem; font-weight:700; color:var(--primary); text-decoration:none;">Forgot password?</a>
+            </div>
             <input type="password" id="cloudPasswordInput" placeholder="Enter password..." onkeydown="if(event.key==='Enter'){event.preventDefault();signInOrCreateCloudAccount();}" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:8px 11px; font-size:0.88rem;" />
           </div>
           <div id="cloudAuthErrorMsg" style="display:none; color:#be123c; font-size:0.78rem; font-weight:700;"></div>
           <button class="btn-primary-add" style="width:100%; justify-content:center; padding:10px;" id="btnCloudSignInSubmit" onclick="signInOrCreateCloudAccount()">
             ☁️ Sign In &amp; Sync
           </button>
+        </div>
+
+        <!-- Signed-Out View: Forgot Password / Account Recovery Panel -->
+        <div id="cloudForgotPasswordBox" class="settings-section-card" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="settings-card-label">🛡️ Recover Lost Account</div>
+            <button type="button" onclick="closeForgotPasswordPanel()" style="font-size:0.74rem; padding:4px 8px;">← Back to Sign In</button>
+          </div>
+          <div>
+            <label style="font-size:0.76rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Account Email Address</label>
+            <div style="display:flex; gap:6px;">
+              <input type="email" id="recoverEmailInput" placeholder="you@example.com" style="flex:1; border:1px solid var(--border-strong); border-radius:8px; padding:8px 11px; font-size:0.86rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupRecoveryAccount();}" />
+              <button type="button" onclick="lookupRecoveryAccount()" id="btnLookupRecovery" style="font-size:0.78rem; font-weight:700; padding:8px 12px;">Find Vault</button>
+            </div>
+          </div>
+
+          <div id="recoverStep2Box" style="display:none; flex-direction:column; gap:10px; border-top:1px solid var(--border); padding-top:10px;">
+            <div id="recoverQuestionPromptBox" style="display:none; background:var(--primary-soft); border:1px solid #bfdbfe; border-radius:8px; padding:8px 10px;">
+              <div style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--primary); margin-bottom:2px;">Security Question</div>
+              <div id="recoverQuestionText" style="font-size:0.86rem; font-weight:800; color:var(--text);"></div>
+            </div>
+            <div>
+              <label style="font-size:0.76rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;" id="recoverSecretInputLabel">Recovery Answer / PIN or Backup Code</label>
+              <input type="text" id="recoverSecretInput" placeholder="Enter your answer, PIN, or XXXX-XXXX-XXXX-XXXX code..." style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:8px 11px; font-size:0.86rem;" />
+            </div>
+            <div>
+              <label style="font-size:0.76rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Set New Password</label>
+              <input type="password" id="recoverNewPasswordInput" placeholder="New password (min 4 chars)..." style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:8px 11px; font-size:0.86rem;" />
+            </div>
+            <button type="button" class="btn-primary-add" id="btnSubmitAccountRecovery" onclick="submitAccountRecovery()" style="width:100%; justify-content:center; padding:10px;">
+              🔓 Recover Vault &amp; Reset Password
+            </button>
+          </div>
+          <div id="recoverStatusMsg" style="display:none; font-size:0.78rem; font-weight:700;"></div>
         </div>
 
         <!-- Signed-In View: Clean Profile Card + Account Management -->
@@ -1880,11 +1917,47 @@
             </div>
 
             <!-- Action Buttons Row -->
-            <div style="border-top:1px solid var(--border); padding-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-              <button type="button" onclick="toggleAccountSubPanel('password')" style="justify-content:center; font-size:0.78rem; padding:8px;">🔑 Change Password</button>
-              <button type="button" onclick="toggleAccountSubPanel('email')" style="justify-content:center; font-size:0.78rem; padding:8px;">✉️ Change Email</button>
-              <button type="button" onclick="manualSyncNow()" id="btnManualSyncNow" style="justify-content:center; font-size:0.78rem; padding:8px;">🔄 Sync Now</button>
-              <button type="button" onclick="disconnectCloudAccount()" style="justify-content:center; font-size:0.78rem; padding:8px; color:#be123c; border-color:#fda4af; background:#fff1f2;">Sign Out</button>
+            <div style="border-top:1px solid var(--border); padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+              <button type="button" onclick="toggleAccountSubPanel('recovery')" style="width:100%; justify-content:space-between; font-size:0.8rem; padding:9px 12px; background:var(--primary-soft); color:var(--primary); border-color:#bfdbfe;">
+                <span>🛡️ Account Recovery &amp; Backup Code</span>
+                <span id="recoveryStatusPill" style="font-size:0.7rem; font-weight:800; background:var(--surface); padding:2px 8px; border-radius:999px;">Setup</span>
+              </button>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <button type="button" onclick="toggleAccountSubPanel('password')" style="justify-content:center; font-size:0.78rem; padding:8px;">🔑 Change Password</button>
+                <button type="button" onclick="toggleAccountSubPanel('email')" style="justify-content:center; font-size:0.78rem; padding:8px;">✉️ Change Email</button>
+                <button type="button" onclick="manualSyncNow()" id="btnManualSyncNow" style="justify-content:center; font-size:0.78rem; padding:8px;">🔄 Sync Now</button>
+                <button type="button" onclick="disconnectCloudAccount()" style="justify-content:center; font-size:0.78rem; padding:8px; color:#be123c; border-color:#fda4af; background:#fff1f2;">Sign Out</button>
+              </div>
+            </div>
+
+            <!-- Expandable Sub-Panel 0: Account Recovery (Security Question + Backup Code) -->
+            <div id="accountSubPanel_recovery" style="display:none; border-top:1px solid var(--border); padding-top:10px; flex-direction:column; gap:10px;">
+              <div style="font-size:0.82rem; font-weight:800;">🛡️ Account Recovery Options</div>
+              <p style="font-size:0.75rem; color:var(--muted); line-height:1.35;">
+                If you ever forget your password, you can unlock your encrypted vault using either your <strong>Security Question / PIN</strong> or your <strong>Emergency Backup Code</strong>.
+              </p>
+
+              <!-- 1. Security Question / PIN -->
+              <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:7px;">
+                <div style="font-size:0.75rem; font-weight:800; color:var(--text);">1. Security Question or Recovery PIN</div>
+                <input type="text" id="recoveryQuestionInput" placeholder="Question (e.g. First pet's name, or '4-Digit PIN')" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:7px 10px; font-size:0.82rem;" />
+                <input type="text" id="recoveryAnswerInput" placeholder="Answer or PIN (case-insensitive)" style="width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:7px 10px; font-size:0.82rem;" />
+                <div id="recoverySaveMsg" style="display:none; font-size:0.75rem; font-weight:700;"></div>
+                <div style="display:flex; justify-content:flex-end;">
+                  <button type="button" class="btn-primary-add" id="btnSaveRecoveryQA" onclick="saveRecoveryQuestionAndAnswer()" style="font-size:0.76rem; padding:6px 12px;">Save Recovery Question</button>
+                </div>
+              </div>
+
+              <!-- 2. Emergency Backup Recovery Code -->
+              <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:7px;">
+                <div style="font-size:0.75rem; font-weight:800; color:var(--text);">2. Emergency Backup Recovery Code</div>
+                <div style="font-size:0.72rem; color:var(--muted);">Save this code somewhere safe. It can always unlock your account on any device:</div>
+                <div id="accountRecoveryCodeDisplay" style="font-family:monospace; font-size:0.9rem; font-weight:900; letter-spacing:0.06em; text-align:center; padding:8px; background:var(--bg); border:1px dashed var(--border-strong); border-radius:8px; user-select:all;">XXXX-XXXX-XXXX-XXXX</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                  <button type="button" onclick="copyRecoveryCode()" id="btnCopyRecoveryCode" style="justify-content:center; font-size:0.75rem; padding:6px;">📋 Copy Code</button>
+                  <button type="button" onclick="downloadRecoveryKitTxt()" style="justify-content:center; font-size:0.75rem; padding:6px;">⬇️ Save Kit (.txt)</button>
+                </div>
+              </div>
             </div>
 
             <!-- Expandable Sub-Panel 1: Change Password -->
@@ -3133,7 +3206,14 @@
         if (!appState.changeId) appState.changeId = generateChangeId();
         const pushedChangeId = appState.changeId;
         try { appState.widgetSnapshot = buildWidgetSnapshot(); } catch (e) {}
+        if (typeof ensureAccountRecoveryConfig === 'function') {
+          ensureAccountRecoveryConfig();
+        }
         const encryptedEnvelope = encryptStatePayload(appState, cloudAccount.encKeyHex, cloudAccount.macKeyHex);
+        if (typeof buildCloudRecoveryMetadata === 'function') {
+          const recMeta = buildCloudRecoveryMetadata();
+          if (recMeta) encryptedEnvelope.recovery = recMeta;
+        }
         const vaultKey = getVaultKeyForEmailHash(cloudAccount.emailHash);
         const vaultTopic = getVaultTopicForEmailHash(cloudAccount.emailHash);
         const bodyStr = JSON.stringify(encryptedEnvelope);
@@ -3243,6 +3323,11 @@
           return;
         }
         applyIncomingCloudEnvelope(envObj);
+        if (!envObj.recovery || !envObj.recovery.codeGrant) {
+          isSyncingNow = false;
+          await pushStateToCloud();
+          return;
+        }
       } catch (e) {
         if (!isSilentPush) {
           setSyncBadge('local', 'Offline • Saved Locally');
@@ -3335,7 +3420,7 @@
 
         if (envObj && envObj.cipher) {
           if (envObj.verifyTag && envObj.verifyTag.slice(0, 16) !== expectedVerifyTag.slice(0, 16)) {
-            errEl.textContent = 'Incorrect password for this email account.';
+            errEl.textContent = 'Incorrect password for this email account. Click "Forgot password?" above to recover your vault.';
             errEl.style.display = 'block';
             btn.disabled = false;
             btn.textContent = '☁️ Sign In & Sync';
@@ -3351,7 +3436,7 @@
               hasPendingLocalEdit = false;
             }
           } catch (decErr) {
-            errEl.textContent = 'Incorrect password for this email account.';
+            errEl.textContent = 'Incorrect password for this email account. Click "Forgot password?" above to recover your vault.';
             errEl.style.display = 'block';
             btn.disabled = false;
             btn.textContent = '☁️ Sign In & Sync';
@@ -5250,9 +5335,59 @@
       return (parts[0] ? parts[0].slice(0, 2) : 'U').toUpperCase();
     }
 
+    function normalizeRecoverySecret(raw) {
+      return String(raw || '').trim().toLowerCase().replace(/[\s-]+/g, '');
+    }
+
+    function deriveRecoveryGrantKeys(email, rawSecret) {
+      return deriveAccountKeys(email, 'rec_v4:' + normalizeRecoverySecret(rawSecret));
+    }
+
+    function ensureAccountRecoveryConfig() {
+      if (!appState.recoveryConfig || typeof appState.recoveryConfig !== 'object') {
+        appState.recoveryConfig = {};
+      }
+      if (!appState.recoveryConfig.recoveryCode && cloudAccount && cloudAccount.emailHash && cloudAccount.encKeyHex) {
+        const alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        const hashBytes = sha256Bytes(utf8ToBytes(`1m1m_backup_code_v4:${cloudAccount.emailHash}:${cloudAccount.encKeyHex}`));
+        let chars = '';
+        for (let i = 0; i < 16; i++) {
+          chars += alphabet[hashBytes[i] % alphabet.length];
+        }
+        appState.recoveryConfig.recoveryCode = `${chars.slice(0, 4)}-${chars.slice(4, 8)}-${chars.slice(8, 12)}-${chars.slice(12, 16)}`;
+      }
+      return appState.recoveryConfig;
+    }
+
+    function buildCloudRecoveryMetadata() {
+      if (!cloudAccount || !cloudAccount.email || !cloudAccount.encKeyHex || !cloudAccount.macKeyHex) return null;
+      const cfg = ensureAccountRecoveryConfig();
+      const secretPayload = {
+        encKeyHex: cloudAccount.encKeyHex,
+        macKeyHex: cloudAccount.macKeyHex
+      };
+      const out = {
+        question: cfg.question || null,
+        qaGrant: null,
+        codeGrant: null
+      };
+      if (cfg.recoveryCode) {
+        const codeKeys = deriveRecoveryGrantKeys(cloudAccount.email, cfg.recoveryCode);
+        out.codeGrant = encryptStatePayload(secretPayload, codeKeys.encKeyHex, codeKeys.macKeyHex);
+      }
+      if (cfg.question && cfg.answerNorm) {
+        const qaKeys = deriveRecoveryGrantKeys(cloudAccount.email, cfg.answerNorm);
+        out.qaGrant = encryptStatePayload(secretPayload, qaKeys.encKeyHex, qaKeys.macKeyHex);
+      }
+      return out;
+    }
+
     function renderAccountProfileUI() {
       const isSignedIn = !!(cloudAccount && (cloudAccount.emailHash || cloudAccount.vaultId));
-      document.getElementById('cloudAuthFormBox').style.display = isSignedIn ? 'none' : 'flex';
+      const forgotBox = document.getElementById('cloudForgotPasswordBox');
+      const isShowingForgot = !isSignedIn && forgotBox && forgotBox.style.display === 'flex';
+      document.getElementById('cloudAuthFormBox').style.display = (isSignedIn || isShowingForgot) ? 'none' : 'flex';
+      if (forgotBox && isSignedIn) forgotBox.style.display = 'none';
       document.getElementById('cloudSignedInBox').style.display = isSignedIn ? 'flex' : 'none';
       document.getElementById('cloudAuthErrorMsg').style.display = 'none';
       if (isSignedIn) {
@@ -5262,6 +5397,24 @@
         document.getElementById('cloudSignedInEmailLabel').textContent = cloudAccount.email || '';
         const nameInp = document.getElementById('accountProfileNameInput');
         if (nameInp) nameInp.value = appState.profileName || cloudAccount.profileName || dispName;
+
+        const cfg = ensureAccountRecoveryConfig();
+        const codeEl = document.getElementById('accountRecoveryCodeDisplay');
+        if (codeEl) codeEl.textContent = cfg.recoveryCode || 'XXXX-XXXX-XXXX-XXXX';
+        const qInp = document.getElementById('recoveryQuestionInput');
+        if (qInp && document.activeElement !== qInp) qInp.value = cfg.question || '';
+        const pillEl = document.getElementById('recoveryStatusPill');
+        if (pillEl) {
+          if (cfg.question && cfg.answerNorm) {
+            pillEl.textContent = '✓ Question + Code Ready';
+            pillEl.style.color = '#047857';
+            pillEl.style.background = '#d1fae5';
+          } else {
+            pillEl.textContent = 'Backup Code Ready';
+            pillEl.style.color = 'var(--primary)';
+            pillEl.style.background = 'var(--surface)';
+          }
+        }
       }
     }
 
@@ -5285,16 +5438,259 @@
     };
 
     window.toggleAccountSubPanel = function(panel) {
+      const recEl = document.getElementById('accountSubPanel_recovery');
       const passEl = document.getElementById('accountSubPanel_password');
       const emailEl = document.getElementById('accountSubPanel_email');
+      const showRec = (panel === 'recovery') && (recEl && recEl.style.display === 'none');
       const showPass = (panel === 'password') && (passEl && passEl.style.display === 'none');
       const showEmail = (panel === 'email') && (emailEl && emailEl.style.display === 'none');
+      if (recEl) recEl.style.display = showRec ? 'flex' : 'none';
       if (passEl) passEl.style.display = showPass ? 'flex' : 'none';
       if (emailEl) emailEl.style.display = showEmail ? 'flex' : 'none';
+      const recMsg = document.getElementById('recoverySaveMsg');
       const passMsg = document.getElementById('chgPassMsg');
       const emailMsg = document.getElementById('chgEmailMsg');
+      if (recMsg) recMsg.style.display = 'none';
       if (passMsg) passMsg.style.display = 'none';
       if (emailMsg) emailMsg.style.display = 'none';
+      if (showRec) renderAccountProfileUI();
+    };
+
+    window.saveRecoveryQuestionAndAnswer = async function() {
+      if (!cloudAccount || !cloudAccount.email) return;
+      const qVal = (document.getElementById('recoveryQuestionInput').value || '').trim();
+      const aVal = (document.getElementById('recoveryAnswerInput').value || '').trim();
+      const msgEl = document.getElementById('recoverySaveMsg');
+      const btn = document.getElementById('btnSaveRecoveryQA');
+
+      const showMsg = (txt, isErr) => {
+        msgEl.textContent = txt;
+        msgEl.style.color = isErr ? '#be123c' : '#047857';
+        msgEl.style.display = 'block';
+      };
+
+      if (!qVal) return showMsg('Please enter a security question (e.g. "First pet\'s name" or "4-Digit PIN").', true);
+      if (normalizeRecoverySecret(aVal).length < 2) return showMsg('Please enter an answer or PIN (at least 2 characters).', true);
+
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      try {
+        const cfg = ensureAccountRecoveryConfig();
+        cfg.question = qVal;
+        cfg.answerNorm = normalizeRecoverySecret(aVal);
+        document.getElementById('recoveryAnswerInput').value = '';
+        appState.updatedAt = Date.now();
+        appState.changeId = generateChangeId();
+        hasPendingLocalEdit = true;
+        localStorage.setItem(STORAGE_KEY_V4, JSON.stringify(appState));
+        renderAccountProfileUI();
+        await pushStateToCloud();
+        showMsg('✓ Security question saved & synced to your cloud vault!', false);
+      } catch (e) {
+        showMsg('Saved locally. Will sync to cloud when online.', false);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Recovery Question';
+      }
+    };
+
+    window.copyRecoveryCode = function() {
+      const cfg = ensureAccountRecoveryConfig();
+      if (!cfg.recoveryCode) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(cfg.recoveryCode);
+      }
+      const btn = document.getElementById('btnCopyRecoveryCode');
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => { btn.textContent = orig; }, 1400);
+      }
+    };
+
+    window.downloadRecoveryKitTxt = function() {
+      if (!cloudAccount) return;
+      const cfg = ensureAccountRecoveryConfig();
+      const lines = [
+        '====================================================',
+        '1 MINOR + 1 MAJOR — ACCOUNT EMERGENCY RECOVERY KIT',
+        '====================================================',
+        `Profile Name:   ${getDisplayProfileName()}`,
+        `Account Email:  ${cloudAccount.email || ''}`,
+        `Backup Code:    ${cfg.recoveryCode || ''}`,
+        cfg.question ? `Security Q:     ${cfg.question}` : '',
+        `Generated On:   ${new Date().toLocaleString()}`,
+        '',
+        'HOW TO RECOVER YOUR ACCOUNT:',
+        '1. Open Settings (⚙️) -> Account tab.',
+        '2. Click "Forgot password?" above the password box.',
+        '3. Enter your email address and this Backup Code (or your Security Answer) to unlock your vault and set a new password.',
+        '===================================================='
+      ].filter(Boolean).join('\r\n');
+      const blob = new Blob([lines], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `1m1m-recovery-key-${(cloudAccount.email || 'account').split('@')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+
+    let pendingRecoveryEnvelope = null;
+    let pendingRecoveryEmail = '';
+
+    window.openForgotPasswordPanel = function() {
+      const signInEmail = (document.getElementById('cloudEmailInput').value || '').trim();
+      document.getElementById('cloudAuthFormBox').style.display = 'none';
+      document.getElementById('cloudForgotPasswordBox').style.display = 'flex';
+      document.getElementById('recoverStatusMsg').style.display = 'none';
+      document.getElementById('recoverStep2Box').style.display = 'none';
+      const recEmailInp = document.getElementById('recoverEmailInput');
+      if (signInEmail && recEmailInp) {
+        recEmailInp.value = signInEmail;
+        lookupRecoveryAccount();
+      }
+    };
+
+    window.closeForgotPasswordPanel = function() {
+      document.getElementById('cloudForgotPasswordBox').style.display = 'none';
+      document.getElementById('cloudAuthFormBox').style.display = 'flex';
+    };
+
+    window.lookupRecoveryAccount = async function() {
+      saveFirebaseUrlFromInput();
+      const email = (document.getElementById('recoverEmailInput').value || '').trim().toLowerCase();
+      const msgEl = document.getElementById('recoverStatusMsg');
+      const step2El = document.getElementById('recoverStep2Box');
+      const qBox = document.getElementById('recoverQuestionPromptBox');
+      const qTxt = document.getElementById('recoverQuestionText');
+      const btn = document.getElementById('btnLookupRecovery');
+
+      const showMsg = (txt, isErr) => {
+        msgEl.textContent = txt;
+        msgEl.style.color = isErr ? '#be123c' : '#047857';
+        msgEl.style.display = 'block';
+      };
+
+      if (!email || !email.includes('@')) {
+        return showMsg('Please enter your account email address.', true);
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Searching...';
+      msgEl.style.display = 'none';
+      step2El.style.display = 'none';
+
+      try {
+        const emailHash = bytesToHex(sha256Bytes(utf8ToBytes('1m1m_email_v4:' + email)));
+        const envObj = await fetchCloudEnvelope(emailHash);
+        if (!envObj || !envObj.cipher) {
+          return showMsg('No encrypted cloud vault found for this email address.', true);
+        }
+        pendingRecoveryEnvelope = envObj;
+        pendingRecoveryEmail = email;
+        step2El.style.display = 'flex';
+        if (envObj.recovery && envObj.recovery.question) {
+          qBox.style.display = 'block';
+          qTxt.textContent = envObj.recovery.question;
+          document.getElementById('recoverSecretInputLabel').textContent = 'Answer Security Question (or enter Backup Code)';
+        } else {
+          qBox.style.display = 'none';
+          document.getElementById('recoverSecretInputLabel').textContent = 'Backup Recovery Code (XXXX-XXXX-XXXX-XXXX)';
+        }
+      } catch (e) {
+        showMsg('Could not reach cloud server. Please check your internet connection.', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Find Vault';
+      }
+    };
+
+    window.submitAccountRecovery = async function() {
+      const secretRaw = (document.getElementById('recoverSecretInput').value || '').trim();
+      const newPass = document.getElementById('recoverNewPasswordInput').value || '';
+      const msgEl = document.getElementById('recoverStatusMsg');
+      const btn = document.getElementById('btnSubmitAccountRecovery');
+
+      const showMsg = (txt, isErr) => {
+        msgEl.textContent = txt;
+        msgEl.style.color = isErr ? '#be123c' : '#047857';
+        msgEl.style.display = 'block';
+      };
+
+      if (!pendingRecoveryEnvelope || !pendingRecoveryEmail) {
+        return showMsg('Please look up your email account first.', true);
+      }
+      if (!secretRaw) {
+        return showMsg('Please enter your Security Answer, PIN, or Backup Code.', true);
+      }
+      if (newPass.length < 4) {
+        return showMsg('Please enter a new password (at least 4 characters).', true);
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Unlocking & Resetting...';
+      try {
+        const rec = pendingRecoveryEnvelope.recovery || {};
+        const grantKeys = deriveRecoveryGrantKeys(pendingRecoveryEmail, secretRaw);
+        let unlockedKeys = null;
+
+        if (rec.qaGrant) {
+          try {
+            unlockedKeys = decryptStatePayload(rec.qaGrant, grantKeys.encKeyHex, grantKeys.macKeyHex);
+          } catch (e) {}
+        }
+        if (!unlockedKeys && rec.codeGrant) {
+          try {
+            unlockedKeys = decryptStatePayload(rec.codeGrant, grantKeys.encKeyHex, grantKeys.macKeyHex);
+          } catch (e) {}
+        }
+
+        if (!unlockedKeys || !unlockedKeys.encKeyHex || !unlockedKeys.macKeyHex) {
+          return showMsg('Incorrect Recovery Answer or Backup Code.', true);
+        }
+
+        const remoteState = decryptStatePayload(pendingRecoveryEnvelope, unlockedKeys.encKeyHex, unlockedKeys.macKeyHex);
+        if (remoteState && Array.isArray(remoteState.tasks)) {
+          const keepFocus = appState.focusDate;
+          appState = remoteState;
+          appState.focusDate = keepFocus;
+        }
+
+        const newKeys = deriveAccountKeys(pendingRecoveryEmail, newPass);
+        const fbUrl = getActiveFirebaseDbUrl();
+        cloudAccount = {
+          email: newKeys.email,
+          profileName: appState.profileName || '',
+          emailHash: newKeys.emailHash,
+          encKeyHex: newKeys.encKeyHex,
+          macKeyHex: newKeys.macKeyHex,
+          liveTopic: newKeys.liveTopic,
+          vaultId: getVaultKeyForEmailHash(newKeys.emailHash),
+          firebaseDbUrl: fbUrl || null,
+          lastSyncedChangeId: generateChangeId()
+        };
+        appState.updatedAt = Date.now();
+        appState.changeId = cloudAccount.lastSyncedChangeId;
+        hasPendingLocalEdit = true;
+        localStorage.setItem(CLOUD_AUTH_STORAGE_KEY, JSON.stringify(cloudAccount));
+        localStorage.setItem(STORAGE_KEY_V4, JSON.stringify(appState));
+
+        await pushStateToCloud();
+        startLiveCrossDeviceListener();
+        document.getElementById('recoverSecretInput').value = '';
+        document.getElementById('recoverNewPasswordInput').value = '';
+        document.getElementById('cloudForgotPasswordBox').style.display = 'none';
+        renderAll();
+        closeDriveModal();
+      } catch (e) {
+        showMsg('Failed to recover vault. Please verify your recovery answer or code.', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔓 Recover Vault & Reset Password';
+      }
     };
 
     window.manualSyncNow = async function() {
