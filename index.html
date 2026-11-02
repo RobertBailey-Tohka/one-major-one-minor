@@ -766,6 +766,24 @@
       font-weight: 800;
     }
 
+    .badge-note {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      padding: 1px 7px;
+      border-radius: 6px;
+      font-weight: 800;
+    }
+
+    .todo-item-row.note-row {
+      background: #fffbeb;
+      border-color: #fde68a;
+    }
+
+    .todo-check.note {
+      border-color: #d97706;
+    }
+
     .completed-accordion-btn {
       width: 100%;
       justify-content: space-between;
@@ -1368,6 +1386,7 @@
               <h2 style="font-size:1.2rem; font-weight:800;" id="currentListTitle">All Active Tasks</h2>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="button" onclick="openTaskWizard({ defaultNote: true })" style="font-weight:700; background:#fffbeb; border-color:#fcd34d; color:#92400e;">+ Note</button>
               <button type="button" onclick="openTaskWizard({ defaultHabit: true })" style="font-weight:700;">+ Habits</button>
               <button class="btn-primary-add" onclick="openTaskWizard()">+ Add Task</button>
             </div>
@@ -1427,7 +1446,7 @@
   </div>
 
   <!-- Floating '+' Button (Only shown on Task List tab on mobile) & Bottom Navigation -->
-  <button class="m-fab-add" id="mobileFabAddBtn" onclick="openTaskWizard()" title="Add Task" style="display:none;">+</button>
+  <button class="m-fab-add" id="mobileFabAddBtn" onclick="openTaskWizardFromFab()" title="Add Task or Note" style="display:none;">+</button>
   <nav class="mobile-bottom-nav">
     <button class="m-nav-btn active" id="mNavToday" onclick="switchMainView('today')">
       <span style="font-size:1.15rem;">☀️</span>
@@ -1465,9 +1484,10 @@
           <select id="wizCategorySelect" style="width:100%; padding:8px 10px; border-radius:9px; border:1px solid var(--border-strong); font-size:0.84rem; font-weight:600;"></select>
         </div>
         <div>
-          <label style="font-size:0.75rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Repeat / Routine</label>
+          <label style="font-size:0.75rem; font-weight:700; color:var(--muted); display:block; margin-bottom:4px;">Type / Repeat</label>
           <select id="wizRecurrenceSelect" onchange="onWizRecurrenceChange()" style="width:100%; padding:8px 10px; border-radius:9px; border:1px solid var(--border-strong); font-size:0.84rem; font-weight:600;">
             <option value="none">One-Time Task</option>
+            <option value="note">📝 Note (No Schedule)</option>
             <option value="daily_habit">🔄 Habit Strip (Above Cards)</option>
             <option value="daily_slot">📅 Repeat Daily in Minor/Major Slot</option>
             <option value="weekdays_slot">💼 Weekdays (Mon–Fri) in Slot</option>
@@ -1476,6 +1496,12 @@
             <option value="monthly_weekday_slot">📆 Repeat Monthly on Pattern (e.g. 1st Mon)...</option>
           </select>
         </div>
+      </div>
+
+      <!-- Note Info Banner (Shown when Type = Note) -->
+      <div id="wizNoteInfoBanner" style="display:none; background:#fffbeb; border:1px solid #fcd34d; border-radius:12px; padding:10px 14px; font-size:0.8rem; font-weight:700; color:#92400e; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+        <span>📝 Saved as a non-scheduled Note in your Category &amp; Notes list (never auto-scheduled).</span>
+        <button type="button" id="btnModalConvertNoteToTask" onclick="switchWizFromNoteToTask()" style="display:none; font-size:0.75rem; padding:4px 9px; background:#fff; border-color:#f59e0b; color:#92400e;">📅 Convert to Scheduled Task</button>
       </div>
 
       <!-- Dynamic Habit / Weekly / Monthly Recurrence Schedule Picker -->
@@ -1755,7 +1781,7 @@
         <p style="font-size:0.78rem; color:var(--muted); line-height:1.35;">
           Install the Android app to place an interactive <strong>Daily / Weekly / Tasks</strong> widget directly on your home screen wallpaper and check off tasks without opening the app.
         </p>
-        <a href="./one-minor-one-major.apk" download="one-minor-one-major.apk" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; background:#059669; color:#fff; font-weight:800; font-size:0.84rem; padding:10px 14px; border-radius:10px;">
+        <a href="./one-minor-one-major.apk?v=8" download="one-minor-one-major.apk" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; background:#059669; color:#fff; font-weight:800; font-size:0.84rem; padding:10px 14px; border-radius:10px;">
           📲 Download Android Widget App (.apk)
         </a>
       </div>
@@ -2060,8 +2086,16 @@
       return rec === 'weekly_slot' || rec === 'monthly_date_slot' || rec === 'monthly_weekday_slot';
     }
 
+    function isNoteTask(task) {
+      return !!(task && task.recurrence === 'note');
+    }
+
+    function isSchedulableTask(task) {
+      return !!(task && task.recurrence !== 'daily_habit' && task.recurrence !== 'note');
+    }
+
     function isRecurringSlotTask(task) {
-      return !!(task && task.recurrence && task.recurrence !== 'none' && task.recurrence !== 'daily_habit');
+      return !!(task && task.recurrence && task.recurrence !== 'none' && task.recurrence !== 'daily_habit' && task.recurrence !== 'note');
     }
 
     function doesTaskMatchRecurringDate(task, dateStr) {
@@ -2167,6 +2201,7 @@
     function getRecurrenceBadgeText(task) {
       if (!task || !task.recurrence || task.recurrence === 'none') return '';
       const rec = task.recurrence;
+      if (rec === 'note') return '📝 Note';
       if (rec === 'daily_habit') {
         const days = Array.isArray(task.habitDays) && task.habitDays.length > 0 ? task.habitDays : [0,1,2,3,4,5,6];
         if (days.length === 7) return '🔄 Every Day';
@@ -2253,7 +2288,7 @@
 
       const activeMatch = appState.tasks.find(t =>
         t.status === 'active' &&
-        t.recurrence !== 'daily_habit' &&
+        isSchedulableTask(t) &&
         t.scheduledDate === dateStr &&
         getTaskSlot(t) === slotSize
       );
@@ -2264,7 +2299,7 @@
       if (dateStr <= todayStr) {
         return appState.tasks.find(t =>
           t.status === 'completed' &&
-          t.recurrence !== 'daily_habit' &&
+          isSchedulableTask(t) &&
           t.scheduledDate === dateStr &&
           getTaskSlot(t) === slotSize
         ) || null;
@@ -2275,9 +2310,9 @@
     function runAutoScheduler() {
       const todayStr = toDateStr(new Date());
 
-      // 0. If any task was completed early (sitting on a future scheduledDate > todayStr), detach it from that future slot so an active task replaces it
+      // 0. If any task was completed early (sitting on a future scheduledDate > todayStr) OR is a non-scheduled Note/Habit, detach it from any schedule slot
       appState.tasks.forEach(t => {
-        if (t.status === 'completed' && t.scheduledDate && t.scheduledDate > todayStr) {
+        if ((t.status === 'completed' && t.scheduledDate && t.scheduledDate > todayStr) || !isSchedulableTask(t)) {
           t.scheduledDate = null;
           t.slotOverride = null;
         }
@@ -2293,7 +2328,7 @@
 
       // 2. Roll over any unfinished tasks scheduled in the past (< todayStr) so nothing is ever lost or "overdue"
       appState.tasks.forEach(t => {
-        if (t.status === 'active' && t.recurrence !== 'daily_habit' && t.scheduledDate && t.scheduledDate < todayStr) {
+        if (t.status === 'active' && isSchedulableTask(t) && t.scheduledDate && t.scheduledDate < todayStr) {
           t.scheduledDate = null;
           t.slotOverride = null;
           t.rolledOver = true;
@@ -2303,7 +2338,7 @@
       // 2.5 Pin every active recurring slot task (e.g. Every Monday, Daily, Weekdays, Monthly) to its valid recurrence date!
       //     Also self-heal any active "College" task that was affected by the Wednesday dropdown default bug so it locks onto Every Monday.
       appState.tasks.forEach(t => {
-        if (t.status === 'active' && /^college\b/i.test((t.title || '').trim())) {
+        if (t.status === 'active' && !isNoteTask(t) && /^college\b/i.test((t.title || '').trim())) {
           if (!t.recurrence || t.recurrence === 'none' || (t.recurrence === 'weekly_slot' && t.recurrenceDayOfWeek === 3)) {
             t.recurrence = 'weekly_slot';
             t.recurrenceDayOfWeek = 1; // Every Monday
@@ -2330,7 +2365,7 @@
       });
       // Pass 3B: Non-recurring tasks yield if a recurring task owns or reserves that date/slot
       appState.tasks.forEach(t => {
-        if (t.status === 'active' && t.recurrence !== 'daily_habit' && !isRecurringSlotTask(t) && t.scheduledDate) {
+        if (t.status === 'active' && isSchedulableTask(t) && !isRecurringSlotTask(t) && t.scheduledDate) {
           const slotSize = getTaskSlot(t);
           const key = `${t.scheduledDate}_${slotSize}`;
           const reservedByRec = getReservedRecurringTaskForSlot(t.scheduledDate, slotSize);
@@ -2343,10 +2378,10 @@
         }
       });
 
-      // 4. Sort unscheduled active pool (excluding recurring tasks, which are already pinned)
+      // 4. Sort unscheduled active pool (excluding recurring tasks and notes)
       const unscheduled = appState.tasks.filter(t =>
         t.status === 'active' &&
-        t.recurrence !== 'daily_habit' &&
+        isSchedulableTask(t) &&
         !isRecurringSlotTask(t) &&
         !t.scheduledDate
       ).sort((a, b) => {
@@ -2375,7 +2410,7 @@
 
           const existing = appState.tasks.find(t =>
             (t.status === 'active' || (dStr === todayStr && t.status === 'completed')) &&
-            t.recurrence !== 'daily_habit' &&
+            isSchedulableTask(t) &&
             t.scheduledDate === dStr &&
             getTaskSlot(t) === slotSize
           );
@@ -2395,7 +2430,7 @@
     function bumpSlotForwardFromDate(dateStr, slotSize) {
       const occupant = appState.tasks.find(t =>
         t.status === 'active' &&
-        t.recurrence !== 'daily_habit' &&
+        isSchedulableTask(t) &&
         !isRecurringSlotTask(t) &&
         t.scheduledDate === dateStr &&
         getTaskSlot(t) === slotSize
@@ -2427,7 +2462,7 @@
         }
       });
 
-      const activeTasks = appState.tasks.filter(t => t.status === 'active' && t.recurrence !== 'daily_habit');
+      const activeTasks = appState.tasks.filter(t => t.status === 'active' && isSchedulableTask(t));
       if (activeTasks.length === 0) {
         if (!cloudAccount) {
           alert('Your Task List currently has 0 tasks in this browser tab (see "Task List (0)" at the top).\n\n• If your tasks are in your Cloud Sync account, click "☁️ Sign In to Sync" in the top-right corner to pull them in.\n• If your tasks were saved on your local index.html file, open that tab and sign into Cloud Sync there first.\n• Or click "+ New Task" to add tasks!');
@@ -2455,7 +2490,7 @@
           t.slotOverride = null;
           return;
         }
-        if (t.status === 'active' && t.recurrence !== 'daily_habit') {
+        if (t.status === 'active' && isSchedulableTask(t)) {
           if (t.scheduledDate) {
             prevDates[t.id] = t.scheduledDate;
             if (t.scheduledDate < todayStr) {
@@ -2488,7 +2523,7 @@
       // If bump points changed scores, re-clear and immediately re-run runAutoScheduler() so slots are filled!
       if (boostedCount > 0) {
         appState.tasks.forEach(t => {
-          if (t.status === 'active' && t.recurrence !== 'daily_habit') {
+          if (t.status === 'active' && isSchedulableTask(t)) {
             if (isRecurringSlotTask(t) && t.scheduledDate && t.scheduledDate >= todayStr && doesTaskMatchRecurringDate(t, t.scheduledDate)) {
               return;
             }
@@ -2836,7 +2871,7 @@
       try {
         if (!appState.changeId) appState.changeId = generateChangeId();
         const pushedChangeId = appState.changeId;
-        appState.widgetSnapshot = buildWidgetSnapshot();
+        try { appState.widgetSnapshot = buildWidgetSnapshot(); } catch (e) {}
         const encryptedEnvelope = encryptStatePayload(appState, cloudAccount.encKeyHex, cloudAccount.macKeyHex);
         const vaultKey = getVaultKeyForEmailHash(cloudAccount.emailHash);
         const vaultTopic = getVaultTopicForEmailHash(cloudAccount.emailHash);
@@ -3110,8 +3145,27 @@
       openDriveModal();
     };
 
+    function hydrateFromNativeBridgeIfNewer() {
+      try {
+        if (!window.AndroidWidgetBridge || typeof window.AndroidWidgetBridge.getSavedStateJson !== 'function') return false;
+        const savedStateRaw = window.AndroidWidgetBridge.getSavedStateJson();
+        if (!savedStateRaw) return false;
+        const parsedState = JSON.parse(savedStateRaw);
+        if (parsedState && Array.isArray(parsedState.tasks) && (parsedState.updatedAt || 0) > (appState.updatedAt || 0)) {
+          const keepFocus = appState.focusDate || toDateStr(new Date());
+          appState = parsedState;
+          appState.focusDate = keepFocus;
+          localStorage.setItem(STORAGE_KEY_V4, JSON.stringify(appState));
+          renderAll();
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
     window.addEventListener('focus', () => {
       checkAndAutoUpdateHostedBuild();
+      hydrateFromNativeBridgeIfNewer();
       if (!window.applyPendingNativeWidgetActions()) {
         if (cloudAccount) pullStateFromCloud(true);
       }
@@ -3119,10 +3173,16 @@
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         checkAndAutoUpdateHostedBuild();
+        hydrateFromNativeBridgeIfNewer();
         if (!window.applyPendingNativeWidgetActions()) {
           if (cloudAccount) pullStateFromCloud(true);
         }
+      } else {
+        syncNativeAndroidWidget();
       }
+    });
+    window.addEventListener('pagehide', () => {
+      syncNativeAndroidWidget();
     });
 
     // =====================================================
@@ -3218,9 +3278,9 @@
         });
       }
 
-      // 3. Tasks View Data (All Active Tasks sorted by effective score + All Habits)
+      // 3. Tasks View Data (All Active Tasks sorted by effective score + All Habits + All Notes)
       const activeTasks = appState.tasks
-        .filter(t => t.status === 'active' && t.recurrence !== 'daily_habit')
+        .filter(t => t.status === 'active' && isSchedulableTask(t))
         .sort((a, b) => getEffectiveScore(b) - getEffectiveScore(a))
         .map(t => {
           const catObj = appState.categories.find(c => c.id === t.category);
@@ -3249,6 +3309,23 @@
           dateStr: todayStr
         }));
 
+      const allNotes = appState.tasks
+        .filter(t => t.status !== 'completed' && isNoteTask(t))
+        .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
+        .map(n => {
+          const catObj = appState.categories.find(c => c.id === n.category);
+          const catName = catObj ? catObj.name : '✨ Personal';
+          const subParts = ['📝 Note', catName];
+          if (n.notes) subParts.push(n.notes);
+          return {
+            id: n.id,
+            title: n.title || '',
+            subtitle: subParts.join(' • '),
+            done: false,
+            dateStr: todayStr
+          };
+        });
+
       return {
         updatedAt: Date.now(),
         todayStr,
@@ -3260,7 +3337,8 @@
         },
         weekly: weeklyDays,
         tasks: activeTasks,
-        habits: allHabits
+        habits: allHabits,
+        notes: allNotes
       };
     }
     window.buildWidgetSnapshot = buildWidgetSnapshot;
@@ -3304,29 +3382,40 @@
           if (act.type === 'toggle_habit' && act.id) {
             const dStr = act.dateStr || toDateStr(new Date());
             const key = `${dStr}_${act.id}`;
-            appState.habitCompletions[key] = !appState.habitCompletions[key];
-            changed = true;
+            const curDone = !!appState.habitCompletions[key];
+            const targetDone = (typeof act.done === 'boolean') ? act.done : !curDone;
+            if (curDone !== targetDone) {
+              appState.habitCompletions[key] = targetDone;
+              changed = true;
+            }
           } else if (act.type === 'toggle_task' && act.id) {
             const task = appState.tasks.find(t => t.id === act.id);
             if (task) {
-              if (task.status === 'completed') {
-                if (task.spawnedChildId) {
-                  appState.tasks = appState.tasks.filter(t => t.id !== task.spawnedChildId);
-                  task.spawnedChildId = null;
+              const curDone = (task.status === 'completed');
+              const targetDone = (typeof act.done === 'boolean') ? act.done : !curDone;
+              if (curDone !== targetDone) {
+                if (!targetDone) {
+                  if (task.spawnedChildId) {
+                    appState.tasks = appState.tasks.filter(t => t.id !== task.spawnedChildId);
+                    task.spawnedChildId = null;
+                  }
+                  if (task.completedOccurrenceDate) {
+                    task.scheduledDate = task.completedOccurrenceDate;
+                    task.completedOccurrenceDate = null;
+                  }
+                  task.status = 'active';
+                  task.completedAt = null;
+                } else {
+                  task.status = 'completed';
+                  task.completedAt = Date.now();
+                  spawnNextRecurrenceIfNeeded(task);
+                  handleEarlyCompletionReplacement(task);
                 }
-                if (task.completedOccurrenceDate) {
-                  task.scheduledDate = task.completedOccurrenceDate;
-                  task.completedOccurrenceDate = null;
-                }
-                task.status = 'active';
-                task.completedAt = null;
-              } else {
-                task.status = 'completed';
-                task.completedAt = Date.now();
+                changed = true;
+              } else if (targetDone && isRecurringSlotTask(task) && !task.spawnedChildId) {
                 spawnNextRecurrenceIfNeeded(task);
-                handleEarlyCompletionReplacement(task);
+                changed = true;
               }
-              changed = true;
             }
           }
         });
@@ -3565,7 +3654,9 @@
     // -----------------------------------------------------
     function renderTaskListView() {
       const sidebarEl = document.getElementById('categoriesSidebar');
-      const activeRegular = appState.tasks.filter(t => t.status === 'active' && t.recurrence !== 'daily_habit');
+      const activeRegular = appState.tasks.filter(t => t.status === 'active' && isSchedulableTask(t));
+      const activeNotes = appState.tasks.filter(t => t.status !== 'completed' && isNoteTask(t));
+      const activeAndNotes = appState.tasks.filter(t => t.status === 'active' && (isSchedulableTask(t) || isNoteTask(t)));
       const habitsCount = appState.tasks.filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit').length;
       const snoozedCount = appState.tasks.filter(t => t.status === 'snoozed').length;
       const blockedCount = appState.tasks.filter(t => t.status === 'blocked').length;
@@ -3573,12 +3664,12 @@
       let catHtml = `
         <button class="cat-nav-item ${selectedListFilter === 'all' ? 'active' : ''}" onclick="selectTaskListFilter('all')">
           <span>📋 All Active Tasks</span>
-          <span class="cat-count-badge">${activeRegular.length}</span>
+          <span class="cat-count-badge">${activeAndNotes.length}</span>
         </button>
       `;
 
       appState.categories.forEach(c => {
-        const cnt = activeRegular.filter(t => t.category === c.id).length;
+        const cnt = activeAndNotes.filter(t => t.category === c.id).length;
         catHtml += `
           <button class="cat-nav-item ${selectedListFilter === c.id ? 'active' : ''}" onclick="selectTaskListFilter('${c.id}')">
             <span>${escapeHtml(c.name)}</span>
@@ -3589,6 +3680,10 @@
 
       catHtml += `
         <div style="height:1px; background:var(--border); margin:6px 0;"></div>
+        <button class="cat-nav-item ${selectedListFilter === 'notes' ? 'active' : ''}" onclick="selectTaskListFilter('notes')">
+          <span>📝 Notes</span>
+          <span class="cat-count-badge">${activeNotes.length}</span>
+        </button>
         <button class="cat-nav-item ${selectedListFilter === 'habits' ? 'active' : ''}" onclick="selectTaskListFilter('habits')">
           <span>🔄 Habits</span>
           <span class="cat-count-badge">${habitsCount}</span>
@@ -3607,11 +3702,14 @@
       `;
       sidebarEl.innerHTML = catHtml;
 
-      // Filter tasks for main panel
+      // Filter tasks & notes for main panel
       let filtered = [];
       let title = 'All Active Tasks';
       if (selectedListFilter === 'all') {
-        filtered = activeRegular;
+        filtered = activeAndNotes;
+      } else if (selectedListFilter === 'notes') {
+        filtered = activeNotes;
+        title = '📝 Notes';
       } else if (selectedListFilter === 'habits') {
         filtered = appState.tasks.filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit');
         title = '🔄 Habits';
@@ -3624,17 +3722,30 @@
       } else {
         const cObj = appState.categories.find(c => c.id === selectedListFilter);
         title = cObj ? cObj.name : 'Category Tasks';
-        filtered = activeRegular.filter(t => t.category === selectedListFilter);
+        filtered = activeAndNotes.filter(t => t.category === selectedListFilter);
       }
 
-      filtered.sort((a, b) => getEffectiveScore(b) - getEffectiveScore(a));
+      filtered.sort((a, b) => {
+        const aIsNote = isNoteTask(a);
+        const bIsNote = isNoteTask(b);
+        if (selectedListFilter === 'notes' || (aIsNote && bIsNote)) {
+          return Number(b.createdAt || 0) - Number(a.createdAt || 0);
+        }
+        if (aIsNote !== bIsNote) {
+          return aIsNote ? 1 : -1;
+        }
+        return getEffectiveScore(b) - getEffectiveScore(a);
+      });
       document.getElementById('currentListTitle').textContent = title;
 
       const listEl = document.getElementById('todoActiveList');
       if (filtered.length === 0) {
+        const emptyHint = selectedListFilter === 'notes'
+          ? 'No notes yet. Click <strong>+ Note</strong> to jot something down!'
+          : 'No tasks or notes in this list right now. Click <strong>+ Add Task</strong> or <strong>+ Note</strong> to add one!';
         listEl.innerHTML = `
           <div style="text-align:center; padding:32px 16px; color:var(--muted); border:1.5px dashed var(--border-strong); border-radius:12px;">
-            No tasks in this list right now. Click <strong>+ Add Task</strong> to add one!
+            ${emptyHint}
           </div>
         `;
       } else {
@@ -3663,46 +3774,60 @@
       const bumpBonus = getTaskBumpBonus(task);
       const totalBoost = ageBonus + bumpBonus;
       const recBadge = getRecurrenceBadgeText(task);
+      const isNote = isNoteTask(task);
 
       let statusBadge = '';
       if (task.status === 'blocked') {
         statusBadge = `<span class="badge-blocked">🚧 Blocked${task.blockerNote ? ': ' + escapeHtml(task.blockerNote) : ''}</span>`;
       } else if (task.status === 'snoozed') {
         statusBadge = `<span class="badge-snoozed">⏳ Snoozed until ${escapeHtml(task.snoozedUntil || '')}</span>`;
+      } else if (isNote && !isCompleted) {
+        statusBadge = `<span style="color:#92400e; font-weight:700;">📌 Non-scheduled Note</span>`;
       } else if (task.scheduledDate && !isCompleted) {
         statusBadge = `<span style="color:var(--primary); font-weight:700;">📅 Scheduled: ${formatShortDate(parseDateStr(task.scheduledDate))}${task.backlogCatchUp ? ' (🕰️ Oldest Backlog Slot)' : ''}</span>`;
       }
 
+      const notesBodyHtml = task.notes
+        ? (isNote
+            ? `<div style="font-size:0.84rem; color:#334155; margin-top:4px; white-space:pre-wrap; line-height:1.4;">${escapeHtml(task.notes)}</div>`
+            : `<div style="font-size:0.8rem; color:#475569; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(task.notes)}</div>`)
+        : '';
+
       return `
-        <div class="todo-item-row ${isCompleted ? 'completed' : ''}" onclick="openTaskWizard({ editTaskId: '${task.id}' })">
+        <div class="todo-item-row ${isNote ? 'note-row' : ''} ${isCompleted ? 'completed' : ''}" onclick="openTaskWizard({ editTaskId: '${task.id}' })">
           <div class="todo-item-left">
-            <div class="todo-check ${task.size} ${isCompleted ? 'checked' : ''}" onclick="event.stopPropagation(); toggleTaskComplete('${task.id}')">
+            <div class="todo-check ${isNote ? 'note' : task.size} ${isCompleted ? 'checked' : ''}" onclick="event.stopPropagation(); toggleTaskComplete('${task.id}')" title="${isNote ? 'Mark note done / archive' : 'Mark complete'}">
               ${isCompleted ? '✓' : ''}
             </div>
             <div style="flex:1; min-width:0;">
               <div class="todo-item-title">${escapeHtml(task.title)}</div>
-              ${task.notes ? `<div style="font-size:0.8rem; color:#475569; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(task.notes)}</div>` : ''}
+              ${notesBodyHtml}
               <div class="todo-item-submeta">
-                ${task.recurrence === 'daily_habit' ? '' : `
+                ${task.recurrence === 'daily_habit' ? '' : (isNote ? `
+                  <span class="badge-note">📝 Note</span>
+                ` : `
                   <span class="${task.size === 'minor' ? 'badge-size-minor' : 'badge-size-major'}">${task.size === 'minor' ? '✓ Minor' : '★ Major'}</span>
                   <span title="Base ${task.score || 80} pts + ${ageBonus} age + ${bumpBonus} bump">${effScore} pts${totalBoost > 0 ? ` (+${totalBoost} boost)` : ''}</span>
-                `}
+                `)}
                 <span>${escapeHtml(catName)}</span>
-                ${recBadge ? `<span style="color:#1d4ed8; font-weight:700;">${escapeHtml(recBadge)}</span>` : ''}
+                ${recBadge && !isNote ? `<span style="color:#1d4ed8; font-weight:700;">${escapeHtml(recBadge)}</span>` : ''}
                 ${subTotal > 0 ? `<span>☑️ ${subDone}/${subTotal} steps</span>` : ''}
                 ${statusBadge}
               </div>
             </div>
           </div>
 
-          <div style="display:flex; align-items:center; gap:6px;" onclick="event.stopPropagation();">
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;" onclick="event.stopPropagation();">
             ${task.status === 'blocked' || task.status === 'snoozed' ? `
               <button style="font-size:0.75rem; padding:4px 9px; background:#ecfdf5; border-color:#6ee7b7; color:#047857;" onclick="unblockOrWakeTask('${task.id}')">Unblock / Wake</button>
             ` : (task.recurrence === 'daily_habit' ? `
               <button style="font-size:0.75rem; padding:4px 9px;" onclick="openTaskWizard({ editTaskId: '${task.id}' })" title="Edit Habit">✎ Edit</button>
+            ` : (isNote && !isCompleted ? `
+              <button style="font-size:0.75rem; padding:4px 9px; background:#eff6ff; border-color:#93c5fd; color:#1d4ed8;" onclick="convertNoteToTask('${task.id}')" title="Turn this note into a scheduled task">📅 Make Task</button>
+              <button style="font-size:0.75rem; padding:4px 9px;" onclick="openTaskWizard({ editTaskId: '${task.id}' })" title="Edit Note">✎ Edit</button>
             ` : (!isCompleted ? `
               <button style="font-size:0.75rem; padding:4px 9px;" onclick="pinTaskToToday('${task.id}')" title="Slot directly into Today">➔ Today</button>
-            ` : ''))}
+            ` : '')))}
           </div>
         </div>
       `;
@@ -3830,7 +3955,7 @@
         }
 
         const topUnscheduled = appState.tasks
-          .filter(t => t.status === 'active' && t.recurrence !== 'daily_habit')
+          .filter(t => t.status === 'active' && isSchedulableTask(t))
           .slice(0, 4)
           .map(t => `• ${t.title}`)
           .join('\n');
@@ -4015,7 +4140,7 @@
 
       // Release auto-scheduled one-time tasks on future days (> dateStr) so the scheduler can pull the best match into today!
       appState.tasks.forEach(t => {
-        if (t.status === 'active' && t.recurrence !== 'daily_habit' && !isRecurringSlotTask(t) && t.scheduledDate && t.scheduledDate > dateStr) {
+        if (t.status === 'active' && isSchedulableTask(t) && !isRecurringSlotTask(t) && t.scheduledDate && t.scheduledDate > dateStr) {
           t.scheduledDate = null;
           t.slotOverride = null;
         }
@@ -4024,7 +4149,7 @@
       if (meta.lowEnergy) {
         // Release high/med energy one-time tasks on this day so low-energy tasks (or lowest available) slot in
         appState.tasks.forEach(t => {
-          if (t.status === 'active' && !isRecurringSlotTask(t) && t.scheduledDate === dateStr && t.energy !== 'low') {
+          if (t.status === 'active' && isSchedulableTask(t) && !isRecurringSlotTask(t) && t.scheduledDate === dateStr && t.energy !== 'low') {
             t.scheduledDate = null;
             t.slotOverride = null;
           }
@@ -4032,7 +4157,7 @@
       } else {
         // Turning Low Energy OFF: release today's auto-slotted one-time tasks so the highest-priority Major & Minor tasks reclaim today
         appState.tasks.forEach(t => {
-          if (t.status === 'active' && !isRecurringSlotTask(t) && t.scheduledDate === dateStr) {
+          if (t.status === 'active' && isSchedulableTask(t) && !isRecurringSlotTask(t) && t.scheduledDate === dateStr) {
             t.scheduledDate = null;
             t.slotOverride = null;
           }
@@ -4048,7 +4173,7 @@
     };
 
     function spawnNextRecurrenceIfNeeded(task) {
-      if (!task || !task.recurrence || task.recurrence === 'none' || task.recurrence === 'daily_habit') return;
+      if (!task || !task.recurrence || task.recurrence === 'none' || task.recurrence === 'daily_habit' || task.recurrence === 'note') return;
       const baseDateStr = task.scheduledDate || toDateStr(new Date());
       task.completedOccurrenceDate = baseDateStr;
       const baseDate = parseDateStr(baseDateStr);
@@ -4085,7 +4210,7 @@
         task.scheduledDate = null;
         task.slotOverride = null;
         appState.tasks.forEach(t => {
-          if (t.status === 'active' && t.recurrence !== 'daily_habit' && t.scheduledDate && t.scheduledDate >= clearedDate) {
+          if (t.status === 'active' && isSchedulableTask(t) && t.scheduledDate && t.scheduledDate >= clearedDate) {
             if (isRecurringSlotTask(t)) return;
             t.scheduledDate = null;
             t.slotOverride = null;
@@ -4259,7 +4384,32 @@
     window.onWizRecurrenceChange = function() {
       populateMonthlyDateOptions();
       const rec = document.getElementById('wizRecurrenceSelect').value;
-      document.getElementById('wizPriorityQuestionsBox').style.display = (rec === 'daily_habit') ? 'none' : 'block';
+      const isNote = (rec === 'note');
+      const isHabit = (rec === 'daily_habit');
+      document.getElementById('wizPriorityQuestionsBox').style.display = (isHabit || isNote) ? 'none' : 'block';
+
+      const noteBanner = document.getElementById('wizNoteInfoBanner');
+      const btnConv = document.getElementById('btnModalConvertNoteToTask');
+      if (noteBanner) noteBanner.style.display = isNote ? 'flex' : 'none';
+      if (btnConv) btnConv.style.display = (isNote && wizEditingTaskId) ? 'inline-flex' : 'none';
+
+      const titleInp = document.getElementById('wizTitleInput');
+      const notesInp = document.getElementById('wizNotesInput');
+      if (titleInp) {
+        titleInp.placeholder = isNote ? 'Note title or quick thought...' : 'What needs to get done?';
+      }
+      if (notesInp) {
+        notesInp.rows = isNote ? 5 : 3;
+        notesInp.placeholder = isNote
+          ? 'Write your note, list, phone numbers, ideas, or details here...'
+          : 'Notes, phone numbers, part numbers, or details...';
+      }
+
+      if (!wizEditingTaskId) {
+        document.getElementById('wizModalTitle').textContent = isNote
+          ? 'New Note (No Schedule)'
+          : (isHabit ? 'New Habit' : 'New Task (4 Priority Questions)');
+      }
 
       const detailBox = document.getElementById('wizRecurrenceDetailBox');
       const habitRow = document.getElementById('wizHabitDaysRow');
@@ -4278,6 +4428,26 @@
       if (mDateRow) mDateRow.style.display = showMDate ? 'flex' : 'none';
       if (mWdayRow) mWdayRow.style.display = showMWday ? 'flex' : 'none';
       if (showHabit) renderWizHabitDayPills();
+    };
+
+    window.switchWizFromNoteToTask = function() {
+      document.getElementById('wizRecurrenceSelect').value = 'none';
+      document.getElementById('wizModalTitle').textContent = 'Convert Note to Scheduled Task';
+      onWizRecurrenceChange();
+    };
+
+    window.convertNoteToTask = function(taskId) {
+      openTaskWizard({ editTaskId: taskId, convertToTask: true });
+    };
+
+    window.openTaskWizardFromFab = function() {
+      if (selectedListFilter === 'notes') {
+        openTaskWizard({ defaultNote: true });
+      } else if (selectedListFilter === 'habits') {
+        openTaskWizard({ defaultHabit: true });
+      } else {
+        openTaskWizard();
+      }
     };
 
     function renderWizSubtasks() {
@@ -4324,11 +4494,14 @@
       if (wizEditingTaskId) {
         const t = appState.tasks.find(x => x.id === wizEditingTaskId);
         if (!t) return;
-        document.getElementById('wizModalTitle').textContent = (t.recurrence === 'daily_habit') ? 'Edit Habit' : 'Edit Task & Subtasks';
+        const targetRec = opts.convertToTask ? 'none' : (t.recurrence || 'none');
+        document.getElementById('wizModalTitle').textContent = opts.convertToTask
+          ? 'Convert Note to Scheduled Task'
+          : (targetRec === 'daily_habit' ? 'Edit Habit' : (targetRec === 'note' ? 'Edit Note' : 'Edit Task & Subtasks'));
         document.getElementById('wizTitleInput').value = t.title || '';
         document.getElementById('wizNotesInput').value = t.notes || '';
         catSel.value = t.category || 'personal';
-        document.getElementById('wizRecurrenceSelect').value = t.recurrence || 'none';
+        document.getElementById('wizRecurrenceSelect').value = targetRec;
         wizSelectedHabitDays = (Array.isArray(t.habitDays) && t.habitDays.length > 0) ? [...t.habitDays] : [0, 1, 2, 3, 4, 5, 6];
         document.getElementById('wizWeeklyDaySelect').value = String(t.recurrenceDayOfWeek ?? defaultDateObj.getDay());
         document.getElementById('wizMonthlyDateSelect').value = String(t.recurrenceMonthDay || '1');
@@ -4341,13 +4514,16 @@
         wizTempSubtasks = JSON.parse(JSON.stringify(t.subtasks || []));
         document.getElementById('btnDeleteTaskInModal').style.display = 'inline-flex';
       } else {
-        document.getElementById('wizModalTitle').textContent = opts.defaultHabit ? 'New Habit' : 'New Task (4 Priority Questions)';
+        const defaultRec = opts.defaultNote ? 'note' : (opts.defaultHabit ? 'daily_habit' : 'none');
+        document.getElementById('wizModalTitle').textContent = defaultRec === 'note'
+          ? 'New Note (No Schedule)'
+          : (defaultRec === 'daily_habit' ? 'New Habit' : 'New Task (4 Priority Questions)');
         document.getElementById('wizTitleInput').value = '';
         document.getElementById('wizNotesInput').value = '';
-        catSel.value = (selectedListFilter !== 'all' && selectedListFilter !== 'habits' && selectedListFilter !== 'snoozed' && selectedListFilter !== 'blocked')
+        catSel.value = (selectedListFilter !== 'all' && selectedListFilter !== 'notes' && selectedListFilter !== 'habits' && selectedListFilter !== 'snoozed' && selectedListFilter !== 'blocked')
           ? selectedListFilter
-          : 'house';
-        document.getElementById('wizRecurrenceSelect').value = opts.defaultHabit ? 'daily_habit' : 'none';
+          : (defaultRec === 'note' ? 'personal' : 'house');
+        document.getElementById('wizRecurrenceSelect').value = defaultRec;
         wizSelectedHabitDays = [0, 1, 2, 3, 4, 5, 6];
         document.getElementById('wizWeeklyDaySelect').value = wizTargetDate ? String(defaultDateObj.getDay()) : '1';
         document.getElementById('wizMonthlyDateSelect').value = String(defaultDateObj.getDate());
@@ -4374,9 +4550,17 @@
     };
 
     window.saveTaskFromWizard = function() {
-      const title = document.getElementById('wizTitleInput').value.trim();
+      let title = document.getElementById('wizTitleInput').value.trim();
+      const notes = document.getElementById('wizNotesInput').value.trim();
+      const recurrence = document.getElementById('wizRecurrenceSelect').value;
+
+      // For a Note, if the user only typed in the Notes body box and left Title empty, use the first line of Notes as Title
+      if (!title && recurrence === 'note' && notes) {
+        const firstLine = notes.split('\n')[0].trim();
+        title = firstLine.slice(0, 60) || 'Quick Note';
+      }
       if (!title) {
-        alert('Please enter a task title.');
+        alert(recurrence === 'note' ? 'Please enter a note title or text.' : 'Please enter a task title.');
         return;
       }
       // Also capture any un-added text in the subtask input box
@@ -4390,9 +4574,7 @@
         document.getElementById('wizNewSubtaskInput').value = '';
       }
 
-      const notes = document.getElementById('wizNotesInput').value.trim();
       const category = document.getElementById('wizCategorySelect').value;
-      const recurrence = document.getElementById('wizRecurrenceSelect').value;
       const score = computePriorityScore(wizAnswers.urgency, wizAnswers.impact, wizAnswers.energy);
 
       let recurrenceDayOfWeek = null;
@@ -4429,7 +4611,10 @@
           t.score = score;
           t.subtasks = wizTempSubtasks;
 
-          if (isFixedDateRecurrence(recurrence)) {
+          if (recurrence === 'note' || recurrence === 'daily_habit') {
+            t.scheduledDate = null;
+            t.slotOverride = null;
+          } else if (isFixedDateRecurrence(recurrence)) {
             const nextDateObj = computeNextRecurrenceDate(new Date(), t, true);
             const targetStr = toDateStr(nextDateObj);
             if (t.scheduledDate !== targetStr) {
@@ -4456,7 +4641,7 @@
           score,
           subtasks: wizTempSubtasks,
           status: 'active',
-          scheduledDate: wizTargetDate || null,
+          scheduledDate: (recurrence === 'note' || recurrence === 'daily_habit') ? null : (wizTargetDate || null),
           snoozedUntil: null,
           blockerNote: '',
           completedAt: null,
@@ -4469,7 +4654,7 @@
           const targetStr = toDateStr(nextDateObj);
           bumpSlotForwardFromDate(targetStr, newTask.size);
           newTask.scheduledDate = targetStr;
-        } else if (wizTargetDate && recurrence !== 'daily_habit') {
+        } else if (wizTargetDate && isSchedulableTask(newTask)) {
           bumpSlotForwardFromDate(wizTargetDate, newTask.size);
           newTask.scheduledDate = wizTargetDate;
         }
@@ -4510,13 +4695,13 @@
       const swapEl = document.getElementById('rbManualSwapList');
 
       let candidates = appState.tasks
-        .filter(t => t.status === 'active' && t.recurrence !== 'daily_habit' && t.id !== taskId && (rbFilterMode === 'all' || t.size === slotSize))
+        .filter(t => t.status === 'active' && isSchedulableTask(t) && t.id !== taskId && (rbFilterMode === 'all' || t.size === slotSize))
         .sort((a, b) => getEffectiveScore(b) - getEffectiveScore(a));
 
       // If 'match' filter has 0 results, automatically show all active tasks so the user is never stuck!
       if (candidates.length === 0 && rbFilterMode === 'match') {
         candidates = appState.tasks
-          .filter(t => t.status === 'active' && t.recurrence !== 'daily_habit' && t.id !== taskId)
+          .filter(t => t.status === 'active' && isSchedulableTask(t) && t.id !== taskId)
           .sort((a, b) => getEffectiveScore(b) - getEffectiveScore(a));
       }
 
@@ -4579,7 +4764,7 @@
 
       // Also release auto-scheduled future one-time tasks so the scheduler can pull the next best task into today!
       appState.tasks.forEach(t => {
-        if (t.status === 'active' && t.recurrence !== 'daily_habit' && !isRecurringSlotTask(t) && t.id !== task.id && t.scheduledDate && t.scheduledDate > rbContext.dateStr) {
+        if (t.status === 'active' && isSchedulableTask(t) && !isRecurringSlotTask(t) && t.id !== task.id && t.scheduledDate && t.scheduledDate > rbContext.dateStr) {
           t.scheduledDate = null;
           t.slotOverride = null;
         }
@@ -4741,7 +4926,9 @@
 
     // Register Service Worker for offline/PWA support
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        try { reg.update(); } catch (e) {}
+      }).catch(() => {});
     }
 
     // Handle deep-links from the Android Home Screen Widget

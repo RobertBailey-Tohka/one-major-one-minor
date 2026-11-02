@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
-Builds the standalone Android APK (with Interactive Home Screen Widget: Daily / Weekly / Tasks)
+Builds the standalone Android APK (with Finger-Scrollable Interactive Home Screen Widget: Daily / Weekly / Tasks)
 for "1 Minor + 1 Major" using the standard Android SDK build-tools (aapt2, javac, d8, zipalign, apksigner).
-Uses 100% static RemoteViews IDs (zero RemoteViewsService, zero addView, zero setPaintFlags reflection)
-so every Android launcher (including Samsung One UI) renders every row reliably.
 """
 import os
 import re
@@ -17,7 +15,6 @@ PACKAGE_NAME = "com.robertbailey.oneminoronemajor"
 PACKAGE_PATH = PACKAGE_NAME.replace(".", "/")
 BUILD_DIR = os.path.abspath("build_apk_work")
 OUT_APK = os.path.abspath("one-minor-one-major.apk")
-MAX_WIDGET_SLOTS = 8
 
 
 def natural_key(s):
@@ -114,97 +111,6 @@ def write_text(path, content):
         f.write(content.lstrip())
 
 
-def build_static_slots_xml():
-    slots = []
-    for i in range(MAX_WIDGET_SLOTS):
-        slots.append(f"""
-        <!-- Static Slot {i} -->
-        <LinearLayout
-            android:id="@+id/row_slot_{i}"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <TextView
-                android:id="@+id/row_hdr_{i}"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingTop="4dp"
-                android:paddingBottom="2dp"
-                android:paddingStart="2dp"
-                android:paddingEnd="2dp"
-                android:text="SECTION"
-                android:textSize="10.5sp"
-                android:textStyle="bold"
-                android:textColor="#1D4ED8"
-                android:visibility="gone" />
-
-            <LinearLayout
-                android:id="@+id/row_card_{i}"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="@drawable/bg_row_card"
-                android:padding="7dp"
-                android:layout_marginBottom="4dp">
-
-                <FrameLayout
-                    android:id="@+id/row_chk_wrap_{i}"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_marginEnd="8dp">
-
-                    <TextView
-                        android:id="@+id/row_chk_{i}"
-                        android:layout_width="23dp"
-                        android:layout_height="23dp"
-                        android:layout_gravity="center"
-                        android:gravity="center"
-                        android:text=""
-                        android:textColor="#FFFFFF"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:background="@drawable/bg_check_unchecked" />
-                </FrameLayout>
-
-                <LinearLayout
-                    android:id="@+id/row_txt_wrap_{i}"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/row_title_{i}"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Task Title"
-                        android:textColor="#0F172A"
-                        android:textSize="12.5sp"
-                        android:textStyle="bold"
-                        android:maxLines="2"
-                        android:ellipsize="end" />
-
-                    <TextView
-                        android:id="@+id/row_sub_{i}"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text=""
-                        android:textColor="#64748B"
-                        android:textSize="10sp"
-                        android:singleLine="true"
-                        android:ellipsize="end"
-                        android:paddingTop="1dp"
-                        android:visibility="gone" />
-                </LinearLayout>
-            </LinearLayout>
-        </LinearLayout>
-""")
-    return "\n".join(slots)
-
-
 def generate_project_files():
     if os.path.exists(BUILD_DIR):
         shutil.rmtree(BUILD_DIR)
@@ -225,12 +131,14 @@ def generate_project_files():
         f"""<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="{PACKAGE_NAME}"
-    android:versionCode="7"
-    android:versionName="7.0">
+    android:versionCode="8"
+    android:versionName="8.0">
 
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="34" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:label="1 Minor + 1 Major"
@@ -255,9 +163,17 @@ def generate_project_files():
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.USER_PRESENT" />
                 <action android:name="{PACKAGE_NAME}.ACTION_SWITCH_TAB" />
                 <action android:name="{PACKAGE_NAME}.ACTION_ROW_CLICK" />
                 <action android:name="{PACKAGE_NAME}.ACTION_REFRESH_WIDGET" />
+                <action android:name="{PACKAGE_NAME}.ACTION_AUTO_SYNC_WIDGET" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
@@ -338,7 +254,7 @@ def generate_project_files():
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
     <solid android:color="#FFFFFF" />
     <stroke android:width="2dp" android:color="#64748B" />
-    <size android:width="24dp" android:height="24dp" />
+    <size android:width="25dp" android:height="25dp" />
 </shape>
 """,
     )
@@ -348,7 +264,7 @@ def generate_project_files():
         """<?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
     <solid android:color="#10B981" />
-    <size android:width="24dp" android:height="24dp" />
+    <size android:width="25dp" android:height="25dp" />
 </shape>
 """,
     )
@@ -721,10 +637,18 @@ public class VaultCrypto {{
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -733,9 +657,11 @@ public class WidgetDataStore {{
     private static final String KEY_STATE_JSON = "state_json";
     private static final String KEY_AUTH_JSON = "auth_json";
     private static final String KEY_SNAPSHOT_JSON = "snapshot_json";
+    private static final String KEY_SNAPSHOT_SIG = "snapshot_sig";
     private static final String KEY_ACTIVE_TAB = "active_tab";
-    private static final String KEY_PAGE_INDEX = "page_index";
     private static final String KEY_PENDING_ACTIONS = "pending_actions";
+    private static final String KEY_NEEDS_FIREBASE_PUSH = "needs_firebase_push";
+    private static final Object LOCK = new Object();
 
     public static SharedPreferences prefs(Context ctx) {{
         return ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -746,58 +672,212 @@ public class WidgetDataStore {{
     }}
 
     public static void setActiveTab(Context ctx, String tab) {{
-        prefs(ctx).edit().putString(KEY_ACTIVE_TAB, tab).putInt(KEY_PAGE_INDEX, 0).commit();
+        prefs(ctx).edit().putString(KEY_ACTIVE_TAB, tab).commit();
     }}
 
-    public static int getPageIndex(Context ctx) {{
-        return Math.max(0, prefs(ctx).getInt(KEY_PAGE_INDEX, 0));
+    private static String computeSnapshotSignature(JSONObject snap, String activeTab) {{
+        if (snap == null) return "";
+        try {{
+            JSONObject copy = new JSONObject(snap.toString());
+            copy.remove("updatedAt");
+            return (activeTab != null ? activeTab : "daily") + "|" + copy.toString();
+        }} catch (Exception e) {{
+            return snap.toString();
+        }}
     }}
 
-    public static void setPageIndex(Context ctx, int page) {{
-        prefs(ctx).edit().putInt(KEY_PAGE_INDEX, Math.max(0, page)).commit();
-    }}
+    public static boolean saveFromWeb(Context ctx, String stateJson, String authJson, String snapshotJson) {{
+        synchronized (LOCK) {{
+            SharedPreferences p = prefs(ctx);
+            SharedPreferences.Editor ed = p.edit();
+            boolean changed = false;
 
-    public static void saveFromWeb(Context ctx, String stateJson, String authJson, String snapshotJson) {{
-        SharedPreferences.Editor ed = prefs(ctx).edit();
-        if (stateJson != null && !stateJson.isEmpty() && !stateJson.equals("null")) {{
-            ed.putString(KEY_STATE_JSON, stateJson);
+            if (authJson != null && !authJson.isEmpty() && !authJson.equals("null")) {{
+                String prevAuth = p.getString(KEY_AUTH_JSON, "");
+                if (!authJson.equals(prevAuth)) {{
+                    ed.putString(KEY_AUTH_JSON, authJson);
+                    changed = true;
+                }}
+            }}
+
+            JSONObject parsedState = null;
+            if (stateJson != null && !stateJson.isEmpty() && !stateJson.equals("null")) {{
+                try {{
+                    parsedState = new JSONObject(stateJson);
+                }} catch (Exception ignored) {{}}
+                String prevState = p.getString(KEY_STATE_JSON, "");
+                if (!stateJson.equals(prevState)) {{
+                    ed.putString(KEY_STATE_JSON, stateJson);
+                    ed.putBoolean(KEY_NEEDS_FIREBASE_PUSH, false);
+                }}
+            }}
+
+            JSONObject targetSnap = null;
+            if (snapshotJson != null && !snapshotJson.isEmpty() && !snapshotJson.equals("null")) {{
+                try {{
+                    targetSnap = new JSONObject(snapshotJson);
+                }} catch (Exception ignored) {{}}
+            }}
+            if (targetSnap == null && parsedState != null) {{
+                targetSnap = buildFallbackSnapshotFromState(parsedState);
+            }}
+
+            if (targetSnap != null) {{
+                String newSig = computeSnapshotSignature(targetSnap, getActiveTab(ctx));
+                String prevSig = p.getString(KEY_SNAPSHOT_SIG, "");
+                String prevSnap = p.getString(KEY_SNAPSHOT_JSON, "");
+                if (!newSig.equals(prevSig) || prevSnap.isEmpty()) {{
+                    ed.putString(KEY_SNAPSHOT_JSON, targetSnap.toString());
+                    ed.putString(KEY_SNAPSHOT_SIG, newSig);
+                    changed = true;
+                }}
+            }}
+
+            ed.commit();
+            return changed;
         }}
-        if (authJson != null && !authJson.isEmpty() && !authJson.equals("null")) {{
-            ed.putString(KEY_AUTH_JSON, authJson);
-        }}
-        if (snapshotJson != null && !snapshotJson.isEmpty() && !snapshotJson.equals("null")) {{
-            ed.putString(KEY_SNAPSHOT_JSON, snapshotJson);
-        }} else if (stateJson != null && !stateJson.isEmpty() && !stateJson.equals("null")) {{
-            try {{
-                JSONObject st = new JSONObject(stateJson);
-                JSONObject built = buildFallbackSnapshotFromState(st);
-                if (built != null) ed.putString(KEY_SNAPSHOT_JSON, built.toString());
-            }} catch (Exception ignored) {{}}
-        }}
-        ed.commit();
     }}
 
     public static JSONObject getSnapshot(Context ctx) {{
-        SharedPreferences p = prefs(ctx);
-        String raw = p.getString(KEY_SNAPSHOT_JSON, "");
-        if (raw != null && !raw.isEmpty()) {{
-            try {{
-                return new JSONObject(raw);
-            }} catch (Exception ignored) {{}}
+        synchronized (LOCK) {{
+            SharedPreferences p = prefs(ctx);
+            String tStr = todayStr();
+            JSONObject snap = null;
+
+            String raw = p.getString(KEY_SNAPSHOT_JSON, "");
+            if (raw != null && !raw.isEmpty()) {{
+                try {{
+                    snap = new JSONObject(raw);
+                }} catch (Exception ignored) {{}}
+            }}
+
+            // If snapshot exists and is already for today, return it immediately
+            if (snap != null && tStr.equals(snap.optString("todayStr", ""))) {{
+                return snap;
+            }}
+
+            // Otherwise (missing snapshot OR midnight date rollover occurred!), rebuild from saved state
+            String stateRaw = p.getString(KEY_STATE_JSON, "");
+            if (stateRaw != null && !stateRaw.isEmpty()) {{
+                try {{
+                    JSONObject st = new JSONObject(stateRaw);
+                    JSONObject rebuilt = buildFallbackSnapshotFromState(st);
+                    if (rebuilt != null) {{
+                        st.put("widgetSnapshot", rebuilt);
+                        String sig = computeSnapshotSignature(rebuilt, getActiveTab(ctx));
+                        p.edit()
+                            .putString(KEY_STATE_JSON, st.toString())
+                            .putString(KEY_SNAPSHOT_JSON, rebuilt.toString())
+                            .putString(KEY_SNAPSHOT_SIG, sig)
+                            .commit();
+                        return rebuilt;
+                    }}
+                }} catch (Exception ignored) {{}}
+            }}
+            return snap;
         }}
-        String stateRaw = p.getString(KEY_STATE_JSON, "");
-        if (stateRaw != null && !stateRaw.isEmpty()) {{
-            try {{
-                JSONObject st = new JSONObject(stateRaw);
-                JSONObject snap = st.optJSONObject("widgetSnapshot");
-                if (snap == null) snap = buildFallbackSnapshotFromState(st);
-                if (snap != null) {{
-                    p.edit().putString(KEY_SNAPSHOT_JSON, snap.toString()).commit();
-                    return snap;
+    }}
+
+    private static String getTaskSlot(JSONObject t) {{
+        String ov = t.optString("slotOverride", "");
+        if (ov != null && !ov.isEmpty() && !"null".equals(ov)) return ov;
+        String sz = t.optString("size", "minor");
+        return "major".equals(sz) ? "major" : "minor";
+    }}
+
+    private static boolean isRecurringSlotTask(JSONObject t) {{
+        if (t == null) return false;
+        String r = t.optString("recurrence", "none");
+        return "daily_slot".equals(r)
+            || "weekdays_slot".equals(r)
+            || "weekly_slot".equals(r)
+            || "monthly_date_slot".equals(r)
+            || "monthly_weekday_slot".equals(r);
+    }}
+
+    private static boolean doesTaskMatchRecurringDate(JSONObject task, Calendar cal) {{
+        if (!isRecurringSlotTask(task)) return false;
+        String rec = task.optString("recurrence", "none");
+        int dow = cal.get(Calendar.DAY_OF_WEEK) - 1; // 0=Sun..6=Sat
+        if ("daily_slot".equals(rec)) return true;
+        if ("weekdays_slot".equals(rec)) return dow >= 1 && dow <= 5;
+        if ("weekly_slot".equals(rec)) {{
+            int targetDow = task.optInt("recurrenceDayOfWeek", 1);
+            return dow == targetDow;
+        }}
+        if ("monthly_date_slot".equals(rec)) {{
+            String mDay = task.optString("recurrenceMonthDay", "1");
+            int lastDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+            int target = "last".equals(mDay) ? lastDay : Math.min( parseIntSafe(mDay, 1), lastDay );
+            return cal.get(Calendar.DAY_OF_MONTH) == target;
+        }}
+        if ("monthly_weekday_slot".equals(rec)) {{
+            int targetDow = task.optInt("recurrenceDayOfWeek", 1);
+            if (dow != targetDow) return false;
+            String nth = task.optString("recurrenceMonthNth", "1");
+            int dom = cal.get(Calendar.DAY_OF_MONTH);
+            int lastDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+            if ("last".equals(nth)) {{
+                return dom + 7 > lastDay;
+            }}
+            int n = Math.max(1, Math.min(4, parseIntSafe(nth, 1)));
+            int occ = ((dom - 1) / 7) + 1;
+            return occ == n || (occ == 4 && dom + 7 > lastDay && n == 4);
+        }}
+        return false;
+    }}
+
+    private static int parseIntSafe(String s, int fallback) {{
+        try {{
+            return Integer.parseInt(s.trim());
+        }} catch (Exception e) {{
+            return fallback;
+        }}
+    }}
+
+    private static String getRecurrenceBadgeText(JSONObject task) {{
+        if (task == null) return "";
+        String rec = task.optString("recurrence", "none");
+        if (rec == null || "none".equals(rec) || rec.isEmpty()) return "";
+        String[] dayNames = new String[] {{ "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }};
+        if ("daily_habit".equals(rec)) {{
+            JSONArray days = task.optJSONArray("habitDays");
+            if (days == null || days.length() == 0 || days.length() == 7) return "🔄 Every Day";
+            if (days.length() == 5) {{
+                boolean monFri = true;
+                for (int d = 1; d <= 5; d++) {{
+                    boolean found = false;
+                    for (int i = 0; i < days.length(); i++) if (days.optInt(i, -1) == d) found = true;
+                    if (!found) monFri = false;
                 }}
-            }} catch (Exception ignored) {{}}
+                if (monFri) return "🔄 Mon–Fri";
+            }}
+            StringBuilder sb = new StringBuilder("🔄 ");
+            for (int i = 0; i < days.length(); i++) {{
+                if (i > 0) sb.append(", ");
+                int d = Math.max(0, Math.min(6, days.optInt(i, 0)));
+                sb.append(dayNames[d]);
+            }}
+            return sb.toString();
         }}
-        return null;
+        if ("daily_slot".equals(rec)) return "📅 Daily";
+        if ("weekdays_slot".equals(rec)) return "💼 Mon–Fri";
+        if ("weekly_slot".equals(rec)) {{
+            int dow = Math.max(0, Math.min(6, task.optInt("recurrenceDayOfWeek", 1)));
+            return "🗓️ Every " + dayNames[dow];
+        }}
+        if ("monthly_date_slot".equals(rec)) return "📆 Monthly";
+        if ("monthly_weekday_slot".equals(rec)) return "📆 Monthly";
+        return "";
+    }}
+
+    private static double getEffectiveScore(JSONObject t) {{
+        double base = t.optDouble("priorityScore", 50.0);
+        double bump = t.optDouble("bumpPoints", 0.0);
+        long created = t.optLong("createdAt", System.currentTimeMillis());
+        double daysWaiting = Math.max(0.0, (System.currentTimeMillis() - created) / 86400000.0);
+        double ageBonus = Math.min(35.0, daysWaiting * 1.5);
+        return base + bump + ageBonus;
     }}
 
     public static JSONObject buildFallbackSnapshotFromState(JSONObject state) {{
@@ -806,16 +886,154 @@ public class WidgetDataStore {{
             if (tasks == null) return null;
             JSONObject hc = state.optJSONObject("habitCompletions");
             if (hc == null) hc = new JSONObject();
+            JSONObject dayMetaAll = state.optJSONObject("dayMeta");
+            JSONArray categories = state.optJSONArray("categories");
+            Map<String, String> catMap = new HashMap<>();
+            if (categories != null) {{
+                for (int i = 0; i < categories.length(); i++) {{
+                    JSONObject c = categories.optJSONObject(i);
+                    if (c != null) catMap.put(c.optString("id", ""), c.optString("name", "✨ Personal"));
+                }}
+            }}
 
-            String tStr = todayStr();
-            Calendar cal = Calendar.getInstance();
-            int todayDow = cal.get(Calendar.DAY_OF_WEEK) - 1;
+            SimpleDateFormat dfIso = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            SimpleDateFormat dfShort = new SimpleDateFormat("MMM d", Locale.US);
+            SimpleDateFormat dfLabel = new SimpleDateFormat("EEE, MMM d", Locale.US);
+            String tStr = dfIso.format(new Date());
+            Calendar todayCal = Calendar.getInstance();
+            int todayDow = todayCal.get(Calendar.DAY_OF_WEEK) - 1;
 
+            // 1. Auto-scheduler rollover for snoozed and past-scheduled unfinished tasks
+            for (int i = 0; i < tasks.length(); i++) {{
+                JSONObject t = tasks.optJSONObject(i);
+                if (t == null) continue;
+                String status = t.optString("status", "active");
+                String rec = t.optString("recurrence", "none");
+                String sched = t.optString("scheduledDate", "");
+                if ("null".equals(sched)) sched = "";
+
+                if ("snoozed".equals(status)) {{
+                    String snoozeUntil = t.optString("snoozedUntil", "");
+                    if (!snoozeUntil.isEmpty() && !"null".equals(snoozeUntil) && snoozeUntil.compareTo(tStr) <= 0) {{
+                        t.put("status", "active");
+                        t.put("snoozedUntil", JSONObject.NULL);
+                        status = "active";
+                    }}
+                }}
+                if ("completed".equals(status) && !sched.isEmpty() && sched.compareTo(tStr) > 0) {{
+                    t.put("scheduledDate", JSONObject.NULL);
+                    t.put("slotOverride", JSONObject.NULL);
+                    sched = "";
+                }}
+                if ("daily_habit".equals(rec) || "note".equals(rec)) {{
+                    t.put("scheduledDate", JSONObject.NULL);
+                    t.put("slotOverride", JSONObject.NULL);
+                    sched = "";
+                }}
+                if ("active".equals(status) && !"daily_habit".equals(rec) && !"note".equals(rec) && !sched.isEmpty() && sched.compareTo(tStr) < 0) {{
+                    if (!isRecurringSlotTask(t)) {{
+                        t.put("scheduledDate", JSONObject.NULL);
+                        t.put("slotOverride", JSONObject.NULL);
+                        t.put("rolledOver", true);
+                    }} else {{
+                        t.put("scheduledDate", JSONObject.NULL);
+                    }}
+                }}
+            }}
+
+            // 2. Collect unscheduled non-recurring active tasks sorted by priority
+            List<JSONObject> unscheduled = new ArrayList<>();
+            for (int i = 0; i < tasks.length(); i++) {{
+                JSONObject t = tasks.optJSONObject(i);
+                if (t == null) continue;
+                String status = t.optString("status", "active");
+                String rec = t.optString("recurrence", "none");
+                String sched = t.optString("scheduledDate", "");
+                if ("null".equals(sched)) sched = "";
+                if ("active".equals(status) && !"daily_habit".equals(rec) && !"note".equals(rec) && !isRecurringSlotTask(t) && sched.isEmpty()) {{
+                    unscheduled.add(t);
+                }}
+            }}
+            Collections.sort(unscheduled, new Comparator<JSONObject>() {{
+                @Override
+                public int compare(JSONObject a, JSONObject b) {{
+                    boolean ra = a.optBoolean("rolledOver", false);
+                    boolean rb = b.optBoolean("rolledOver", false);
+                    if (ra != rb) return rb ? 1 : -1;
+                    double diff = getEffectiveScore(b) - getEffectiveScore(a);
+                    if (Math.abs(diff) > 0.001) return diff > 0 ? 1 : -1;
+                    return Long.compare(a.optLong("createdAt", 0L), b.optLong("createdAt", 0L));
+                }}
+            }});
+
+            // 3. Build 7-day rolling schedule (Today + 6 days) and fill open slots
+            JSONArray weeklyDays = new JSONArray();
+            JSONObject todayMinorTask = null;
+            JSONObject todayMajorTask = null;
+            Calendar wCal = Calendar.getInstance();
+
+            for (int d = 0; d < 7; d++) {{
+                String dIso = dfIso.format(wCal.getTime());
+                String dLbl = (d == 0 ? "TODAY • " : "") + dfLabel.format(wCal.getTime());
+
+                JSONObject minTask = findSlotTaskForDate(tasks, dIso, wCal, "minor", tStr);
+                if (minTask == null && !unscheduled.isEmpty()) {{
+                    minTask = pickCandidateFromPool(unscheduled, "minor");
+                    if (minTask != null) {{
+                        minTask.put("scheduledDate", dIso);
+                        if (!"minor".equals(minTask.optString("size", "minor"))) {{
+                            minTask.put("slotOverride", "minor");
+                        }}
+                    }}
+                }}
+
+                JSONObject majTask = findSlotTaskForDate(tasks, dIso, wCal, "major", tStr);
+                if (majTask == null && !unscheduled.isEmpty()) {{
+                    majTask = pickCandidateFromPool(unscheduled, "major");
+                    if (majTask != null) {{
+                        majTask.put("scheduledDate", dIso);
+                        if (!"major".equals(majTask.optString("size", "minor"))) {{
+                            majTask.put("slotOverride", "major");
+                        }}
+                    }}
+                }}
+
+                if (d == 0) {{
+                    todayMinorTask = minTask;
+                    todayMajorTask = majTask;
+                }}
+
+                JSONObject dayObj = new JSONObject();
+                dayObj.put("dateStr", dIso);
+                dayObj.put("dayLabel", dLbl);
+                dayObj.put("isToday", d == 0);
+                if (minTask != null) {{
+                    JSONObject wMin = new JSONObject();
+                    wMin.put("id", minTask.optString("id", ""));
+                    wMin.put("title", minTask.optString("title", ""));
+                    wMin.put("done", "completed".equals(minTask.optString("status", "active")));
+                    wMin.put("recBadge", getRecurrenceBadgeText(minTask));
+                    wMin.put("dateStr", dIso);
+                    dayObj.put("minor", wMin);
+                }}
+                if (majTask != null) {{
+                    JSONObject wMaj = new JSONObject();
+                    wMaj.put("id", majTask.optString("id", ""));
+                    wMaj.put("title", majTask.optString("title", ""));
+                    wMaj.put("done", "completed".equals(majTask.optString("status", "active")));
+                    wMaj.put("recBadge", getRecurrenceBadgeText(majTask));
+                    wMaj.put("dateStr", dIso);
+                    dayObj.put("major", wMaj);
+                }}
+                weeklyDays.put(dayObj);
+                wCal.add(Calendar.DAY_OF_YEAR, 1);
+            }}
+
+            // 4. Build Today Habits, All Habits, Notes, and Active Tasks list
             JSONArray todayHabits = new JSONArray();
             JSONArray allHabits = new JSONArray();
-            JSONArray activeTasks = new JSONArray();
-            JSONObject minorSlot = null;
-            JSONObject majorSlot = null;
+            JSONArray allNotes = new JSONArray();
+            List<JSONObject> activeTaskObjs = new ArrayList<>();
 
             for (int i = 0; i < tasks.length(); i++) {{
                 JSONObject t = tasks.optJSONObject(i);
@@ -824,8 +1042,6 @@ public class WidgetDataStore {{
                 String rec = t.optString("recurrence", "none");
                 String id = t.optString("id", "");
                 String title = t.optString("title", "");
-                String size = t.optString("size", "minor");
-                String sched = t.optString("scheduledDate", "");
 
                 if ("daily_habit".equals(rec)) {{
                     if (!"completed".equals(status)) {{
@@ -833,7 +1049,8 @@ public class WidgetDataStore {{
                         JSONObject hObj = new JSONObject();
                         hObj.put("id", id);
                         hObj.put("title", title);
-                        hObj.put("subtitle", "🔄 Habit");
+                        String badge = getRecurrenceBadgeText(t);
+                        hObj.put("subtitle", badge.isEmpty() ? "🔄 Habit" : badge);
                         hObj.put("done", doneToday);
                         hObj.put("dateStr", tStr);
                         allHabits.put(hObj);
@@ -848,96 +1065,71 @@ public class WidgetDataStore {{
                         }}
                         if (matchDay) todayHabits.put(hObj);
                     }}
-                }} else {{
-                    if (tStr.equals(sched)) {{
-                        JSONObject slotItem = new JSONObject();
-                        slotItem.put("id", id);
-                        slotItem.put("slotSize", size);
-                        slotItem.put("title", title);
-                        slotItem.put("subtitle", t.optString("notes", ""));
-                        slotItem.put("done", "completed".equals(status));
-                        slotItem.put("empty", false);
-                        slotItem.put("dateStr", tStr);
-                        if ("minor".equals(size) && minorSlot == null) minorSlot = slotItem;
-                        if ("major".equals(size) && majorSlot == null) majorSlot = slotItem;
+                }} else if ("note".equals(rec)) {{
+                    if (!"completed".equals(status)) {{
+                        String catId = t.optString("category", "");
+                        String catName = catMap.containsKey(catId) ? catMap.get(catId) : "✨ Personal";
+                        String notesTxt = t.optString("notes", "");
+                        JSONObject nObj = new JSONObject();
+                        nObj.put("id", id);
+                        nObj.put("title", title);
+                        nObj.put("subtitle", "📝 Note • " + catName + (notesTxt.isEmpty() ? "" : " • " + notesTxt));
+                        nObj.put("done", false);
+                        nObj.put("dateStr", tStr);
+                        allNotes.put(nObj);
                     }}
-                    if ("active".equals(status)) {{
-                        JSONObject tItem = new JSONObject();
-                        tItem.put("id", id);
-                        tItem.put("title", title);
-                        tItem.put("subtitle", ("minor".equals(size) ? "✓ Minor" : "★ Major") + (sched.isEmpty() ? "" : " • 📅 " + sched));
-                        tItem.put("size", size);
-                        tItem.put("done", false);
-                        tItem.put("dateStr", sched.isEmpty() ? tStr : sched);
-                        activeTasks.put(tItem);
-                    }}
+                }} else if ("active".equals(status)) {{
+                    activeTaskObjs.add(t);
                 }}
             }}
 
-            if (minorSlot == null) {{
-                minorSlot = new JSONObject();
-                minorSlot.put("id", "");
-                minorSlot.put("slotSize", "minor");
-                minorSlot.put("title", "No Minor Task Scheduled");
-                minorSlot.put("subtitle", "Tap to open planner");
-                minorSlot.put("done", false);
-                minorSlot.put("empty", true);
-                minorSlot.put("dateStr", tStr);
-            }}
-            if (majorSlot == null) {{
-                majorSlot = new JSONObject();
-                majorSlot.put("id", "");
-                majorSlot.put("slotSize", "major");
-                majorSlot.put("title", "No Major Task Scheduled");
-                majorSlot.put("subtitle", "Tap to open planner");
-                majorSlot.put("done", false);
-                majorSlot.put("empty", true);
-                majorSlot.put("dateStr", tStr);
-            }}
+            Collections.sort(activeTaskObjs, new Comparator<JSONObject>() {{
+                @Override
+                public int compare(JSONObject a, JSONObject b) {{
+                    double diff = getEffectiveScore(b) - getEffectiveScore(a);
+                    if (Math.abs(diff) > 0.001) return diff > 0 ? 1 : -1;
+                    return 0;
+                }}
+            }});
 
-            JSONArray weeklyDays = new JSONArray();
-            SimpleDateFormat dfIso = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-            SimpleDateFormat dfLabel = new SimpleDateFormat("EEE, MMM d", Locale.US);
-            Calendar wCal = Calendar.getInstance();
-            for (int d = 0; d < 7; d++) {{
-                String dIso = dfIso.format(wCal.getTime());
-                String dLbl = (d == 0 ? "TODAY • " : "") + dfLabel.format(wCal.getTime());
-                int dow = wCal.get(Calendar.DAY_OF_WEEK) - 1;
-                JSONObject minW = null;
-                JSONObject majW = null;
-                for (int i = 0; i < tasks.length(); i++) {{
-                    JSONObject t = tasks.optJSONObject(i);
-                    if (t == null) continue;
-                    String rec = t.optString("recurrence", "none");
-                    if ("daily_habit".equals(rec)) continue;
-                    String status = t.optString("status", "active");
-                    String sched = t.optString("scheduledDate", "");
-                    String size = t.optString("size", "minor");
-                    boolean match = dIso.equals(sched);
-                    if (!match && "active".equals(status) && "weekly_slot".equals(rec)) {{
-                        int recDow = t.optInt("recurrenceDayOfWeek", 1);
-                        if (dow == recDow && (sched.isEmpty() || dIso.compareTo(sched) >= 0)) match = true;
-                    }}
-                    if (match) {{
-                        JSONObject wItem = new JSONObject();
-                        wItem.put("id", t.optString("id", ""));
-                        wItem.put("title", t.optString("title", ""));
-                        wItem.put("done", "completed".equals(status));
-                        wItem.put("recBadge", "weekly_slot".equals(rec) ? "🗓️ Weekly" : "");
-                        wItem.put("dateStr", dIso);
-                        if ("minor".equals(size) && minW == null) minW = wItem;
-                        if ("major".equals(size) && majW == null) majW = wItem;
+            JSONArray activeTasks = new JSONArray();
+            for (JSONObject t : activeTaskObjs) {{
+                String size = t.optString("size", "minor");
+                String catId = t.optString("category", "");
+                String catName = catMap.containsKey(catId) ? catMap.get(catId) : "✨ Personal";
+                String recBadge = getRecurrenceBadgeText(t);
+                String sched = t.optString("scheduledDate", "");
+                if ("null".equals(sched)) sched = "";
+
+                StringBuilder sub = new StringBuilder();
+                sub.append("minor".equals(size) ? "✓ Minor" : "★ Major");
+                sub.append(" • ").append(catName);
+                if (!recBadge.isEmpty()) sub.append(" • ").append(recBadge);
+                if (!sched.isEmpty()) {{
+                    try {{
+                        Date parsedD = dfIso.parse(sched);
+                        if (parsedD != null) sub.append(" • 📅 ").append(dfShort.format(parsedD));
+                    }} catch (Exception e) {{
+                        sub.append(" • 📅 ").append(sched);
                     }}
                 }}
-                JSONObject dayObj = new JSONObject();
-                dayObj.put("dateStr", dIso);
-                dayObj.put("dayLabel", dLbl);
-                dayObj.put("isToday", d == 0);
-                if (minW != null) dayObj.put("minor", minW);
-                if (majW != null) dayObj.put("major", majW);
-                weeklyDays.put(dayObj);
-                wCal.add(Calendar.DAY_OF_YEAR, 1);
+
+                JSONObject tItem = new JSONObject();
+                tItem.put("id", t.optString("id", ""));
+                tItem.put("title", t.optString("title", ""));
+                tItem.put("subtitle", sub.toString());
+                tItem.put("size", size);
+                tItem.put("done", false);
+                tItem.put("dateStr", sched.isEmpty() ? tStr : sched);
+                activeTasks.put(tItem);
             }}
+
+            JSONObject todayMeta = (dayMetaAll != null) ? dayMetaAll.optJSONObject(tStr) : null;
+            JSONObject partialMin = (todayMeta != null) ? todayMeta.optJSONObject("partialWinMinor") : null;
+            JSONObject partialMaj = (todayMeta != null) ? todayMeta.optJSONObject("partialWinMajor") : null;
+
+            JSONObject minorSlot = formatDailySlotObj(todayMinorTask, "minor", partialMin, tStr);
+            JSONObject majorSlot = formatDailySlotObj(todayMajorTask, "major", partialMaj, tStr);
 
             JSONObject daily = new JSONObject();
             daily.put("habits", todayHabits);
@@ -952,131 +1144,341 @@ public class WidgetDataStore {{
             snap.put("weekly", weeklyDays);
             snap.put("tasks", activeTasks);
             snap.put("habits", allHabits);
+            snap.put("notes", allNotes);
             return snap;
         }} catch (Exception e) {{
             return null;
         }}
     }}
 
+    private static JSONObject findSlotTaskForDate(JSONArray tasks, String dIso, Calendar cal, String slotSize, String todayStr) {{
+        // 1. Recurring task matching this date and slot
+        for (int i = 0; i < tasks.length(); i++) {{
+            JSONObject t = tasks.optJSONObject(i);
+            if (t == null) continue;
+            if (!"active".equals(t.optString("status", "active"))) continue;
+            if (!isRecurringSlotTask(t)) continue;
+            if (!slotSize.equals(getTaskSlot(t))) continue;
+            String sched = t.optString("scheduledDate", "");
+            if ("null".equals(sched)) sched = "";
+            if (dIso.equals(sched) || doesTaskMatchRecurringDate(t, cal)) {{
+                return t;
+            }}
+        }}
+        // 2. Active task explicitly scheduled on this date
+        for (int i = 0; i < tasks.length(); i++) {{
+            JSONObject t = tasks.optJSONObject(i);
+            if (t == null) continue;
+            if (!"active".equals(t.optString("status", "active"))) continue;
+            String rec = t.optString("recurrence", "none");
+            if ("daily_habit".equals(rec) || "note".equals(rec)) continue;
+            if (dIso.equals(t.optString("scheduledDate", "")) && slotSize.equals(getTaskSlot(t))) {{
+                return t;
+            }}
+        }}
+        // 3. Completed task on or before today
+        if (dIso.compareTo(todayStr) <= 0) {{
+            for (int i = 0; i < tasks.length(); i++) {{
+                JSONObject t = tasks.optJSONObject(i);
+                if (t == null) continue;
+                if (!"completed".equals(t.optString("status", "active"))) continue;
+                String rec = t.optString("recurrence", "none");
+                if ("daily_habit".equals(rec) || "note".equals(rec)) continue;
+                if (dIso.equals(t.optString("scheduledDate", "")) && slotSize.equals(getTaskSlot(t))) {{
+                    return t;
+                }}
+            }}
+        }}
+        return null;
+    }}
+
+    private static JSONObject pickCandidateFromPool(List<JSONObject> pool, String slotSize) {{
+        for (int i = 0; i < pool.size(); i++) {{
+            if (slotSize.equals(pool.get(i).optString("size", "minor"))) {{
+                return pool.remove(i);
+            }}
+        }}
+        return pool.isEmpty() ? null : pool.remove(0);
+    }}
+
+    private static JSONObject formatDailySlotObj(JSONObject t, String slotSize, JSONObject partialWin, String tStr) throws Exception {{
+        JSONObject slot = new JSONObject();
+        slot.put("slotSize", slotSize);
+        slot.put("dateStr", tStr);
+        if (t == null && partialWin != null) {{
+            slot.put("id", "");
+            slot.put("title", partialWin.optString("title", "Partial Progress Win"));
+            slot.put("subtitle", "Completed " + partialWin.optInt("doneCount", 1) + " of " + partialWin.optInt("totalCount", 1) + " steps today!");
+            slot.put("done", true);
+            slot.put("empty", false);
+            return slot;
+        }}
+        if (t == null) {{
+            slot.put("id", "");
+            slot.put("title", "minor".equals(slotSize) ? "No Minor Task Scheduled" : "No Major Task Scheduled");
+            slot.put("subtitle", "Tap to open planner & pick a task");
+            slot.put("done", false);
+            slot.put("empty", true);
+            return slot;
+        }}
+        List<String> parts = new ArrayList<>();
+        String recBadge = getRecurrenceBadgeText(t);
+        if (!recBadge.isEmpty()) parts.add(recBadge);
+        JSONArray subs = t.optJSONArray("subtasks");
+        if (subs != null && subs.length() > 0) {{
+            int doneCount = 0;
+            for (int i = 0; i < subs.length(); i++) {{
+                JSONObject s = subs.optJSONObject(i);
+                if (s != null && s.optBoolean("done", false)) doneCount++;
+            }}
+            parts.add("☑️ " + doneCount + "/" + subs.length() + " steps");
+        }}
+        String notes = t.optString("notes", "");
+        if (notes != null && !notes.isEmpty() && !"null".equals(notes)) parts.add(notes);
+
+        StringBuilder subSb = new StringBuilder();
+        for (int i = 0; i < parts.size(); i++) {{
+            if (i > 0) subSb.append(" • ");
+            subSb.append(parts.get(i));
+        }}
+
+        slot.put("id", t.optString("id", ""));
+        slot.put("title", t.optString("title", ""));
+        slot.put("subtitle", subSb.toString());
+        slot.put("done", "completed".equals(t.optString("status", "active")));
+        slot.put("empty", false);
+        return slot;
+    }}
+
     public static String consumePendingActions(Context ctx) {{
-        SharedPreferences p = prefs(ctx);
-        String raw = p.getString(KEY_PENDING_ACTIONS, "[]");
-        p.edit().putString(KEY_PENDING_ACTIONS, "[]").commit();
-        return raw;
+        synchronized (LOCK) {{
+            SharedPreferences p = prefs(ctx);
+            String raw = p.getString(KEY_PENDING_ACTIONS, "[]");
+            p.edit().putString(KEY_PENDING_ACTIONS, "[]").commit();
+            return raw;
+        }}
     }}
 
     public static String getSavedStateJson(Context ctx) {{
-        return prefs(ctx).getString(KEY_STATE_JSON, "");
+        synchronized (LOCK) {{
+            return prefs(ctx).getString(KEY_STATE_JSON, "");
+        }}
     }}
 
     public static String getSavedAuthJson(Context ctx) {{
-        return prefs(ctx).getString(KEY_AUTH_JSON, "");
+        synchronized (LOCK) {{
+            return prefs(ctx).getString(KEY_AUTH_JSON, "");
+        }}
     }}
 
-    public static void toggleItemOptimisticAndSync(final Context ctx, final String itemType, final String itemId, final String dateStr) {{
-        if (itemId == null || itemId.isEmpty()) return;
-        SharedPreferences p = prefs(ctx);
+    public static void toggleItemOptimisticAndSync(final Context ctx, final String itemType, final String itemId, final String dateStr, final Runnable onDone) {{
+        if (itemId == null || itemId.isEmpty()) {{
+            if (onDone != null) onDone.run();
+            return;
+        }}
 
-        try {{
-            JSONArray q = new JSONArray(p.getString(KEY_PENDING_ACTIONS, "[]"));
-            JSONObject act = new JSONObject();
-            act.put("type", "habit".equals(itemType) ? "toggle_habit" : "toggle_task");
-            act.put("id", itemId);
-            act.put("dateStr", dateStr != null ? dateStr : todayStr());
-            act.put("ts", System.currentTimeMillis());
-            q.put(act);
-            p.edit().putString(KEY_PENDING_ACTIONS, q.toString()).commit();
-        }} catch (Exception ignored) {{}}
+        final String dStr = (dateStr != null && !dateStr.isEmpty()) ? dateStr : todayStr();
 
-        boolean newDoneState = true;
-        try {{
-            JSONObject snap = getSnapshot(ctx);
-            if (snap != null) {{
-                if ("habit".equals(itemType)) {{
-                    JSONObject daily = snap.optJSONObject("daily");
-                    if (daily != null) {{
-                        JSONArray habits = daily.optJSONArray("habits");
-                        if (habits != null) {{
-                            for (int i = 0; i < habits.length(); i++) {{
-                                JSONObject h = habits.getJSONObject(i);
-                                if (itemId.equals(h.optString("id"))) {{
-                                    newDoneState = !h.optBoolean("done", false);
-                                    h.put("done", newDoneState);
+        synchronized (LOCK) {{
+            SharedPreferences p = prefs(ctx);
+            boolean newDoneState = true;
+            boolean foundInState = false;
+
+            // 1. Update KEY_STATE_JSON synchronously first so state and snapshot never diverge
+            String stateRaw = p.getString(KEY_STATE_JSON, "");
+            JSONObject state = null;
+            if (stateRaw != null && !stateRaw.isEmpty()) {{
+                try {{
+                    state = new JSONObject(stateRaw);
+                    if ("habit".equals(itemType)) {{
+                        JSONObject hc = state.optJSONObject("habitCompletions");
+                        if (hc == null) {{
+                            hc = new JSONObject();
+                            state.put("habitCompletions", hc);
+                        }}
+                        String hKey = dStr + "_" + itemId;
+                        newDoneState = !hc.optBoolean(hKey, false);
+                        hc.put(hKey, newDoneState);
+                        foundInState = true;
+                    }} else {{
+                        JSONArray tasks = state.optJSONArray("tasks");
+                        if (tasks != null) {{
+                            for (int i = 0; i < tasks.length(); i++) {{
+                                JSONObject t = tasks.optJSONObject(i);
+                                if (t != null && itemId.equals(t.optString("id"))) {{
+                                    boolean wasDone = "completed".equals(t.optString("status", "active"));
+                                    newDoneState = !wasDone;
+                                    t.put("status", newDoneState ? "completed" : "active");
+                                    t.put("completedAt", newDoneState ? System.currentTimeMillis() : JSONObject.NULL);
+                                    foundInState = true;
+                                    break;
                                 }}
                             }}
                         }}
                     }}
-                    JSONArray allHabits = snap.optJSONArray("habits");
-                    if (allHabits != null) {{
-                        for (int i = 0; i < allHabits.length(); i++) {{
-                            JSONObject h = allHabits.getJSONObject(i);
-                            if (itemId.equals(h.optString("id"))) {{
-                                h.put("done", newDoneState);
-                            }}
-                        }}
-                    }}
-                }} else {{
-                    JSONObject daily = snap.optJSONObject("daily");
-                    if (daily != null) {{
-                        JSONObject minObj = daily.optJSONObject("minor");
-                        if (minObj != null && itemId.equals(minObj.optString("id"))) {{
-                            newDoneState = !minObj.optBoolean("done", false);
-                            minObj.put("done", newDoneState);
-                        }}
-                        JSONObject majObj = daily.optJSONObject("major");
-                        if (majObj != null && itemId.equals(majObj.optString("id"))) {{
-                            newDoneState = !majObj.optBoolean("done", false);
-                            majObj.put("done", newDoneState);
-                        }}
-                    }}
-                    JSONArray weekly = snap.optJSONArray("weekly");
-                    if (weekly != null) {{
-                        for (int i = 0; i < weekly.length(); i++) {{
-                            JSONObject day = weekly.getJSONObject(i);
-                            JSONObject minObj = day.optJSONObject("minor");
-                            if (minObj != null && itemId.equals(minObj.optString("id"))) {{
-                                newDoneState = !minObj.optBoolean("done", false);
-                                minObj.put("done", newDoneState);
-                            }}
-                            JSONObject majObj = day.optJSONObject("major");
-                            if (majObj != null && itemId.equals(majObj.optString("id"))) {{
-                                newDoneState = !majObj.optBoolean("done", false);
-                                majObj.put("done", newDoneState);
-                            }}
-                        }}
-                    }}
-                    JSONArray tasks = snap.optJSONArray("tasks");
-                    if (tasks != null) {{
-                        for (int i = 0; i < tasks.length(); i++) {{
-                            JSONObject t = tasks.getJSONObject(i);
-                            if (itemId.equals(t.optString("id"))) {{
-                                newDoneState = !t.optBoolean("done", false);
-                                t.put("done", newDoneState);
-                            }}
-                        }}
-                    }}
-                }}
-                p.edit().putString(KEY_SNAPSHOT_JSON, snap.toString()).commit();
+                }} catch (Exception ignored) {{}}
             }}
-        }} catch (Exception ignored) {{}}
+
+            // 2. Patch or rebuild KEY_SNAPSHOT_JSON synchronously
+            try {{
+                JSONObject snap = getSnapshot(ctx);
+                if (snap != null) {{
+                    if ("habit".equals(itemType)) {{
+                        JSONObject daily = snap.optJSONObject("daily");
+                        if (daily != null) {{
+                            JSONArray habits = daily.optJSONArray("habits");
+                            if (habits != null) {{
+                                for (int i = 0; i < habits.length(); i++) {{
+                                    JSONObject h = habits.getJSONObject(i);
+                                    if (itemId.equals(h.optString("id"))) {{
+                                        if (!foundInState) {{
+                                            newDoneState = !h.optBoolean("done", false);
+                                            foundInState = true;
+                                        }}
+                                        h.put("done", newDoneState);
+                                    }}
+                                }}
+                            }}
+                        }}
+                        JSONArray allHabits = snap.optJSONArray("habits");
+                        if (allHabits != null) {{
+                            for (int i = 0; i < allHabits.length(); i++) {{
+                                JSONObject h = allHabits.getJSONObject(i);
+                                if (itemId.equals(h.optString("id"))) {{
+                                    if (!foundInState) {{
+                                        newDoneState = !h.optBoolean("done", false);
+                                        foundInState = true;
+                                    }}
+                                    h.put("done", newDoneState);
+                                }}
+                            }}
+                        }}
+                    }} else {{
+                        // Determine newDoneState once if not already found in state
+                        if (!foundInState) {{
+                            JSONObject daily = snap.optJSONObject("daily");
+                            if (daily != null) {{
+                                JSONObject minObj = daily.optJSONObject("minor");
+                                if (minObj != null && itemId.equals(minObj.optString("id"))) {{
+                                    newDoneState = !minObj.optBoolean("done", false);
+                                    foundInState = true;
+                                }}
+                                JSONObject majObj = daily.optJSONObject("major");
+                                if (!foundInState && majObj != null && itemId.equals(majObj.optString("id"))) {{
+                                    newDoneState = !majObj.optBoolean("done", false);
+                                    foundInState = true;
+                                }}
+                            }}
+                            JSONArray weekly = snap.optJSONArray("weekly");
+                            if (!foundInState && weekly != null) {{
+                                for (int i = 0; i < weekly.length() && !foundInState; i++) {{
+                                    JSONObject day = weekly.getJSONObject(i);
+                                    JSONObject minObj = day.optJSONObject("minor");
+                                    if (minObj != null && itemId.equals(minObj.optString("id"))) {{
+                                        newDoneState = !minObj.optBoolean("done", false);
+                                        foundInState = true;
+                                    }}
+                                    JSONObject majObj = day.optJSONObject("major");
+                                    if (!foundInState && majObj != null && itemId.equals(majObj.optString("id"))) {{
+                                        newDoneState = !majObj.optBoolean("done", false);
+                                        foundInState = true;
+                                    }}
+                                }}
+                            }}
+                            JSONArray tasks = snap.optJSONArray("tasks");
+                            if (!foundInState && tasks != null) {{
+                                for (int i = 0; i < tasks.length() && !foundInState; i++) {{
+                                    JSONObject t = tasks.getJSONObject(i);
+                                    if (itemId.equals(t.optString("id"))) {{
+                                        newDoneState = !t.optBoolean("done", false);
+                                        foundInState = true;
+                                    }}
+                                }}
+                            }}
+                        }}
+
+                        // Apply consistent newDoneState across all views in snap
+                        JSONObject daily = snap.optJSONObject("daily");
+                        if (daily != null) {{
+                            JSONObject minObj = daily.optJSONObject("minor");
+                            if (minObj != null && itemId.equals(minObj.optString("id"))) minObj.put("done", newDoneState);
+                            JSONObject majObj = daily.optJSONObject("major");
+                            if (majObj != null && itemId.equals(majObj.optString("id"))) majObj.put("done", newDoneState);
+                        }}
+                        JSONArray weekly = snap.optJSONArray("weekly");
+                        if (weekly != null) {{
+                            for (int i = 0; i < weekly.length(); i++) {{
+                                JSONObject day = weekly.getJSONObject(i);
+                                JSONObject minObj = day.optJSONObject("minor");
+                                if (minObj != null && itemId.equals(minObj.optString("id"))) minObj.put("done", newDoneState);
+                                JSONObject majObj = day.optJSONObject("major");
+                                if (majObj != null && itemId.equals(majObj.optString("id"))) majObj.put("done", newDoneState);
+                            }}
+                        }}
+                        JSONArray tasks = snap.optJSONArray("tasks");
+                        if (tasks != null) {{
+                            for (int i = 0; i < tasks.length(); i++) {{
+                                JSONObject t = tasks.getJSONObject(i);
+                                if (itemId.equals(t.optString("id"))) t.put("done", newDoneState);
+                            }}
+                        }}
+                    }}
+                    snap.put("updatedAt", System.currentTimeMillis());
+                }}
+
+                SharedPreferences.Editor ed = p.edit();
+                if (state != null) {{
+                    if (snap != null) state.put("widgetSnapshot", snap);
+                    state.put("updatedAt", System.currentTimeMillis());
+                    state.put("changeId", "chg_w_" + System.currentTimeMillis());
+                    ed.putString(KEY_STATE_JSON, state.toString());
+                }}
+                if (snap != null) {{
+                    ed.putString(KEY_SNAPSHOT_JSON, snap.toString());
+                    ed.putString(KEY_SNAPSHOT_SIG, computeSnapshotSignature(snap, getActiveTab(ctx)));
+                }}
+
+                // Record idempotent action with explicit target `done` state for WebView sync
+                JSONArray q = new JSONArray(p.getString(KEY_PENDING_ACTIONS, "[]"));
+                JSONObject act = new JSONObject();
+                act.put("type", "habit".equals(itemType) ? "toggle_habit" : "toggle_task");
+                act.put("id", itemId);
+                act.put("dateStr", dStr);
+                act.put("done", newDoneState);
+                act.put("ts", System.currentTimeMillis());
+                q.put(act);
+                ed.putString(KEY_PENDING_ACTIONS, q.toString());
+                ed.putBoolean(KEY_NEEDS_FIREBASE_PUSH, true);
+                ed.commit();
+            }} catch (Exception ignored) {{}}
+        }}
 
         MainActivity.notifyWidgetActionFromBackground();
 
-        final boolean finalDone = newDoneState;
         new Thread(new Runnable() {{
             @Override
             public void run() {{
-                syncToggleToFirebase(ctx, itemType, itemId, dateStr, finalDone);
+                try {{
+                    pushLocalStateToFirebaseNow(ctx);
+                }} finally {{
+                    if (onDone != null) {{
+                        new Handler(Looper.getMainLooper()).post(onDone);
+                    }}
+                }}
             }}
         }}).start();
     }}
 
-    private static void syncToggleToFirebase(Context ctx, String itemType, String itemId, String dateStr, boolean isDone) {{
+    private static boolean pushLocalStateToFirebaseNow(Context ctx) {{
         try {{
-            SharedPreferences p = prefs(ctx);
-            String authRaw = p.getString(KEY_AUTH_JSON, "");
-            String stateRaw = p.getString(KEY_STATE_JSON, "");
-            if (authRaw.isEmpty() || stateRaw.isEmpty()) return;
+            String authRaw;
+            String stateRaw;
+            synchronized (LOCK) {{
+                SharedPreferences p = prefs(ctx);
+                authRaw = p.getString(KEY_AUTH_JSON, "");
+                stateRaw = p.getString(KEY_STATE_JSON, "");
+            }}
+            if (authRaw.isEmpty() || stateRaw.isEmpty()) return false;
 
             JSONObject auth = new JSONObject(authRaw);
             String fbUrl = auth.optString("firebaseDbUrl", "https://one-minor-one-major-default-rtdb.firebaseio.com");
@@ -1087,43 +1489,20 @@ public class WidgetDataStore {{
                 String eh = auth.optString("emailHash", "");
                 vaultKey = "vault_" + (eh.length() > 24 ? eh.substring(0, 24) : eh);
             }}
-            if (vaultKey.isEmpty() || encKeyHex.isEmpty() || macKeyHex.isEmpty()) return;
+            if (vaultKey.isEmpty() || encKeyHex.isEmpty() || macKeyHex.isEmpty()) return false;
 
             JSONObject state = new JSONObject(stateRaw);
-            String dStr = (dateStr != null && !dateStr.isEmpty()) ? dateStr : todayStr();
-
-            if ("habit".equals(itemType)) {{
-                JSONObject hc = state.optJSONObject("habitCompletions");
-                if (hc == null) {{
-                    hc = new JSONObject();
-                    state.put("habitCompletions", hc);
-                }}
-                hc.put(dStr + "_" + itemId, isDone);
-            }} else {{
-                JSONArray tasks = state.optJSONArray("tasks");
-                if (tasks != null) {{
-                    for (int i = 0; i < tasks.length(); i++) {{
-                        JSONObject t = tasks.getJSONObject(i);
-                        if (itemId.equals(t.optString("id"))) {{
-                            t.put("status", isDone ? "completed" : "active");
-                            t.put("completedAt", isDone ? System.currentTimeMillis() : JSONObject.NULL);
-                            break;
-                        }}
-                    }}
-                }}
-            }}
-
-            JSONObject snap = getSnapshot(ctx);
-            if (snap != null) {{
-                state.put("widgetSnapshot", snap);
-            }}
-            state.put("updatedAt", System.currentTimeMillis());
-            state.put("changeId", "chg_w_" + System.currentTimeMillis());
-            p.edit().putString(KEY_STATE_JSON, state.toString()).commit();
-
             JSONObject env = VaultCrypto.encryptStatePayload(state, encKeyHex, macKeyHex);
-            VaultCrypto.pushFirebaseEnvelope(fbUrl, vaultKey, env);
-        }} catch (Exception ignored) {{}}
+            boolean ok = VaultCrypto.pushFirebaseEnvelope(fbUrl, vaultKey, env);
+            if (ok) {{
+                synchronized (LOCK) {{
+                    prefs(ctx).edit().putBoolean(KEY_NEEDS_FIREBASE_PUSH, false).commit();
+                }}
+            }}
+            return ok;
+        }} catch (Exception e) {{
+            return false;
+        }}
     }}
 
     public static void pullLatestFromFirebaseAsync(final Context ctx, final Runnable onComplete) {{
@@ -1131,8 +1510,21 @@ public class WidgetDataStore {{
             @Override
             public void run() {{
                 try {{
-                    SharedPreferences p = prefs(ctx);
-                    String authRaw = p.getString(KEY_AUTH_JSON, "");
+                    boolean needsPush;
+                    String authRaw;
+                    String localStateRaw;
+                    synchronized (LOCK) {{
+                        SharedPreferences p = prefs(ctx);
+                        needsPush = p.getBoolean(KEY_NEEDS_FIREBASE_PUSH, false);
+                        authRaw = p.getString(KEY_AUTH_JSON, "");
+                        localStateRaw = p.getString(KEY_STATE_JSON, "");
+                    }}
+
+                    // If we have unpushed local widget edits, push them first so cloud doesn't clobber them
+                    if (needsPush) {{
+                        pushLocalStateToFirebaseNow(ctx);
+                    }}
+
                     if (!authRaw.isEmpty()) {{
                         JSONObject auth = new JSONObject(authRaw);
                         String fbUrl = auth.optString("firebaseDbUrl", "https://one-minor-one-major-default-rtdb.firebaseio.com");
@@ -1148,20 +1540,42 @@ public class WidgetDataStore {{
                             if (env != null) {{
                                 JSONObject remoteState = VaultCrypto.decryptStatePayload(env, encKeyHex, macKeyHex);
                                 if (remoteState != null) {{
-                                    SharedPreferences.Editor ed = p.edit();
-                                    ed.putString(KEY_STATE_JSON, remoteState.toString());
-                                    JSONObject snap = remoteState.optJSONObject("widgetSnapshot");
-                                    if (snap == null) snap = buildFallbackSnapshotFromState(remoteState);
-                                    if (snap != null) {{
-                                        ed.putString(KEY_SNAPSHOT_JSON, snap.toString());
+                                    synchronized (LOCK) {{
+                                        SharedPreferences p = prefs(ctx);
+                                        long localUpdated = 0L;
+                                        if (!localStateRaw.isEmpty()) {{
+                                            try {{
+                                                localUpdated = new JSONObject(localStateRaw).optLong("updatedAt", 0L);
+                                            }} catch (Exception ignored) {{}}
+                                        }}
+                                        long remoteUpdated = remoteState.optLong("updatedAt", 0L);
+
+                                        if (localStateRaw.isEmpty() || remoteUpdated >= localUpdated || !p.getBoolean(KEY_NEEDS_FIREBASE_PUSH, false)) {{
+                                            String tStr = todayStr();
+                                            JSONObject snap = remoteState.optJSONObject("widgetSnapshot");
+                                            if (snap == null || !tStr.equals(snap.optString("todayStr", ""))) {{
+                                                snap = buildFallbackSnapshotFromState(remoteState);
+                                                if (snap != null) {{
+                                                    remoteState.put("widgetSnapshot", snap);
+                                                }}
+                                            }}
+                                            SharedPreferences.Editor ed = p.edit();
+                                            ed.putString(KEY_STATE_JSON, remoteState.toString());
+                                            if (snap != null) {{
+                                                ed.putString(KEY_SNAPSHOT_JSON, snap.toString());
+                                                ed.putString(KEY_SNAPSHOT_SIG, computeSnapshotSignature(snap, getActiveTab(ctx)));
+                                            }}
+                                            ed.commit();
+                                        }}
                                     }}
-                                    ed.commit();
                                 }}
                             }}
                         }}
                     }}
                 }} catch (Exception ignored) {{}}
-                if (onComplete != null) onComplete.run();
+                if (onComplete != null) {{
+                    new Handler(Looper.getMainLooper()).post(onComplete);
+                }}
             }}
         }}).start();
     }}
@@ -1173,11 +1587,12 @@ public class WidgetDataStore {{
 """,
     )
 
-    # 8. Java Source: PlannerWidgetProvider.java (Binds Finger-Scrollable ListView + Explicit Mutable Template)
+    # 8. Java Source: PlannerWidgetProvider.java (Binds Finger-Scrollable ListView + Explicit Mutable Template + Background Keep-Alive)
     write_text(
         os.path.join(src_dir, "PlannerWidgetProvider.java"),
         f"""package {PACKAGE_NAME};
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -1185,13 +1600,20 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.widget.RemoteViews;
+import java.util.Calendar;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import org.json.JSONObject;
 
 public class PlannerWidgetProvider extends AppWidgetProvider {{
     public static final String ACTION_SWITCH_TAB = "{PACKAGE_NAME}.ACTION_SWITCH_TAB";
     public static final String ACTION_ROW_CLICK = "{PACKAGE_NAME}.ACTION_ROW_CLICK";
     public static final String ACTION_REFRESH_WIDGET = "{PACKAGE_NAME}.ACTION_REFRESH_WIDGET";
+    public static final String ACTION_AUTO_SYNC_WIDGET = "{PACKAGE_NAME}.ACTION_AUTO_SYNC_WIDGET";
 
     public static final String EXTRA_TAB = "extra_tab";
     public static final String EXTRA_CLICK_MODE = "extra_click_mode";
@@ -1200,17 +1622,25 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
     public static final String EXTRA_DATE_STR = "extra_date_str";
     public static final String EXTRA_EDIT_ID = "extra_edit_id";
 
+    // Initialized to current time on process start so any killed/restarted process forces a fresh RemoteViewsService connection
+    private static final AtomicLong ADAPTER_BIND_SALT = new AtomicLong(System.currentTimeMillis());
+    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
+
+    public static void bumpAdapterBindSalt() {{
+        ADAPTER_BIND_SALT.set(System.currentTimeMillis());
+    }}
+
+    @Override
+    public void onEnabled(Context context) {{
+        super.onEnabled(context);
+        scheduleNextRefreshAlarm(context);
+    }}
+
     @Override
     public void onUpdate(final Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {{
-        updateAllWidgets(context);
-        if (WidgetDataStore.getSnapshot(context) == null) {{
-            WidgetDataStore.pullLatestFromFirebaseAsync(context, new Runnable() {{
-                @Override
-                public void run() {{
-                    updateAllWidgets(context);
-                }}
-            }});
-        }}
+        scheduleNextRefreshAlarm(context);
+        updateAllWidgets(context, true);
+        syncWithCloudKeepingReceiverAlive(context, goAsync(), false);
     }}
 
     @Override
@@ -1223,7 +1653,8 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
             String tab = intent.getStringExtra(EXTRA_TAB);
             if (tab != null && !tab.isEmpty()) {{
                 WidgetDataStore.setActiveTab(context, tab);
-                updateAllWidgets(context);
+                bumpAdapterBindSalt();
+                updateAllWidgets(context, true);
             }}
         }} else if (ACTION_ROW_CLICK.equals(action)) {{
             String clickMode = intent.getStringExtra(EXTRA_CLICK_MODE);
@@ -1232,8 +1663,26 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
                 String itemId = intent.getStringExtra(EXTRA_ITEM_ID);
                 String dateStr = intent.getStringExtra(EXTRA_DATE_STR);
                 if (itemId != null && !itemId.isEmpty()) {{
-                    WidgetDataStore.toggleItemOptimisticAndSync(context, itemType, itemId, dateStr);
-                    updateAllWidgets(context);
+                    final PendingResult pr = goAsync();
+                    final AtomicBoolean finished = new AtomicBoolean(false);
+                    final Runnable finishSafe = new Runnable() {{
+                        @Override
+                        public void run() {{
+                            if (finished.compareAndSet(false, true) && pr != null) {{
+                                try {{ pr.finish(); }} catch (Exception ignored) {{}}
+                            }}
+                        }}
+                    }};
+                    MAIN_HANDLER.postDelayed(finishSafe, 8000);
+
+                    WidgetDataStore.toggleItemOptimisticAndSync(context, itemType, itemId, dateStr, new Runnable() {{
+                        @Override
+                        public void run() {{
+                            updateAllWidgets(context, false);
+                            finishSafe.run();
+                        }}
+                    }});
+                    updateAllWidgets(context, false);
                 }} else {{
                     Intent openIntent = new Intent(context, MainActivity.class);
                     openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -1250,20 +1699,117 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
                 context.startActivity(openIntent);
             }}
         }} else if (ACTION_REFRESH_WIDGET.equals(action)) {{
-            WidgetDataStore.pullLatestFromFirebaseAsync(context, new Runnable() {{
-                @Override
-                public void run() {{
-                    updateAllWidgets(context);
-                }}
-            }});
+            bumpAdapterBindSalt();
+            updateAllWidgets(context, true);
+            syncWithCloudKeepingReceiverAlive(context, goAsync(), true);
+        }} else if (
+            ACTION_AUTO_SYNC_WIDGET.equals(action)
+            || Intent.ACTION_BOOT_COMPLETED.equals(action)
+            || "android.intent.action.QUICKBOOT_POWERON".equals(action)
+            || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)
+            || Intent.ACTION_DATE_CHANGED.equals(action)
+            || Intent.ACTION_TIME_CHANGED.equals(action)
+            || Intent.ACTION_TIMEZONE_CHANGED.equals(action)
+            || Intent.ACTION_USER_PRESENT.equals(action)
+        ) {{
+            scheduleNextRefreshAlarm(context);
+            if (!Intent.ACTION_USER_PRESENT.equals(action)) {{
+                bumpAdapterBindSalt();
+            }}
+            updateAllWidgets(context, false);
+            syncWithCloudKeepingReceiverAlive(context, goAsync(), false);
         }}
     }}
 
+    private static void syncWithCloudKeepingReceiverAlive(final Context context, final PendingResult pr, final boolean forceRebindOnComplete) {{
+        final AtomicBoolean finished = new AtomicBoolean(false);
+        final Runnable finishSafe = new Runnable() {{
+            @Override
+            public void run() {{
+                if (finished.compareAndSet(false, true) && pr != null) {{
+                    try {{ pr.finish(); }} catch (Exception ignored) {{}}
+                }}
+            }}
+        }};
+        MAIN_HANDLER.postDelayed(finishSafe, 8000);
+
+        WidgetDataStore.pullLatestFromFirebaseAsync(context, new Runnable() {{
+            @Override
+            public void run() {{
+                if (forceRebindOnComplete) {{
+                    bumpAdapterBindSalt();
+                }}
+                updateAllWidgets(context, forceRebindOnComplete);
+                finishSafe.run();
+            }}
+        }});
+    }}
+
+    public static void scheduleNextRefreshAlarm(Context context) {{
+        try {{
+            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            if (am == null) return;
+
+            // 1. Periodic 15-minute background sync alarm (does not require exact alarm permission)
+            Intent syncIntent = new Intent(context, PlannerWidgetProvider.class);
+            syncIntent.setAction(ACTION_AUTO_SYNC_WIDGET);
+            syncIntent.setPackage(context.getPackageName());
+            PendingIntent piSync = PendingIntent.getBroadcast(
+                context, 901, syncIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+            am.setInexactRepeating(
+                AlarmManager.ELAPSED_REALTIME,
+                SystemClock.elapsedRealtime() + AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+                AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+                piSync
+            );
+
+            // 2. Midnight rollover window alarm so the widget flips to the new day right after midnight
+            Calendar midnight = Calendar.getInstance();
+            midnight.add(Calendar.DAY_OF_YEAR, 1);
+            midnight.set(Calendar.HOUR_OF_DAY, 0);
+            midnight.set(Calendar.MINUTE, 0);
+            midnight.set(Calendar.SECOND, 5);
+            midnight.set(Calendar.MILLISECOND, 0);
+            PendingIntent piMidnight = PendingIntent.getBroadcast(
+                context, 902, syncIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+            am.setWindow(
+                AlarmManager.RTC,
+                midnight.getTimeInMillis(),
+                120000L,
+                piMidnight
+            );
+        }} catch (Exception ignored) {{}}
+    }}
+
     public static void updateAllWidgets(Context context) {{
-        AppWidgetManager mgr = AppWidgetManager.getInstance(context);
+        updateAllWidgets(context, false);
+    }}
+
+    public static void updateAllWidgets(final Context context, final boolean forceRebind) {{
+        if (Looper.myLooper() != Looper.getMainLooper()) {{
+            MAIN_HANDLER.post(new Runnable() {{
+                @Override
+                public void run() {{
+                    updateAllWidgetsOnMainThread(context.getApplicationContext(), forceRebind);
+                }}
+            }});
+        }} else {{
+            updateAllWidgetsOnMainThread(context.getApplicationContext(), forceRebind);
+        }}
+    }}
+
+    private static void updateAllWidgetsOnMainThread(final Context context, boolean forceRebind) {{
+        final AppWidgetManager mgr = AppWidgetManager.getInstance(context);
         ComponentName cn = new ComponentName(context, PlannerWidgetProvider.class);
-        int[] ids = mgr.getAppWidgetIds(cn);
+        final int[] ids = mgr.getAppWidgetIds(cn);
         if (ids == null || ids.length == 0) return;
+
+        if (forceRebind) {{
+            bumpAdapterBindSalt();
+        }}
+        long bindSalt = ADAPTER_BIND_SALT.get();
 
         String activeTab = WidgetDataStore.getActiveTab(context);
         JSONObject snap = WidgetDataStore.getSnapshot(context);
@@ -1305,15 +1851,18 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
 
             Intent refIntent = new Intent(context, PlannerWidgetProvider.class);
             refIntent.setAction(ACTION_REFRESH_WIDGET);
+            refIntent.setPackage(context.getPackageName());
             PendingIntent piRef = PendingIntent.getBroadcast(
                 context, 202, refIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
             rv.setOnClickPendingIntent(R.id.widget_btn_refresh, piRef);
 
-            // Bind Finger-Scrollable ListView
+            // Bind Finger-Scrollable ListView with activeTab + bindSalt so killed services rebind cleanly
             Intent svcIntent = new Intent(context, PlannerWidgetService.class);
             svcIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-            svcIntent.setData(Uri.parse(svcIntent.toUri(Intent.URI_INTENT_SCHEME)));
+            svcIntent.setData(Uri.parse(
+                "plannerwidget://widget/" + appWidgetId + "/" + activeTab + "/" + bindSalt
+            ));
             rv.setRemoteAdapter(R.id.widget_list_view, svcIntent);
             rv.setEmptyView(R.id.widget_list_view, R.id.widget_empty_view);
 
@@ -1328,7 +1877,17 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
 
             mgr.updateAppWidget(appWidgetId, rv);
         }}
+
         mgr.notifyAppWidgetViewDataChanged(ids, R.id.widget_list_view);
+        // Follow-up notification after RemoteViews inflation ensures the launcher never drops onDataSetChanged
+        MAIN_HANDLER.postDelayed(new Runnable() {{
+            @Override
+            public void run() {{
+                try {{
+                    mgr.notifyAppWidgetViewDataChanged(ids, R.id.widget_list_view);
+                }} catch (Exception ignored) {{}}
+            }}
+        }}, 180);
     }}
 
     private static void styleTab(RemoteViews rv, int viewId, boolean active) {{
@@ -1339,6 +1898,7 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
     private static PendingIntent makeTabIntent(Context context, String tab, int reqCode) {{
         Intent i = new Intent(context, PlannerWidgetProvider.class);
         i.setAction(ACTION_SWITCH_TAB);
+        i.setPackage(context.getPackageName());
         i.putExtra(EXTRA_TAB, tab);
         return PendingIntent.getBroadcast(
             context, reqCode, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
@@ -1348,13 +1908,14 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
 """,
     )
 
-    # 9. Java Source: PlannerWidgetService.java (Scrollable ListView Factory with SpannableString Strikethrough)
+    # 9. Java Source: PlannerWidgetService.java (Thread-safe Scrollable ListView Factory with Stable IDs)
     write_text(
         os.path.join(src_dir, "PlannerWidgetService.java"),
         f"""package {PACKAGE_NAME};
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Binder;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.StrikethroughSpan;
@@ -1362,6 +1923,7 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -1384,32 +1946,36 @@ public class PlannerWidgetService extends RemoteViewsService {{
         String subtitle;
         boolean done;
         boolean empty;
+        long stableId;
 
-        static RowEntry header(String text, int color) {{
+        static RowEntry header(String text, int color, int idx) {{
             RowEntry r = new RowEntry();
             r.isHeader = true;
-            r.headerText = text;
+            r.headerText = text != null ? text : "";
             r.headerColor = color;
+            r.stableId = 100000L + ((long) r.headerText.hashCode() & 0x7fffffffL) + idx;
             return r;
         }}
 
-        static RowEntry item(String type, String id, String dateStr, String title, String subtitle, boolean done, boolean empty) {{
+        static RowEntry item(String type, String id, String dateStr, String title, String subtitle, boolean done, boolean empty, int idx) {{
             RowEntry r = new RowEntry();
             r.isHeader = false;
-            r.itemType = type;
+            r.itemType = type != null ? type : "task";
             r.itemId = id != null ? id : "";
             r.dateStr = dateStr != null ? dateStr : "";
             r.title = title != null ? title : "";
             r.subtitle = subtitle != null ? subtitle : "";
             r.done = done;
             r.empty = empty;
+            String key = r.itemType + ":" + r.itemId + ":" + r.dateStr + ":" + idx;
+            r.stableId = 200000L + ((long) key.hashCode() & 0x7fffffffL);
             return r;
         }}
     }}
 
     private static class PlannerRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {{
         private final Context context;
-        private final List<RowEntry> rows = new ArrayList<>();
+        private volatile List<RowEntry> rows = Collections.emptyList();
 
         PlannerRemoteViewsFactory(Context context) {{
             this.context = context;
@@ -1417,134 +1983,155 @@ public class PlannerWidgetService extends RemoteViewsService {{
 
         @Override
         public void onCreate() {{
-            rebuildRows();
+            onDataSetChanged();
         }}
 
         @Override
         public void onDataSetChanged() {{
-            rebuildRows();
+            final long token = Binder.clearCallingIdentity();
+            try {{
+                rebuildRows();
+            }} finally {{
+                Binder.restoreCallingIdentity(token);
+            }}
         }}
 
-        private void rebuildRows() {{
-            rows.clear();
+        private synchronized void rebuildRows() {{
+            List<RowEntry> next = new ArrayList<>();
             JSONObject snap = WidgetDataStore.getSnapshot(context);
-            if (snap == null) return;
+            if (snap == null) {{
+                this.rows = next;
+                return;
+            }}
 
             String tab = WidgetDataStore.getActiveTab(context);
             String todayStr = snap.optString("todayStr", WidgetDataStore.todayStr());
 
             if ("daily".equals(tab)) {{
                 JSONObject daily = snap.optJSONObject("daily");
-                if (daily == null) return;
+                if (daily == null) {{
+                    this.rows = next;
+                    return;
+                }}
 
                 JSONArray habits = daily.optJSONArray("habits");
                 if (habits != null && habits.length() > 0) {{
-                    rows.add(RowEntry.header("🔄 HABITS", 0xFF475569));
+                    next.add(RowEntry.header("🔄 HABITS", 0xFF475569, next.size()));
                     for (int i = 0; i < habits.length(); i++) {{
                         JSONObject h = habits.optJSONObject(i);
                         if (h != null) {{
-                            rows.add(RowEntry.item(
+                            next.add(RowEntry.item(
                                 "habit",
                                 h.optString("id"),
                                 h.optString("dateStr", todayStr),
                                 h.optString("title"),
                                 "",
                                 h.optBoolean("done", false),
-                                false
+                                false,
+                                next.size()
                             ));
                         }}
                     }}
                 }}
 
-                rows.add(RowEntry.header("✓ 1 MINOR THING", 0xFF047857));
+                next.add(RowEntry.header("✓ 1 MINOR THING", 0xFF047857, next.size()));
                 JSONObject minObj = daily.optJSONObject("minor");
                 if (minObj != null) {{
-                    rows.add(RowEntry.item(
+                    next.add(RowEntry.item(
                         "task",
                         minObj.optString("id"),
                         minObj.optString("dateStr", todayStr),
                         minObj.optString("title"),
                         minObj.optString("subtitle"),
                         minObj.optBoolean("done", false),
-                        minObj.optBoolean("empty", false)
+                        minObj.optBoolean("empty", false),
+                        next.size()
                     ));
                 }}
 
-                rows.add(RowEntry.header("★ 1 MAJOR THING", 0xFF1D4ED8));
+                next.add(RowEntry.header("★ 1 MAJOR THING", 0xFF1D4ED8, next.size()));
                 JSONObject majObj = daily.optJSONObject("major");
                 if (majObj != null) {{
-                    rows.add(RowEntry.item(
+                    next.add(RowEntry.item(
                         "task",
                         majObj.optString("id"),
                         majObj.optString("dateStr", todayStr),
                         majObj.optString("title"),
                         majObj.optString("subtitle"),
                         majObj.optBoolean("done", false),
-                        majObj.optBoolean("empty", false)
+                        majObj.optBoolean("empty", false),
+                        next.size()
                     ));
                 }}
 
             }} else if ("weekly".equals(tab)) {{
                 JSONArray weekly = snap.optJSONArray("weekly");
-                if (weekly == null) return;
+                if (weekly == null) {{
+                    this.rows = next;
+                    return;
+                }}
                 for (int i = 0; i < weekly.length(); i++) {{
                     JSONObject day = weekly.optJSONObject(i);
                     if (day == null) continue;
                     boolean isToday = day.optBoolean("isToday", false);
                     String dStr = day.optString("dateStr", todayStr);
-                    rows.add(RowEntry.header(
+                    next.add(RowEntry.header(
                         day.optString("dayLabel", dStr),
-                        isToday ? 0xFF1D4ED8 : 0xFF334155
+                        isToday ? 0xFF1D4ED8 : 0xFF334155,
+                        next.size()
                     ));
 
                     JSONObject minObj = day.optJSONObject("minor");
                     if (minObj != null) {{
                         String badge = minObj.optString("recBadge", "");
-                        rows.add(RowEntry.item(
+                        next.add(RowEntry.item(
                             "task",
                             minObj.optString("id"),
                             dStr,
                             "✓ " + minObj.optString("title"),
                             badge.isEmpty() ? "Minor Slot" : "Minor • " + badge,
                             minObj.optBoolean("done", false),
-                            false
+                            false,
+                            next.size()
                         ));
                     }} else {{
-                        rows.add(RowEntry.item("task", "", dStr, "✓ — Empty Minor Slot —", "", false, true));
+                        next.add(RowEntry.item("task", "", dStr, "✓ — Empty Minor Slot —", "", false, true, next.size()));
                     }}
 
                     JSONObject majObj = day.optJSONObject("major");
                     if (majObj != null) {{
                         String badge = majObj.optString("recBadge", "");
-                        rows.add(RowEntry.item(
+                        next.add(RowEntry.item(
                             "task",
                             majObj.optString("id"),
                             dStr,
                             "★ " + majObj.optString("title"),
                             badge.isEmpty() ? "Major Slot" : "Major • " + badge,
                             majObj.optBoolean("done", false),
-                            false
+                            false,
+                            next.size()
                         ));
                     }} else {{
-                        rows.add(RowEntry.item("task", "", dStr, "★ — Empty Major Slot —", "", false, true));
+                        next.add(RowEntry.item("task", "", dStr, "★ — Empty Major Slot —", "", false, true, next.size()));
                     }}
                 }}
 
             }} else {{
                 JSONArray tasks = snap.optJSONArray("tasks");
                 if (tasks != null && tasks.length() > 0) {{
-                    rows.add(RowEntry.header("📋 ACTIVE TASKS (" + tasks.length() + ")", 0xFF1D4ED8));
+                    next.add(RowEntry.header("📋 ACTIVE TASKS (" + tasks.length() + ")", 0xFF1D4ED8, next.size()));
                     for (int i = 0; i < tasks.length(); i++) {{
                         JSONObject t = tasks.optJSONObject(i);
                         if (t != null) {{
-                            rows.add(RowEntry.item(
+                            next.add(RowEntry.item(
                                 "task",
                                 t.optString("id"),
                                 t.optString("dateStr", todayStr),
                                 t.optString("title"),
                                 t.optString("subtitle"),
                                 t.optBoolean("done", false),
-                                false
+                                false,
+                                next.size()
                             ));
                         }}
                     }}
@@ -1552,28 +2139,51 @@ public class PlannerWidgetService extends RemoteViewsService {{
 
                 JSONArray habits = snap.optJSONArray("habits");
                 if (habits != null && habits.length() > 0) {{
-                    rows.add(RowEntry.header("🔄 HABITS (" + habits.length() + ")", 0xFF047857));
+                    next.add(RowEntry.header("🔄 HABITS (" + habits.length() + ")", 0xFF047857, next.size()));
                     for (int i = 0; i < habits.length(); i++) {{
                         JSONObject h = habits.optJSONObject(i);
                         if (h != null) {{
-                            rows.add(RowEntry.item(
+                            next.add(RowEntry.item(
                                 "habit",
                                 h.optString("id"),
                                 h.optString("dateStr", todayStr),
                                 h.optString("title"),
                                 h.optString("subtitle"),
                                 h.optBoolean("done", false),
-                                false
+                                false,
+                                next.size()
+                            ));
+                        }}
+                    }}
+                }}
+
+                JSONArray notes = snap.optJSONArray("notes");
+                if (notes != null && notes.length() > 0) {{
+                    next.add(RowEntry.header("📝 NOTES (" + notes.length() + ")", 0xFF92400E, next.size()));
+                    for (int i = 0; i < notes.length(); i++) {{
+                        JSONObject n = notes.optJSONObject(i);
+                        if (n != null) {{
+                            next.add(RowEntry.item(
+                                "task",
+                                n.optString("id"),
+                                n.optString("dateStr", todayStr),
+                                n.optString("title"),
+                                n.optString("subtitle"),
+                                n.optBoolean("done", false),
+                                false,
+                                next.size()
                             ));
                         }}
                     }}
                 }}
             }}
+
+            this.rows = next;
         }}
 
         @Override
         public void onDestroy() {{
-            rows.clear();
+            this.rows = Collections.emptyList();
         }}
 
         @Override
@@ -1588,8 +2198,9 @@ public class PlannerWidgetService extends RemoteViewsService {{
 
         @Override
         public RemoteViews getViewAt(int position) {{
-            if (position < 0 || position >= rows.size()) return null;
-            RowEntry r = rows.get(position);
+            List<RowEntry> current = this.rows;
+            if (position < 0 || position >= current.size()) return null;
+            RowEntry r = current.get(position);
 
             if (r.isHeader) {{
                 RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_row_header);
@@ -1652,12 +2263,16 @@ public class PlannerWidgetService extends RemoteViewsService {{
 
         @Override
         public long getItemId(int position) {{
+            List<RowEntry> current = this.rows;
+            if (position >= 0 && position < current.size()) {{
+                return current.get(position).stableId;
+            }}
             return position;
         }}
 
         @Override
         public boolean hasStableIds() {{
-            return false;
+            return true;
         }}
     }}
 }}
@@ -1698,7 +2313,7 @@ public class MainActivity extends Activity {{
         public void run() {{
             if (activeInstance != null && webView != null && pageLoaded) {{
                 pullWebLocalStorageIntoWidget();
-                syncHandler.postDelayed(this, 1800);
+                syncHandler.postDelayed(this, 2500);
             }}
         }}
     }};
@@ -1708,6 +2323,7 @@ public class MainActivity extends Activity {{
     protected void onCreate(Bundle savedInstanceState) {{
         super.onCreate(savedInstanceState);
         activeInstance = this;
+        PlannerWidgetProvider.scheduleNextRefreshAlarm(this.getApplicationContext());
 
         webView = new WebView(this);
         setContentView(webView);
@@ -1730,7 +2346,7 @@ public class MainActivity extends Activity {{
                 forwardIntentToWeb(getIntent());
                 pullWebLocalStorageIntoWidget();
                 syncHandler.removeCallbacks(periodicBridgeSync);
-                syncHandler.postDelayed(periodicBridgeSync, 1500);
+                syncHandler.postDelayed(periodicBridgeSync, 2000);
             }}
 
             @Override
@@ -1749,7 +2365,7 @@ public class MainActivity extends Activity {{
         String js = "(function() {{"
             + "try {{"
             + "  if (window.applyPendingNativeWidgetActions) window.applyPendingNativeWidgetActions();"
-            + "  if (window.syncNativeAndroidWidget) {{ try {{ window.syncNativeAndroidWidget(); }} catch(e1) {{}} }}"
+            + "  if (window.syncNativeAndroidWidget) {{ window.syncNativeAndroidWidget(); return; }}"
             + "  var st = localStorage.getItem('one_minor_one_major_v4') || '';"
             + "  var au = localStorage.getItem('one_minor_one_major_cloud_account_v4') || '';"
             + "  var sn = '';"
@@ -1776,7 +2392,7 @@ public class MainActivity extends Activity {{
         if (pageLoaded && webView != null) {{
             pullWebLocalStorageIntoWidget();
             syncHandler.removeCallbacks(periodicBridgeSync);
-            syncHandler.postDelayed(periodicBridgeSync, 1500);
+            syncHandler.postDelayed(periodicBridgeSync, 2000);
         }}
     }}
 
@@ -1784,6 +2400,7 @@ public class MainActivity extends Activity {{
     protected void onPause() {{
         pullWebLocalStorageIntoWidget();
         syncHandler.removeCallbacks(periodicBridgeSync);
+        PlannerWidgetProvider.updateAllWidgets(this.getApplicationContext(), false);
         super.onPause();
     }}
 
@@ -1839,8 +2456,10 @@ public class MainActivity extends Activity {{
         @JavascriptInterface
         public void syncFromWeb(String stateJson, String authJson, String snapshotJson) {{
             Context appCtx = MainActivity.this.getApplicationContext();
-            WidgetDataStore.saveFromWeb(appCtx, stateJson, authJson, snapshotJson);
-            PlannerWidgetProvider.updateAllWidgets(appCtx);
+            boolean changed = WidgetDataStore.saveFromWeb(appCtx, stateJson, authJson, snapshotJson);
+            if (changed) {{
+                PlannerWidgetProvider.updateAllWidgets(appCtx, false);
+            }}
         }}
 
         @JavascriptInterface
