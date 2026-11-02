@@ -1382,11 +1382,19 @@
         <!-- Main Tasks List Panel -->
         <div class="tasks-main-panel">
           <div class="tasks-panel-header">
-            <div>
-              <h2 style="font-size:1.2rem; font-weight:800;" id="currentListTitle">All Active Tasks</h2>
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <div class="hero-segmented-pill" role="tablist" aria-label="Switch between Tasks and Notes">
+                <button type="button" class="hero-seg-btn active" id="btnTasksSubmodeTasks" onclick="setTasksViewSubmode('tasks')">
+                  ☑️ Tasks (<span id="tasksSubmodeCount">0</span>)
+                </button>
+                <button type="button" class="hero-seg-btn" id="btnTasksSubmodeNotes" onclick="setTasksViewSubmode('notes')">
+                  📝 Notes (<span id="notesSubmodeCount">0</span>)
+                </button>
+              </div>
+              <h2 style="font-size:1.05rem; font-weight:800; color:var(--muted);" id="currentListTitle">📋 All Categories</h2>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn-primary-add" onclick="openTaskWizardFromFab()">+ Add Task</button>
+              <button class="btn-primary-add" id="btnMainPanelAdd" onclick="openTaskWizardFromFab()">+ Add Task</button>
             </div>
           </div>
 
@@ -1652,22 +1660,12 @@
           <span>➔</span>
         </button>
 
-        <div style="border:1px solid var(--border-strong); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
-          <div style="font-size:0.84rem; font-weight:700;">⏳ Snooze for a Few Days (Hide until date)</div>
-          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-            <button style="font-size:0.76rem; padding:5px 10px;" onclick="executeRoadblockAction('snooze_2')">+2 Days</button>
-            <button style="font-size:0.76rem; padding:5px 10px;" onclick="executeRoadblockAction('snooze_3')">+3 Days</button>
-            <button style="font-size:0.76rem; padding:5px 10px;" onclick="executeRoadblockAction('snooze_7')">Next Week (+7d)</button>
-            <input type="date" id="rbSnoozeDateInput" onchange="if(this.value) executeRoadblockAction('snooze_custom', this.value)" style="padding:4px 8px; border-radius:7px; border:1px solid var(--border-strong); font-size:0.76rem;" />
-          </div>
-        </div>
-
         <div style="border:1px solid var(--blocked-border); background:var(--blocked-bg); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
-          <div style="font-size:0.84rem; font-weight:800; color:var(--blocked-accent);">🚧 Mark as Blocked / Waiting on Something</div>
-          <p style="font-size:0.76rem; color:#881337;">Moves task to your "🚧 Blocked / Waiting" list so the auto-scheduler skips it until you unblock it.</p>
-          <div style="display:flex; gap:6px;">
-            <input type="text" id="rbBlockerNoteInput" placeholder="Optional: Waiting on parts / reply..." style="flex:1; border:1px solid var(--blocked-border); border-radius:7px; padding:6px 10px; font-size:0.8rem; background:#fff;" />
-            <button style="background:var(--blocked-accent); color:#fff; border:none; font-size:0.78rem;" onclick="executeRoadblockAction('block')">Mark Blocked</button>
+          <div style="font-size:0.84rem; font-weight:800; color:var(--blocked-accent);">🚧 Blocked / Waiting — Push Behind Last Task</div>
+          <p style="font-size:0.76rem; color:#881337;">Pushes this task to the very end of your schedule queue (after your last scheduled task). If it still isn't doable when that day arrives, just push it back again.</p>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <input type="text" id="rbBlockerNoteInput" placeholder="Optional note: Waiting on parts / reply..." style="flex:1; min-width:160px; border:1px solid var(--blocked-border); border-radius:7px; padding:6px 10px; font-size:0.8rem; background:#fff;" />
+            <button style="background:var(--blocked-accent); color:#fff; border:none; font-size:0.78rem; font-weight:800;" onclick="executeRoadblockAction('block')">Push to End ➔</button>
           </div>
         </div>
       </div>
@@ -2230,8 +2228,11 @@
       return '';
     }
 
-    function findBestCandidateIndex(pool, slotSize, isLow, prefCat, useOldestFirst) {
+    function findBestCandidateIndex(pool, slotSize, isLow, prefCat, useOldestFirst, dateStr) {
+      const canScheduleOnDate = (t) => !t.notBeforeDate || !dateStr || dateStr >= t.notBeforeDate;
+
       const matchesFilter = (t, relaxCat, allowMinorInMajor, allowAnyEnergy) => {
+        if (!canScheduleOnDate(t)) return false;
         const sizeOk = allowMinorInMajor ? (t.size === 'minor') : (t.size === slotSize);
         if (!sizeOk) return false;
         const catOk = relaxCat || prefCat === 'all' || t.category === prefCat;
@@ -2240,26 +2241,34 @@
         return t.energy === 'low';
       };
 
-      const pickFromPass = (predicate) => {
-        if (!useOldestFirst) {
-          return pool.findIndex(predicate);
-        }
-        // Option C: Pick the oldest waiting task (lowest createdAt; tie-break by effective score)
-        let bestIdx = -1;
-        let bestCreated = Infinity;
-        let bestEff = -Infinity;
-        for (let i = 0; i < pool.length; i++) {
-          const t = pool[i];
-          if (!predicate(t)) continue;
-          const cAt = Number(t.createdAt || Date.now());
-          const eff = getEffectiveScore(t);
-          if (cAt < bestCreated || (cAt === bestCreated && eff > bestEff)) {
-            bestCreated = cAt;
-            bestEff = eff;
-            bestIdx = i;
+      const pickFromPass = (basePredicate) => {
+        // Always prefer normal tasks over tasks pushed to the end of the queue (Blocked/Waiting)
+        const trySubset = (allowPushedToEnd) => {
+          const predicate = (t) => basePredicate(t) && (allowPushedToEnd ? !!t.pushedToEndAt : !t.pushedToEndAt);
+          if (!useOldestFirst || allowPushedToEnd) {
+            return pool.findIndex(predicate);
           }
-        }
-        return bestIdx;
+          // Option C: Pick the oldest waiting task (lowest createdAt; tie-break by effective score)
+          let bestIdx = -1;
+          let bestCreated = Infinity;
+          let bestEff = -Infinity;
+          for (let i = 0; i < pool.length; i++) {
+            const t = pool[i];
+            if (!predicate(t)) continue;
+            const cAt = Number(t.createdAt || Date.now());
+            const eff = getEffectiveScore(t);
+            if (cAt < bestCreated || (cAt === bestCreated && eff > bestEff)) {
+              bestCreated = cAt;
+              bestEff = eff;
+              bestIdx = i;
+            }
+          }
+          return bestIdx;
+        };
+
+        const normalIdx = trySubset(false);
+        if (normalIdx !== -1) return normalIdx;
+        return trySubset(true);
       };
 
       let idx = pickFromPass(t => matchesFilter(t, false, false, false));
@@ -2270,13 +2279,13 @@
         idx = pickFromPass(t => matchesFilter(t, true, true, false));
       }
       if (idx === -1 && isLow) {
-        idx = pickFromPass(t => t.size === slotSize && t.energy === 'med');
-        if (idx === -1) idx = pickFromPass(t => t.size === slotSize);
+        idx = pickFromPass(t => canScheduleOnDate(t) && t.size === slotSize && t.energy === 'med');
+        if (idx === -1) idx = pickFromPass(t => canScheduleOnDate(t) && t.size === slotSize);
       }
       // Final fallback: if no task of this exact size is available, allow any remaining active task to fill the open slot
       if (idx === -1) {
-        idx = pickFromPass(t => !isLow || t.energy === 'low');
-        if (idx === -1) idx = pickFromPass(() => true);
+        idx = pickFromPass(t => canScheduleOnDate(t) && (!isLow || t.energy === 'low'));
+        if (idx === -1) idx = pickFromPass(t => canScheduleOnDate(t));
       }
       return idx;
     }
@@ -2318,11 +2327,20 @@
         }
       });
 
-      // 1. Wake up any snoozed tasks whose snooze date has arrived
+      // 1. Keep all unfinished tasks active in their category lists (convert any legacy snoozed/blocked status to active queue items)
       appState.tasks.forEach(t => {
-        if (t.status === 'snoozed' && t.snoozedUntil && t.snoozedUntil <= todayStr) {
+        if (t.status === 'snoozed') {
           t.status = 'active';
+          if (t.snoozedUntil && t.snoozedUntil > todayStr) {
+            t.notBeforeDate = t.snoozedUntil;
+          }
           t.snoozedUntil = null;
+        } else if (t.status === 'blocked') {
+          t.status = 'active';
+          t.pushedToEndAt = t.pushedToEndAt || Date.now();
+        }
+        if (t.notBeforeDate && t.notBeforeDate <= todayStr) {
+          t.notBeforeDate = null;
         }
       });
 
@@ -2379,12 +2397,17 @@
       });
 
       // 4. Sort unscheduled active pool (excluding recurring tasks and notes)
+      //    Tasks marked Blocked/Waiting (pushedToEndAt) sort at the very end of the queue!
       const unscheduled = appState.tasks.filter(t =>
         t.status === 'active' &&
         isSchedulableTask(t) &&
         !isRecurringSlotTask(t) &&
         !t.scheduledDate
       ).sort((a, b) => {
+        const aEnd = Number(a.pushedToEndAt || 0);
+        const bEnd = Number(b.pushedToEndAt || 0);
+        if (!!aEnd !== !!bEnd) return aEnd ? 1 : -1;
+        if (aEnd && bEnd) return aEnd - bEnd;
         if (!!b.rolledOver !== !!a.rolledOver) return b.rolledOver ? 1 : -1;
         const diff = getEffectiveScore(b) - getEffectiveScore(a);
         if (diff !== 0) return diff;
@@ -2416,7 +2439,7 @@
           );
           if (existing) return;
 
-          const idx = findBestCandidateIndex(unscheduled, slotSize, isLow, prefCat, isSaturdayBacklogDay);
+          const idx = findBestCandidateIndex(unscheduled, slotSize, isLow, prefCat, isSaturdayBacklogDay, dStr);
           if (idx !== -1) {
             const picked = unscheduled.splice(idx, 1)[0];
             picked.scheduledDate = dStr;
@@ -3652,24 +3675,48 @@
     // -----------------------------------------------------
     // VIEW 2: MICROSOFT TO DO / GOOGLE TASKS LIST VIEW
     // -----------------------------------------------------
+    let tasksViewSubmode = 'tasks'; // 'tasks' | 'notes'
+
+    window.setTasksViewSubmode = function(mode) {
+      tasksViewSubmode = (mode === 'notes') ? 'notes' : 'tasks';
+      renderTaskListView();
+    };
+
     function renderTaskListView() {
       const sidebarEl = document.getElementById('categoriesSidebar');
       const activeRegular = appState.tasks.filter(t => t.status === 'active' && isSchedulableTask(t));
       const activeNotes = appState.tasks.filter(t => t.status !== 'completed' && isNoteTask(t));
-      const activeAndNotes = appState.tasks.filter(t => t.status === 'active' && (isSchedulableTask(t) || isNoteTask(t)));
-      const habitsCount = appState.tasks.filter(t => t.status !== 'completed' && t.recurrence === 'daily_habit').length;
-      const snoozedCount = appState.tasks.filter(t => t.status === 'snoozed').length;
-      const blockedCount = appState.tasks.filter(t => t.status === 'blocked').length;
+
+      // If selectedListFilter was previously set to a non-category filter ('notes', 'snoozed', 'blocked', 'habits'), reset to 'all'
+      if (['notes', 'snoozed', 'blocked', 'habits'].includes(selectedListFilter)) {
+        selectedListFilter = 'all';
+      }
+
+      const isNotesMode = (tasksViewSubmode === 'notes');
+      const modePool = isNotesMode ? activeNotes : activeRegular;
+
+      // Update Tasks | Notes top segmented switcher & Add button
+      const btnSubTasks = document.getElementById('btnTasksSubmodeTasks');
+      const btnSubNotes = document.getElementById('btnTasksSubmodeNotes');
+      const cntTasksEl = document.getElementById('tasksSubmodeCount');
+      const cntNotesEl = document.getElementById('notesSubmodeCount');
+      const btnAddEl = document.getElementById('btnMainPanelAdd');
+
+      if (btnSubTasks) btnSubTasks.classList.toggle('active', !isNotesMode);
+      if (btnSubNotes) btnSubNotes.classList.toggle('active', isNotesMode);
+      if (cntTasksEl) cntTasksEl.textContent = String(activeRegular.length);
+      if (cntNotesEl) cntNotesEl.textContent = String(activeNotes.length);
+      if (btnAddEl) btnAddEl.textContent = isNotesMode ? '+ Add Note' : '+ Add Task';
 
       let catHtml = `
         <button class="cat-nav-item ${selectedListFilter === 'all' ? 'active' : ''}" onclick="selectTaskListFilter('all')">
-          <span>📋 All Active Tasks</span>
-          <span class="cat-count-badge">${activeAndNotes.length}</span>
+          <span>📋 All Categories</span>
+          <span class="cat-count-badge">${modePool.length}</span>
         </button>
       `;
 
       appState.categories.forEach(c => {
-        const cnt = activeAndNotes.filter(t => t.category === c.id).length;
+        const cnt = modePool.filter(t => t.category === c.id).length;
         catHtml += `
           <button class="cat-nav-item ${selectedListFilter === c.id ? 'active' : ''}" onclick="selectTaskListFilter('${c.id}')">
             <span>${escapeHtml(c.name)}</span>
@@ -3679,63 +3726,40 @@
       });
 
       catHtml += `
-        <div style="height:1px; background:var(--border); margin:6px 0;"></div>
-        <button class="cat-nav-item ${selectedListFilter === 'notes' ? 'active' : ''}" onclick="selectTaskListFilter('notes')">
-          <span>📝 Notes</span>
-          <span class="cat-count-badge">${activeNotes.length}</span>
-        </button>
-        <button class="cat-nav-item ${selectedListFilter === 'snoozed' ? 'active' : ''}" onclick="selectTaskListFilter('snoozed')">
-          <span>⏳ Snoozed</span>
-          <span class="cat-count-badge">${snoozedCount}</span>
-        </button>
-        <button class="cat-nav-item ${selectedListFilter === 'blocked' ? 'active' : ''}" onclick="selectTaskListFilter('blocked')">
-          <span>🚧 Blocked / Waiting</span>
-          <span class="cat-count-badge">${blockedCount}</span>
-        </button>
         <button class="cat-nav-item" style="color:var(--primary); margin-top:4px;" onclick="promptNewCategory()">
           <span>+ New Category List</span>
         </button>
       `;
       sidebarEl.innerHTML = catHtml;
 
-      // Filter tasks & notes for main panel
+      // Filter tasks or notes for main panel by selected Category
       let filtered = [];
-      let title = 'All Active Tasks';
+      let title = '📋 All Categories';
       if (selectedListFilter === 'all') {
-        filtered = activeAndNotes;
-      } else if (selectedListFilter === 'notes') {
-        filtered = activeNotes;
-        title = '📝 Notes';
-      } else if (selectedListFilter === 'snoozed') {
-        filtered = appState.tasks.filter(t => t.status === 'snoozed');
-        title = '⏳ Snoozed Tasks';
-      } else if (selectedListFilter === 'blocked') {
-        filtered = appState.tasks.filter(t => t.status === 'blocked');
-        title = '🚧 Blocked / Waiting Tasks';
+        filtered = [...modePool];
       } else {
         const cObj = appState.categories.find(c => c.id === selectedListFilter);
-        title = cObj ? cObj.name : 'Category Tasks';
-        filtered = activeAndNotes.filter(t => t.category === selectedListFilter);
+        title = cObj ? cObj.name : 'Category';
+        filtered = modePool.filter(t => t.category === selectedListFilter);
       }
 
       filtered.sort((a, b) => {
-        const aIsNote = isNoteTask(a);
-        const bIsNote = isNoteTask(b);
-        if (selectedListFilter === 'notes' || (aIsNote && bIsNote)) {
+        if (isNotesMode) {
           return Number(b.createdAt || 0) - Number(a.createdAt || 0);
         }
-        if (aIsNote !== bIsNote) {
-          return aIsNote ? 1 : -1;
-        }
+        const aEnd = Number(a.pushedToEndAt || 0);
+        const bEnd = Number(b.pushedToEndAt || 0);
+        if (!!aEnd !== !!bEnd) return aEnd ? 1 : -1;
+        if (aEnd && bEnd) return aEnd - bEnd;
         return getEffectiveScore(b) - getEffectiveScore(a);
       });
       document.getElementById('currentListTitle').textContent = title;
 
       const listEl = document.getElementById('todoActiveList');
       if (filtered.length === 0) {
-        const emptyHint = selectedListFilter === 'notes'
-          ? 'No notes yet. Click <strong>+ Add Task</strong> and select <strong>📝 Note</strong> to jot something down!'
-          : 'No tasks or notes in this list right now. Click <strong>+ Add Task</strong> to add one!';
+        const emptyHint = isNotesMode
+          ? 'No notes in this category yet. Click <strong>+ Add Note</strong> to jot something down!'
+          : 'No active tasks in this category right now. Click <strong>+ Add Task</strong> to add one!';
         listEl.innerHTML = `
           <div style="text-align:center; padding:32px 16px; color:var(--muted); border:1.5px dashed var(--border-strong); border-radius:12px;">
             ${emptyHint}
@@ -3745,9 +3769,9 @@
         listEl.innerHTML = filtered.map(t => buildTodoRowHtml(t, false)).join('');
       }
 
-      // Render Collapsible Completed Section
+      // Render Collapsible Completed Section (matching current Tasks vs Notes mode)
       const completedTasks = appState.tasks
-        .filter(t => t.status === 'completed')
+        .filter(t => t.status === 'completed' && (isNotesMode ? isNoteTask(t) : !isNoteTask(t)))
         .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
 
       document.getElementById('completedCountLabel').textContent = String(completedTasks.length);
@@ -3770,14 +3794,17 @@
       const isNote = isNoteTask(task);
 
       let statusBadge = '';
-      if (task.status === 'blocked') {
-        statusBadge = `<span class="badge-blocked">🚧 Blocked${task.blockerNote ? ': ' + escapeHtml(task.blockerNote) : ''}</span>`;
-      } else if (task.status === 'snoozed') {
-        statusBadge = `<span class="badge-snoozed">⏳ Snoozed until ${escapeHtml(task.snoozedUntil || '')}</span>`;
-      } else if (isNote && !isCompleted) {
+      if (isNote && !isCompleted) {
         statusBadge = `<span style="color:#92400e; font-weight:700;">📌 Non-scheduled Note</span>`;
-      } else if (task.scheduledDate && !isCompleted) {
-        statusBadge = `<span style="color:var(--primary); font-weight:700;">📅 Scheduled: ${formatShortDate(parseDateStr(task.scheduledDate))}${task.backlogCatchUp ? ' (🕰️ Oldest Backlog Slot)' : ''}</span>`;
+      } else if (!isCompleted) {
+        const parts = [];
+        if (task.pushedToEndAt || task.blockerNote) {
+          parts.push(`<span class="badge-blocked">🚧 Waiting${task.blockerNote ? ': ' + escapeHtml(task.blockerNote) : ' (End of Queue)'}</span>`);
+        }
+        if (task.scheduledDate) {
+          parts.push(`<span style="color:var(--primary); font-weight:700;">📅 Scheduled: ${formatShortDate(parseDateStr(task.scheduledDate))}${task.backlogCatchUp ? ' (🕰️ Oldest Backlog Slot)' : ''}</span>`);
+        }
+        statusBadge = parts.join(' ');
       }
 
       const notesBodyHtml = task.notes
@@ -3811,16 +3838,14 @@
           </div>
 
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;" onclick="event.stopPropagation();">
-            ${task.status === 'blocked' || task.status === 'snoozed' ? `
-              <button style="font-size:0.75rem; padding:4px 9px; background:#ecfdf5; border-color:#6ee7b7; color:#047857;" onclick="unblockOrWakeTask('${task.id}')">Unblock / Wake</button>
-            ` : (task.recurrence === 'daily_habit' ? `
+            ${task.recurrence === 'daily_habit' ? `
               <button style="font-size:0.75rem; padding:4px 9px;" onclick="openTaskWizard({ editTaskId: '${task.id}' })" title="Edit Habit">✎ Edit</button>
             ` : (isNote && !isCompleted ? `
               <button style="font-size:0.75rem; padding:4px 9px; background:#eff6ff; border-color:#93c5fd; color:#1d4ed8;" onclick="convertNoteToTask('${task.id}')" title="Turn this note into a scheduled task">📅 Make Task</button>
               <button style="font-size:0.75rem; padding:4px 9px;" onclick="openTaskWizard({ editTaskId: '${task.id}' })" title="Edit Note">✎ Edit</button>
             ` : (!isCompleted ? `
               <button style="font-size:0.75rem; padding:4px 9px;" onclick="pinTaskToToday('${task.id}')" title="Slot directly into Today">➔ Today</button>
-            ` : '')))}
+            ` : ''))}
           </div>
         </div>
       `;
@@ -4447,7 +4472,7 @@
     };
 
     window.openTaskWizardFromFab = function() {
-      if (selectedListFilter === 'notes') {
+      if (tasksViewSubmode === 'notes') {
         openTaskWizard({ defaultNote: true });
       } else {
         openTaskWizard();
@@ -4737,10 +4762,9 @@
       const secCurrent = document.getElementById('rbSectionCurrentTask');
       if (task) {
         secCurrent.style.display = 'flex';
-        document.getElementById('rbModalTitle').textContent = `Delay, Snooze, or Swap Task`;
+        document.getElementById('rbModalTitle').textContent = `Delay, Push Back, or Swap Task`;
         document.getElementById('rbModalSubtitle').textContent = `"${task.title}" (${slotSize === 'minor' ? 'Minor Thing' : 'Major Thing'})`;
         document.getElementById('rbBlockerNoteInput').value = task.blockerNote || '';
-        document.getElementById('rbSnoozeDateInput').value = '';
         document.getElementById('rbPickSectionTitle').textContent = 'Or Swap With a Task From Your List:';
       } else {
         secCurrent.style.display = 'none';
@@ -4758,13 +4782,14 @@
       rbContext = null;
     };
 
-    window.executeRoadblockAction = function(action, customDate) {
+    window.executeRoadblockAction = function(action) {
       if (!rbContext || !rbContext.taskId) return;
       const task = appState.tasks.find(t => t.id === rbContext.taskId);
       if (!task) return;
       const curDateObj = parseDateStr(rbContext.dateStr);
+      const tomStr = toDateStr(addDays(curDateObj, 1));
 
-      // Also release auto-scheduled future one-time tasks so the scheduler can pull the next best task into today!
+      // Release auto-scheduled future one-time tasks so the scheduler can pull the next best task into today!
       appState.tasks.forEach(t => {
         if (t.status === 'active' && isSchedulableTask(t) && !isRecurringSlotTask(t) && t.id !== task.id && t.scheduledDate && t.scheduledDate > rbContext.dateStr) {
           t.scheduledDate = null;
@@ -4773,21 +4798,15 @@
       });
 
       if (action === 'tomorrow') {
-        const tomStr = toDateStr(addDays(curDateObj, 1));
         task.scheduledDate = tomStr;
         task.slotOverride = null;
-      } else if (action.startsWith('snooze_')) {
-        let wakeStr = customDate;
-        if (action === 'snooze_2') wakeStr = toDateStr(addDays(curDateObj, 2));
-        if (action === 'snooze_3') wakeStr = toDateStr(addDays(curDateObj, 3));
-        if (action === 'snooze_7') wakeStr = toDateStr(addDays(curDateObj, 7));
-        task.status = 'snoozed';
-        task.snoozedUntil = wakeStr;
-        task.scheduledDate = null;
-        task.slotOverride = null;
       } else if (action === 'block') {
-        task.status = 'blocked';
+        // Keep task active in its category list and push it behind the last task in the schedule queue!
+        task.status = 'active';
         task.blockerNote = document.getElementById('rbBlockerNoteInput').value.trim();
+        task.rolledOver = false;
+        task.pushedToEndAt = Date.now();
+        task.notBeforeDate = tomStr;
         task.scheduledDate = null;
         task.slotOverride = null;
       }
@@ -4874,6 +4893,9 @@
         }
       });
       bumpSlotForwardFromDate(todayStr, t.size);
+      t.pushedToEndAt = null;
+      t.notBeforeDate = null;
+      t.blockerNote = '';
       t.scheduledDate = todayStr;
       persistAndSync();
       switchMainView('today');
