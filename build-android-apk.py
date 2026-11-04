@@ -131,8 +131,8 @@ def generate_project_files():
         f"""<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="{PACKAGE_NAME}"
-    android:versionCode="8"
-    android:versionName="8.0">
+    android:versionCode="9"
+    android:versionName="9.0">
 
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="34" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -325,7 +325,7 @@ def generate_project_files():
             android:background="@drawable/bg_tab_active" />
     </LinearLayout>
 
-    <!-- 3 View Switcher Tabs: Daily | Weekly | Tasks -->
+    <!-- 4 View Switcher Tabs: Daily | Weekly | Tasks | Notes -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -339,7 +339,7 @@ def generate_project_files():
             android:layout_weight="1"
             android:gravity="center"
             android:text="☀️ Daily"
-            android:textSize="12sp"
+            android:textSize="11.5sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:background="@drawable/bg_tab_active"
@@ -352,7 +352,7 @@ def generate_project_files():
             android:layout_weight="1"
             android:gravity="center"
             android:text="🗓️ Weekly"
-            android:textSize="12sp"
+            android:textSize="11.5sp"
             android:textStyle="bold"
             android:textColor="#475569"
             android:background="@drawable/bg_tab_inactive"
@@ -365,7 +365,20 @@ def generate_project_files():
             android:layout_weight="1"
             android:gravity="center"
             android:text="☑️ Tasks"
-            android:textSize="12sp"
+            android:textSize="11.5sp"
+            android:textStyle="bold"
+            android:textColor="#475569"
+            android:background="@drawable/bg_tab_inactive"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/widget_tab_notes"
+            android:layout_width="0dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="📝 Notes"
+            android:textSize="11.5sp"
             android:textStyle="bold"
             android:textColor="#475569"
             android:background="@drawable/bg_tab_inactive" />
@@ -1395,6 +1408,16 @@ public class WidgetDataStore {{
                                     }}
                                 }}
                             }}
+                            JSONArray notes = snap.optJSONArray("notes");
+                            if (!foundInState && notes != null) {{
+                                for (int i = 0; i < notes.length() && !foundInState; i++) {{
+                                    JSONObject n = notes.getJSONObject(i);
+                                    if (itemId.equals(n.optString("id"))) {{
+                                        newDoneState = !n.optBoolean("done", false);
+                                        foundInState = true;
+                                    }}
+                                }}
+                            }}
                         }}
 
                         // Apply consistent newDoneState across all views in snap
@@ -1420,6 +1443,13 @@ public class WidgetDataStore {{
                             for (int i = 0; i < tasks.length(); i++) {{
                                 JSONObject t = tasks.getJSONObject(i);
                                 if (itemId.equals(t.optString("id"))) t.put("done", newDoneState);
+                            }}
+                        }}
+                        JSONArray notes = snap.optJSONArray("notes");
+                        if (notes != null) {{
+                            for (int i = 0; i < notes.length(); i++) {{
+                                JSONObject n = notes.getJSONObject(i);
+                                if (itemId.equals(n.optString("id"))) n.put("done", newDoneState);
                             }}
                         }}
                     }}
@@ -1826,10 +1856,12 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
             styleTab(rv, R.id.widget_tab_daily, "daily".equals(activeTab));
             styleTab(rv, R.id.widget_tab_weekly, "weekly".equals(activeTab));
             styleTab(rv, R.id.widget_tab_tasks, "tasks".equals(activeTab));
+            styleTab(rv, R.id.widget_tab_notes, "notes".equals(activeTab));
 
             rv.setOnClickPendingIntent(R.id.widget_tab_daily, makeTabIntent(context, "daily", 101));
             rv.setOnClickPendingIntent(R.id.widget_tab_weekly, makeTabIntent(context, "weekly", 102));
             rv.setOnClickPendingIntent(R.id.widget_tab_tasks, makeTabIntent(context, "tasks", 103));
+            rv.setOnClickPendingIntent(R.id.widget_tab_notes, makeTabIntent(context, "notes", 104));
 
             Intent openMain = new Intent(context, MainActivity.class);
             openMain.putExtra("widgetView", activeTab);
@@ -1841,7 +1873,7 @@ public class PlannerWidgetProvider extends AppWidgetProvider {{
             rv.setOnClickPendingIntent(R.id.widget_empty_view, piMain);
 
             Intent openAdd = new Intent(context, MainActivity.class);
-            openAdd.putExtra("widgetView", "tasks");
+            openAdd.putExtra("widgetView", "notes".equals(activeTab) ? "notes" : "tasks");
             openAdd.putExtra("widgetNewTask", true);
             openAdd.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             PendingIntent piAdd = PendingIntent.getActivity(
@@ -2116,6 +2148,30 @@ public class PlannerWidgetService extends RemoteViewsService {{
                     }}
                 }}
 
+            }} else if ("notes".equals(tab)) {{
+                JSONArray notes = snap.optJSONArray("notes");
+                int nCount = (notes != null) ? notes.length() : 0;
+                next.add(RowEntry.header("📝 NOTES (" + nCount + ")", 0xFF92400E, next.size()));
+                if (notes != null && nCount > 0) {{
+                    for (int i = 0; i < nCount; i++) {{
+                        JSONObject n = notes.optJSONObject(i);
+                        if (n != null) {{
+                            next.add(RowEntry.item(
+                                "task",
+                                n.optString("id"),
+                                n.optString("dateStr", todayStr),
+                                n.optString("title"),
+                                n.optString("subtitle"),
+                                n.optBoolean("done", false),
+                                false,
+                                next.size()
+                            ));
+                        }}
+                    }}
+                }} else {{
+                    next.add(RowEntry.item("task", "", todayStr, "No notes yet — tap ＋ above to add a note", "", false, true, next.size()));
+                }}
+
             }} else {{
                 JSONArray tasks = snap.optJSONArray("tasks");
                 if (tasks != null && tasks.length() > 0) {{
@@ -2150,26 +2206,6 @@ public class PlannerWidgetService extends RemoteViewsService {{
                                 h.optString("title"),
                                 h.optString("subtitle"),
                                 h.optBoolean("done", false),
-                                false,
-                                next.size()
-                            ));
-                        }}
-                    }}
-                }}
-
-                JSONArray notes = snap.optJSONArray("notes");
-                if (notes != null && notes.length() > 0) {{
-                    next.add(RowEntry.header("📝 NOTES (" + notes.length() + ")", 0xFF92400E, next.size()));
-                    for (int i = 0; i < notes.length(); i++) {{
-                        JSONObject n = notes.optJSONObject(i);
-                        if (n != null) {{
-                            next.add(RowEntry.item(
-                                "task",
-                                n.optString("id"),
-                                n.optString("dateStr", todayStr),
-                                n.optString("title"),
-                                n.optString("subtitle"),
-                                n.optBoolean("done", false),
                                 false,
                                 next.size()
                             ));
@@ -2475,6 +2511,11 @@ public class MainActivity extends Activity {{
         @JavascriptInterface
         public String getSavedAuthJson() {{
             return WidgetDataStore.getSavedAuthJson(MainActivity.this.getApplicationContext());
+        }}
+
+        @JavascriptInterface
+        public int getAppVersion() {{
+            return 9;
         }}
     }}
 }}

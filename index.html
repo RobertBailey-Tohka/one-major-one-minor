@@ -3678,6 +3678,16 @@
           };
         });
 
+      // If running inside an older Android widget APK (< v9 that only had 3 tabs), place Notes at the very TOP of the Tasks list so the user never has to scroll to the bottom!
+      const isLegacy3TabWidget = !!(window.AndroidWidgetBridge && typeof window.AndroidWidgetBridge.getAppVersion !== 'function');
+      const snapshotTasks = isLegacy3TabWidget
+        ? [
+            ...allNotes.map(n => ({ ...n, title: `📝 ${n.title}` })),
+            ...activeTasks
+          ]
+        : activeTasks;
+      const snapshotNotes = isLegacy3TabWidget ? [] : allNotes;
+
       return {
         updatedAt: Date.now(),
         todayStr,
@@ -3688,9 +3698,9 @@
           major: formatSlotObj(majorTask, 'major', todayMeta.partialWinMajor)
         },
         weekly: weeklyDays,
-        tasks: activeTasks,
+        tasks: snapshotTasks,
         habits: allHabits,
-        notes: allNotes
+        notes: snapshotNotes
       };
     }
     window.buildWidgetSnapshot = buildWidgetSnapshot;
@@ -5946,8 +5956,12 @@
 
     // Handle deep-links from the Android Home Screen Widget
     window.handleWidgetLaunchParams = function(viewMode, editTaskId, openNewTask) {
-      if (viewMode === 'tasks') {
+      if (viewMode === 'notes') {
         switchMainView('tasks');
+        setTasksViewSubmode('notes');
+      } else if (viewMode === 'tasks') {
+        switchMainView('tasks');
+        setTasksViewSubmode('tasks');
       } else if (viewMode === 'weekly') {
         setMainScreenScheduleMode('weekly');
       } else if (viewMode === 'daily') {
@@ -5956,7 +5970,7 @@
       if (editTaskId) {
         setTimeout(() => openTaskWizard({ editTaskId }), 80);
       } else if (openNewTask) {
-        setTimeout(() => openTaskWizard(), 80);
+        setTimeout(() => openTaskWizard(viewMode === 'notes' ? { defaultRecurrence: 'note' } : {}), 80);
       }
     };
 
